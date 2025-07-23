@@ -1,6 +1,8 @@
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
 import IdeaCard from '@/components/ui/IdeaCard';
 import heroImage from '@/assets/hero-innovation.jpg';
 
@@ -65,6 +67,8 @@ const mockIdeas = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
+  
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -77,10 +81,21 @@ export default function Home() {
               </h1>
               <p className="text-sm text-muted-foreground">Discover Innovation</p>
             </div>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {!user ? (
+                <Link to="/auth">
+                  <Button variant="innovation" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" />
+                </Button>
+              )}
+            </div>
           </div>
           
           {/* Search */}

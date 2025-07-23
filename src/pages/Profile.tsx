@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { Settings, Share, Edit, Heart, MessageCircle, Bookmark, Grid, Video, Camera, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Settings, Share, Edit, Heart, MessageCircle, Bookmark, Grid, Video, Camera, ExternalLink, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import heroImage from '@/assets/hero-innovation.jpg';
 
 // Mock user data
@@ -50,6 +53,36 @@ const mockIdeas = [
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('ideas');
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "You have been signed out",
+      });
+      navigate('/');
+    }
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen">
@@ -64,6 +97,9 @@ export default function Profile() {
               </Button>
               <Button variant="ghost" size="icon">
                 <Settings className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                <LogOut className="h-5 w-5" />
               </Button>
             </div>
           </div>
@@ -81,8 +117,8 @@ export default function Profile() {
               </AvatarFallback>
             </Avatar>
             
-            <h2 className="text-2xl font-bold text-foreground mb-1">{userData.name}</h2>
-            <p className="text-muted-foreground mb-4">@{userData.username}</p>
+            <h2 className="text-2xl font-bold text-foreground mb-1">{user.email?.split('@')[0] || 'User'}</h2>
+            <p className="text-muted-foreground mb-4">{user.email}</p>
             
             <p className="text-sm text-foreground mb-4 max-w-xs mx-auto">
               {userData.bio}
