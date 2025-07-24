@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
@@ -18,9 +21,132 @@ export default function Upload() {
     description: '',
     category: ''
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    
+    if (mediaType === 'photo') {
+      const imageFiles = files.filter(file => file.type.startsWith('image/'));
+      if (imageFiles.length > 10) {
+        toast({
+          title: "Too many files",
+          description: "You can only upload up to 10 photos.",
+          variant: "destructive"
+        });
+        return;
+      }
+      setSelectedFiles(imageFiles);
+    } else if (mediaType === 'video') {
+      const videoFile = files.find(file => file.type.startsWith('video/'));
+      if (videoFile) {
+        // Check if video is under 3 minutes (180 seconds)
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          if (video.duration > 180) {
+            toast({
+              title: "Video too long",
+              description: "Video must be 3 minutes or shorter.",
+              variant: "destructive"
+            });
+            return;
+          }
+          setSelectedFiles([videoFile]);
+        };
+        video.src = URL.createObjectURL(videoFile);
+      }
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload files.",
+        variant: "destructive"
+      });
+      return [];
+    }
+
+    const uploadedUrls: string[] = [];
+    
+    for (const file of selectedFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('media')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive"
+        });
+        continue;
+      }
+
+      const { data } = supabase.storage
+        .from('media')
+        .getPublicUrl(fileName);
+      
+      uploadedUrls.push(data.publicUrl);
+    }
+
+    return uploadedUrls;
+  };
+
+  const handlePublish = async () => {
+    if (!selectedFiles.length) {
+      toast({
+        title: "No files selected",
+        description: "Please select files to upload.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      const uploadedUrls = await uploadFiles();
+      
+      if (uploadedUrls.length > 0) {
+        toast({
+          title: "Success!",
+          description: `Successfully uploaded ${uploadedUrls.length} file(s).`,
+        });
+        
+        // Reset form
+        setSelectedFiles([]);
+        setFormData({ title: '', description: '', category: '' });
+        setMediaType(null);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (!mediaType) {
@@ -131,27 +257,81 @@ export default function Upload() {
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Media Upload Area */}
         <div className="relative">
-          <div className="w-full aspect-video bg-gradient-discovery border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center text-center p-8">
-            <div className="p-4 rounded-full bg-gradient-primary mb-4">
-              {mediaType === 'photo' ? (
-                <Camera className="h-8 w-8 text-primary-foreground" />
-              ) : (
-                <Video className="h-8 w-8 text-primary-foreground" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={mediaType === 'photo' ? 'image/*' : 'video/*'}
+            multiple={mediaType === 'photo'}
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          
+          {selectedFiles.length > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="relative">
+                    <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                      {file.type.startsWith('image/') ? (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Video className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={() => removeFile(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              
+              {mediaType === 'photo' && selectedFiles.length < 10 && (
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full"
+                >
+                  Add More Photos ({selectedFiles.length}/10)
+                </Button>
               )}
             </div>
-            <h3 className="font-semibold text-foreground mb-2">
-              {mediaType === 'photo' ? 'Add Photos' : 'Add Video'}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {mediaType === 'photo' 
-                ? 'Tap to select up to 10 photos' 
-                : 'Tap to select a video (max 3 minutes)'
-              }
-            </p>
-            <Button variant="innovation" size="sm">
-              Choose {mediaType === 'photo' ? 'Photos' : 'Video'}
-            </Button>
-          </div>
+          ) : (
+            <div 
+              className="w-full aspect-video bg-gradient-discovery border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center text-center p-8 cursor-pointer hover:border-primary transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="p-4 rounded-full bg-gradient-primary mb-4">
+                {mediaType === 'photo' ? (
+                  <Camera className="h-8 w-8 text-primary-foreground" />
+                ) : (
+                  <Video className="h-8 w-8 text-primary-foreground" />
+                )}
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
+                {mediaType === 'photo' ? 'Add Photos' : 'Add Video'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {mediaType === 'photo' 
+                  ? 'Tap to select up to 10 photos' 
+                  : 'Tap to select a video (max 3 minutes)'
+                }
+              </p>
+              <Button variant="innovation" size="sm">
+                Choose {mediaType === 'photo' ? 'Photos' : 'Video'}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Form Fields */}
@@ -224,10 +404,11 @@ export default function Upload() {
             variant="innovation" 
             size="lg" 
             className="w-full"
-            disabled={!formData.title || !formData.description || !formData.category}
+            disabled={!formData.title || !formData.description || !formData.category || selectedFiles.length === 0 || isUploading}
+            onClick={handlePublish}
           >
             <Sparkles className="h-5 w-5 mr-2" />
-            Publish Idea
+            {isUploading ? 'Uploading...' : 'Publish Idea'}
           </Button>
           
           <Button variant="ghost" size="lg" className="w-full">
