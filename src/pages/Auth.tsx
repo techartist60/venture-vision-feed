@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Lightbulb, Mail } from 'lucide-react';
+import { authRateLimiter, validateEmail, validatePassword, logSecurityEvent } from '@/utils/security';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ export default function Auth() {
   const navigate = useNavigate();
 
   const handleEmailAuth = async (isSignUp: boolean) => {
+    // Enhanced validation
     if (!email || !password) {
       toast({
         title: "Error",
@@ -25,6 +27,42 @@ export default function Auth() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Rate limiting check
+    const rateLimitKey = `auth_${email}`;
+    if (authRateLimiter.isRateLimited(rateLimitKey)) {
+      const remainingTime = Math.ceil(authRateLimiter.getRemainingTime(rateLimitKey) / 1000 / 60);
+      logSecurityEvent('rate_limit_exceeded', { email, action: isSignUp ? 'signup' : 'signin' });
+      toast({
+        title: "Too many attempts",
+        description: `Please wait ${remainingTime} minutes before trying again`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Email validation
+    if (!validateEmail(email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Password validation for sign up
+    if (isSignUp) {
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        toast({
+          title: "Error",
+          description: passwordValidation.message,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setLoading(true);

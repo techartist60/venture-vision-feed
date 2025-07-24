@@ -8,6 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  validateImageFile, 
+  validateVideoFile, 
+  validateTextInput, 
+  sanitizeFileName,
+  MAX_IMAGES_COUNT,
+  MAX_VIDEO_DURATION 
+} from '@/utils/fileValidation';
+import { uploadRateLimiter, logSecurityEvent } from '@/utils/security';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
@@ -28,31 +37,71 @@ export default function Upload() {
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Validate input before setting
+    const maxLengths = { title: 100, description: 1000, category: 50 };
+    const maxLength = maxLengths[field as keyof typeof maxLengths] || 1000;
+    
+    const validation = validateTextInput(value, maxLength);
+    if (validation.isValid || value === '') {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    } else {
+      toast({
+        title: "Invalid input",
+        description: validation.error,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
     if (mediaType === 'photo') {
-      const imageFiles = files.filter(file => file.type.startsWith('image/'));
-      if (imageFiles.length > 10) {
+      // Validate each image file
+      const validImageFiles: File[] = [];
+      
+      for (const file of files) {
+        const validation = validateImageFile(file);
+        if (!validation.isValid) {
+          toast({
+            title: "Invalid file",
+            description: validation.error,
+            variant: "destructive"
+          });
+          continue;
+        }
+        validImageFiles.push(file);
+      }
+      
+      if (validImageFiles.length > MAX_IMAGES_COUNT) {
         toast({
           title: "Too many files",
-          description: "You can only upload up to 10 photos.",
+          description: `You can only upload up to ${MAX_IMAGES_COUNT} photos.`,
           variant: "destructive"
         });
         return;
       }
-      setSelectedFiles(imageFiles);
+      
+      setSelectedFiles(validImageFiles);
     } else if (mediaType === 'video') {
-      const videoFile = files.find(file => file.type.startsWith('video/'));
+      const videoFile = files[0];
       if (videoFile) {
-        // Check if video is under 3 minutes (180 seconds)
+        // Validate video file
+        const validation = validateVideoFile(videoFile);
+        if (!validation.isValid) {
+          toast({
+            title: "Invalid file",
+            description: validation.error,
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Check video duration
         const video = document.createElement('video');
         video.preload = 'metadata';
         video.onloadedmetadata = () => {
-          if (video.duration > 180) {
+          if (video.duration > MAX_VIDEO_DURATION) {
             toast({
               title: "Video too long",
               description: "Video must be 3 minutes or shorter.",
@@ -61,6 +110,7 @@ export default function Upload() {
             return;
           }
           setSelectedFiles([videoFile]);
+          URL.revokeObjectURL(video.src); // Clean up memory
         };
         video.src = URL.createObjectURL(videoFile);
       }
@@ -84,18 +134,22 @@ export default function Upload() {
     const uploadedUrls: string[] = [];
     
     for (const file of selectedFiles) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const sanitizedName = sanitizeFileName(file.name.split('.')[0]);
+      const fileName = `${user.id}/${Date.now()}_${sanitizedName}.${fileExt}`;
       
       const { error } = await supabase.storage
         .from('media')
         .upload(fileName, file);
 
       if (error) {
-        console.error('Upload error:', error);
+        // Log error securely without exposing system details
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Upload error for file:', file.name);
+        }
         toast({
           title: "Upload failed",
-          description: `Failed to upload ${file.name}`,
+          description: "Failed to upload file. Please try again.",
           variant: "destructive"
         });
         continue;
@@ -112,6 +166,50 @@ export default function Upload() {
   };
 
   const handlePublish = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload files.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Rate limiting check
+    const rateLimitKey = `upload_${user.id}`;
+    if (uploadRateLimiter.isRateLimited(rateLimitKey)) {
+      const remainingTime = Math.ceil(uploadRateLimiter.getRemainingTime(rateLimitKey) / 1000);
+      logSecurityEvent('upload_rate_limit_exceeded', { userId: user.id });
+      toast({
+        title: "Upload limit reached",
+        description: `Please wait ${remainingTime} seconds before uploading again`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate form data
+    const titleValidation = validateTextInput(formData.title, 100);
+    const descriptionValidation = validateTextInput(formData.description, 1000);
+    
+    if (!titleValidation.isValid) {
+      toast({
+        title: "Invalid title",
+        description: titleValidation.error,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!descriptionValidation.isValid) {
+      toast({
+        title: "Invalid description", 
+        description: descriptionValidation.error,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!selectedFiles.length) {
       toast({
         title: "No files selected",
@@ -138,7 +236,10 @@ export default function Upload() {
         setMediaType(null);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      // Log error securely without exposing system details
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Upload process error:', error);
+      }
       toast({
         title: "Upload failed",
         description: "Something went wrong. Please try again.",
