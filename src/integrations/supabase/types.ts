@@ -14,6 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
+      followers: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followers_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "followers_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      media_likes: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_likes_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_uploads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      media_uploads: {
+        Row: {
+          comments_count: number
+          created_at: string
+          description: string | null
+          file_size: number | null
+          id: string
+          likes_count: number
+          media_type: string
+          media_url: string
+          mime_type: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          id?: string
+          likes_count?: number
+          media_type: string
+          media_url: string
+          mime_type?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments_count?: number
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          id?: string
+          likes_count?: number
+          media_type?: string
+          media_url?: string
+          mime_type?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_uploads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -58,7 +186,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_follower_count: {
+        Args: { profile_user_id: string }
+        Returns: number
+      }
+      get_following_count: {
+        Args: { profile_user_id: string }
+        Returns: number
+      }
+      get_media_count: {
+        Args: { profile_user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
