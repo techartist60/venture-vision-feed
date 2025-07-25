@@ -118,6 +118,10 @@ export function generateSecureRandomString(length: number = 32): string {
   return result;
 }
 
+export function sanitizeInput(input: string): string {
+  return sanitizeHtml(input);
+}
+
 export function validateFileType(file: File, allowedTypes: string[]): boolean {
   // Check both MIME type and file extension for better security
   const mimeType = file.type.toLowerCase();

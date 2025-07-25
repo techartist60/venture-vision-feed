@@ -22,6 +22,10 @@ interface IdeaCardProps {
   };
   isLiked?: boolean;
   isSaved?: boolean;
+  onLike?: () => void;
+  onComment?: () => void;
+  onShare?: () => void;
+  onSave?: () => void;
 }
 
 export default function IdeaCard({ 
@@ -33,7 +37,11 @@ export default function IdeaCard({
   user, 
   stats,
   isLiked = false,
-  isSaved = false 
+  isSaved = false,
+  onLike,
+  onComment,
+  onShare,
+  onSave
 }: IdeaCardProps) {
   return (
     <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
@@ -94,17 +102,18 @@ export default function IdeaCard({
                 "gap-2 hover:text-red-500 transition-colors",
                 isLiked && "text-red-500"
               )}
+              onClick={onLike}
             >
               <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
               <span className="text-xs">{stats.likes}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" onClick={onComment}>
               <MessageCircle className="h-4 w-4" />
               <span className="text-xs">{stats.comments}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" onClick={onShare}>
               <Share className="h-4 w-4" />
               <span className="text-xs">{stats.shares}</span>
             </Button>
@@ -117,6 +126,7 @@ export default function IdeaCard({
               "hover:text-accent transition-colors",
               isSaved && "text-accent"
             )}
+            onClick={onSave}
           >
             <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
           </Button>

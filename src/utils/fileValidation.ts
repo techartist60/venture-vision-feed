@@ -73,6 +73,24 @@ export function sanitizeFileName(fileName: string): string {
     .toLowerCase();
 }
 
+export function validateFileUpload(file: File, allowedTypes: string[], maxSize: number): FileValidationResult {
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      isValid: false,
+      error: 'File type not supported.'
+    };
+  }
+
+  if (file.size > maxSize) {
+    return {
+      isValid: false,
+      error: `File size must be less than ${Math.round(maxSize / 1024 / 1024)}MB.`
+    };
+  }
+
+  return { isValid: true };
+}
+
 export function validateTextInput(text: string, maxLength: number = 1000): FileValidationResult {
   if (!text || text.trim().length === 0) {
     return {
