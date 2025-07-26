@@ -214,7 +214,7 @@ export default function Profile() {
             </TabsList>
 
             <TabsContent value="ideas" className="mt-6">
-              <DiscoveryFeed />
+              <DiscoveryFeed userOnly={true} />
             </TabsContent>
 
             <TabsContent value="videos" className="mt-6">

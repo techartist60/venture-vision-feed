@@ -24,7 +24,11 @@ interface MediaUpload {
   is_saved?: boolean;
 }
 
-export const DiscoveryFeed = () => {
+interface DiscoveryFeedProps {
+  userOnly?: boolean;
+}
+
+export const DiscoveryFeed = ({ userOnly = false }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,14 +36,14 @@ export const DiscoveryFeed = () => {
   useEffect(() => {
     if (!user) return;
     
-    fetchUserMedia();
-  }, [user]);
+    fetchMedia();
+  }, [user, userOnly]);
 
-  const fetchUserMedia = async () => {
+  const fetchMedia = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('media_uploads')
         .select(`
           *,
@@ -48,9 +52,14 @@ export const DiscoveryFeed = () => {
             username,
             avatar_url
           )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        `);
+
+      // If userOnly is true, filter by current user
+      if (userOnly) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
