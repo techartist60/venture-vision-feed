@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import BottomNavigation from './BottomNavigation';
 
 interface AppLayoutProps {
@@ -29,8 +30,12 @@ export default function AppLayout({ children, showNavigation = true }: AppLayout
 
   return (
     <div className="min-h-screen bg-gradient-discovery">
+      {/* Header with theme toggle */}
+      <header className="fixed top-0 right-0 z-50 p-4">
+        <ThemeToggle />
+      </header>
       <main className={cn(
-        "min-h-screen",
+        "min-h-screen pt-16",
         shouldShowNavigation && "pb-20" // Add padding bottom when navigation is shown
       )}>
         {children}
