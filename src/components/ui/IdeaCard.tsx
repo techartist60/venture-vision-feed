@@ -54,14 +54,14 @@ export default function IdeaCard({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-primary flex items-center justify-center">
-            <div className="text-primary-foreground text-center">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                <div className="w-0 h-0 border-l-[12px] border-l-transparent border-b-[20px] border-b-white border-r-[12px] border-r-transparent transform rotate-90" />
-              </div>
-              <p className="text-sm opacity-80">Video Content</p>
-            </div>
-          </div>
+          <video 
+            src={mediaUrl} 
+            controls
+            className="w-full h-full object-cover"
+            poster={mediaUrl.replace(/\.[^/.]+$/, '_thumbnail.jpg')}
+          >
+            Your browser does not support the video tag.
+          </video>
         )}
         <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
           {category}

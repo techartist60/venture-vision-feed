@@ -174,7 +174,7 @@ export default function Profile() {
               <div className="text-xl font-bold text-foreground">
                 {statsLoading ? '...' : stats.mediaCount}
               </div>
-              <div className="text-xs text-muted-foreground">Uploads</div>
+              <div className="text-xs text-muted-foreground">Ideas</div>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border">
               <div className="text-xl font-bold text-foreground">0</div>
