@@ -225,6 +225,31 @@ export default function Upload() {
       const uploadedUrls = await uploadFiles();
       
       if (uploadedUrls.length > 0) {
+        // Save media metadata to database
+        for (const mediaUrl of uploadedUrls) {
+          const { error: dbError } = await supabase
+            .from('media_uploads')
+            .insert({
+              user_id: user.id,
+              title: formData.title,
+              description: formData.description,
+              media_type: mediaType === 'photo' ? 'image' : 'video',
+              media_url: mediaUrl,
+              mime_type: selectedFiles[0]?.type || null,
+              file_size: selectedFiles[0]?.size || null
+            });
+
+          if (dbError) {
+            console.error('Error saving media metadata:', dbError);
+            toast({
+              title: "Upload incomplete",
+              description: "Files uploaded but metadata save failed. Please try again.",
+              variant: "destructive"
+            });
+            return;
+          }
+        }
+
         toast({
           title: "Success!",
           description: `Successfully uploaded ${uploadedUrls.length} file(s).`,
