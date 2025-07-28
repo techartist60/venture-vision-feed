@@ -26,9 +26,10 @@ interface MediaUpload {
 
 interface DiscoveryFeedProps {
   userOnly?: boolean;
+  userId?: string;
 }
 
-export const DiscoveryFeed = ({ userOnly = false }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,7 @@ export const DiscoveryFeed = ({ userOnly = false }: DiscoveryFeedProps = {}) => 
     if (!user) return;
     
     fetchMedia();
-  }, [user, userOnly]);
+  }, [user, userOnly, userId]);
 
   const fetchMedia = async () => {
     if (!user) return;
@@ -54,9 +55,10 @@ export const DiscoveryFeed = ({ userOnly = false }: DiscoveryFeedProps = {}) => 
           )
         `);
 
-      // If userOnly is true, filter by current user
+      // If userOnly is true, filter by specified user or current user
       if (userOnly) {
-        query = query.eq('user_id', user.id);
+        const targetUserId = userId || user.id;
+        query = query.eq('user_id', targetUserId);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });

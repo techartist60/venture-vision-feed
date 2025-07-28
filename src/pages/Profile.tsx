@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,27 +34,36 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("ideas");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({});
+  const [profileUserId, setProfileUserId] = useState<string>('');
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
   const { user, signOut } = useAuth();
-  const { stats, loading: statsLoading } = useProfileData();
+  const { userId } = useParams();
+  const { stats, loading: statsLoading, isFollowing, toggleFollow } = useProfileData(userId);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
-    } else {
-      fetchProfile();
+      return;
     }
-  }, [user, navigate]);
 
-  const fetchProfile = async () => {
+    // Determine whose profile to show
+    const targetUserId = userId || user.id;
+    setProfileUserId(targetUserId);
+    setIsOwnProfile(targetUserId === user.id);
+    
+    fetchProfile(targetUserId);
+  }, [user, navigate, userId]);
+
+  const fetchProfile = async (targetUserId: string) => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -94,17 +103,23 @@ export default function Profile() {
       <header className="bg-background/95 backdrop-blur-md border-b border-border">
         <div className="px-4 py-4 max-w-md mx-auto">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Profile</h1>
+            <h1 className="text-xl font-bold">
+              {isOwnProfile ? 'Profile' : profile.full_name || 'Profile'}
+            </h1>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon">
                 <Share className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon">
-                <Settings className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                <LogOut className="h-5 w-5" />
-              </Button>
+              {isOwnProfile && (
+                <>
+                  <Button variant="ghost" size="icon">
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -157,15 +172,26 @@ export default function Profile() {
               }) : 'Recently'}
             </div>
 
-            <Button 
-              variant="innovation" 
-              size="sm" 
-              className="gap-2"
-              onClick={() => setEditDialogOpen(true)}
-            >
-              <Edit className="h-4 w-4" />
-              Edit Profile
-            </Button>
+            {isOwnProfile ? (
+              <Button 
+                variant="innovation" 
+                size="sm" 
+                className="gap-2"
+                onClick={() => setEditDialogOpen(true)}
+              >
+                <Edit className="h-4 w-4" />
+                Edit Profile
+              </Button>
+            ) : (
+              <Button 
+                variant={isFollowing ? "outline" : "innovation"} 
+                size="sm" 
+                onClick={toggleFollow}
+                disabled={statsLoading}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </Button>
+            )}
           </div>
 
           {/* Stats */}
@@ -214,7 +240,7 @@ export default function Profile() {
             </TabsList>
 
             <TabsContent value="ideas" className="mt-6">
-              <DiscoveryFeed userOnly={true} />
+              <DiscoveryFeed userOnly={true} userId={profileUserId} />
             </TabsContent>
 
             <TabsContent value="videos" className="mt-6">
@@ -267,13 +293,15 @@ export default function Profile() {
         </section>
       </div>
 
-      {/* Profile Edit Dialog */}
-      <ProfileEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        profile={profile}
-        onProfileUpdate={fetchProfile}
-      />
+      {/* Profile Edit Dialog - Only show for own profile */}
+      {isOwnProfile && (
+        <ProfileEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          profile={profile}
+          onProfileUpdate={() => fetchProfile(profileUserId)}
+        />
+      )}
     </div>
   );
 }
