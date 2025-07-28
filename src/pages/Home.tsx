@@ -1,5 +1,5 @@
 import { Search, Bell, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,6 +68,7 @@ const mockIdeas = [
 
 export default function Home() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   return (
     <div className="min-h-screen">
@@ -103,7 +104,9 @@ export default function Home() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search ideas, creators..." 
-              className="pl-10 rounded-full bg-muted/50 border-0 focus:bg-background transition-colors"
+              className="pl-10 rounded-full bg-muted/50 border-0 focus:bg-background transition-colors cursor-pointer"
+              readOnly
+              onClick={() => navigate('/search')}
             />
           </div>
         </div>
