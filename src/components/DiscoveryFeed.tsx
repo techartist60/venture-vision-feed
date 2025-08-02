@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import IdeaCard from '@/components/ui/IdeaCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Heart, MessageCircle, Share, Bookmark } from 'lucide-react';
+import { CommentDialog } from '@/components/CommentDialog';
 
 interface MediaUpload {
   id: string;
@@ -33,6 +33,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
   const { user } = useAuth();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
+  const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string }>({
+    open: false,
+    mediaId: '',
+    mediaTitle: ''
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -204,11 +209,18 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           isSaved={item.is_saved || false}
           category="Personal"
           onLike={() => handleLike(item.id, item.is_liked || false)}
-          onComment={() => {}}
+          onComment={() => setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title })}
           onShare={() => {}}
           onSave={() => {}}
         />
       ))}
+      
+      <CommentDialog
+        open={commentDialog.open}
+        onOpenChange={(open) => setCommentDialog(prev => ({ ...prev, open }))}
+        mediaId={commentDialog.mediaId}
+        mediaTitle={commentDialog.mediaTitle}
+      />
     </div>
   );
 };

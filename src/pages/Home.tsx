@@ -62,7 +62,12 @@ export default function Home() {
             <p className="text-primary-foreground/90 mb-6">
               Turn your ideas into reality and inspire the world
             </p>
-            <Button variant="discovery" size="lg" className="bg-background text-primary hover:bg-white">
+            <Button 
+              variant="discovery" 
+              size="lg" 
+              className="bg-background text-primary hover:bg-white"
+              onClick={() => navigate('/upload')}
+            >
               Start Creating
             </Button>
           </div>
