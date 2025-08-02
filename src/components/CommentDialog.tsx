@@ -13,11 +13,8 @@ interface Comment {
   content: string;
   created_at: string;
   user_id: string;
-  profiles?: {
-    full_name?: string | null;
-    username?: string | null;
-    avatar_url?: string | null;
-  };
+  user_name?: string;
+  user_avatar?: string;
 }
 
 interface CommentDialogProps {
@@ -44,29 +41,35 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
   const fetchComments = async () => {
     setLoading(true);
     try {
-      // Simple query without joins for now
-      const { data: commentsData, error } = await supabase
-        .from('media_comments' as any)
+      // Fetch comments first
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('media_comments')
         .select('*')
         .eq('media_id', mediaId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (commentsError) throw commentsError;
 
-      // Get profiles for all users
-      const userIds = [...new Set(commentsData?.map((c: any) => c.user_id) || [])];
+      // Get unique user IDs
+      const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
+      
+      // Fetch user profiles
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('user_id, full_name, username, avatar_url')
+        .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
 
-      // Merge data
-      const commentsWithProfiles = (commentsData || []).map((comment: any) => ({
-        ...comment,
-        profiles: profilesData?.find((p: any) => p.user_id === comment.user_id)
-      }));
+      // Combine comments with user data
+      const commentsWithUsers = commentsData?.map(comment => {
+        const profile = profilesData?.find(p => p.user_id === comment.user_id);
+        return {
+          ...comment,
+          user_name: profile?.full_name || 'Anonymous',
+          user_avatar: profile?.avatar_url || ''
+        };
+      }) || [];
 
-      setComments(commentsWithProfiles);
+      setComments(commentsWithUsers);
     } catch (error) {
       console.error('Error fetching comments:', error);
       toast({
@@ -85,50 +88,47 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
 
     setSubmitting(true);
     try {
-      // Add comment with proper casting
-      const commentData = {
-        media_id: mediaId,
-        user_id: user.id,
-        content: newComment.trim()
-      };
-
-      const { data, error } = await supabase
-        .from('media_comments' as any)
-        .insert(commentData)
-        .select('*')
+      // Insert comment
+      const { data: commentData, error: commentError } = await supabase
+        .from('media_comments')
+        .insert({
+          media_id: mediaId,
+          user_id: user.id,
+          content: newComment.trim()
+        })
+        .select()
         .single();
 
-      if (error) throw error;
+      if (commentError) throw commentError;
 
       // Get user profile
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('user_id, full_name, username, avatar_url')
+        .select('full_name, avatar_url')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      const newCommentWithProfile: Comment = {
-        id: (data as any).id,
-        content: (data as any).content,
-        created_at: (data as any).created_at,
-        user_id: (data as any).user_id,
-        profiles: profile
+      // Add to comments list
+      const newCommentWithUser = {
+        ...commentData,
+        user_name: profileData?.full_name || 'Anonymous',
+        user_avatar: profileData?.avatar_url || ''
       };
 
-      setComments(prev => [...prev, newCommentWithProfile]);
+      setComments(prev => [...prev, newCommentWithUser]);
       setNewComment('');
       
-      // Update comment count in media_uploads
+      // Update comment count
       const { data: currentMedia } = await supabase
         .from('media_uploads')
         .select('comments_count')
         .eq('id', mediaId)
-        .maybeSingle();
-        
+        .single();
+
       if (currentMedia) {
         await supabase
           .from('media_uploads')
-          .update({ comments_count: currentMedia.comments_count + 1 })
+          .update({ comments_count: (currentMedia.comments_count || 0) + 1 })
           .eq('id', mediaId);
       }
 
@@ -166,15 +166,15 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
             comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
                 <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarImage src={comment.profiles?.avatar_url || ''} />
+                  <AvatarImage src={comment.user_avatar} />
                   <AvatarFallback className="text-xs">
-                    {(comment.profiles?.full_name || 'U').slice(0, 2).toUpperCase()}
+                    {(comment.user_name || 'U').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-sm">
-                      {comment.profiles?.full_name || 'Anonymous'}
+                      {comment.user_name}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(comment.created_at).toLocaleDateString()}
