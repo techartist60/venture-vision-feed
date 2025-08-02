@@ -3,68 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
-import IdeaCard from '@/components/ui/IdeaCard';
+import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import heroImage from '@/assets/hero-innovation.jpg';
-
-// Mock data for demonstration
-const mockIdeas = [
-  {
-    id: '1',
-    title: 'Smart Plant Watering System',
-    description: 'An IoT-based automated watering system that monitors soil moisture and weather conditions to optimize plant care.',
-    category: 'Tech',
-    mediaType: 'image' as const,
-    mediaUrl: heroImage,
-    user: {
-      name: 'Alex Chen',
-      username: 'alexchen',
-      avatar: undefined
-    },
-    stats: {
-      likes: 234,
-      comments: 45,
-      shares: 12
-    },
-    isLiked: true
-  },
-  {
-    id: '2',
-    title: 'Sustainable Fashion Collection',
-    description: 'A complete fashion line made from recycled ocean plastic, combining style with environmental responsibility.',
-    category: 'Fashion',
-    mediaType: 'video' as const,
-    mediaUrl: '',
-    user: {
-      name: 'Maya Rodriguez',
-      username: 'mayar',
-      avatar: undefined
-    },
-    stats: {
-      likes: 189,
-      comments: 32,
-      shares: 8
-    }
-  },
-  {
-    id: '3',
-    title: 'Vertical Farming Innovation',
-    description: 'Revolutionary vertical farming technique that increases crop yield by 300% using LED lighting and hydroponics.',
-    category: 'Agriculture',
-    mediaType: 'image' as const,
-    mediaUrl: heroImage,
-    user: {
-      name: 'David Kim',
-      username: 'davidk',
-      avatar: undefined
-    },
-    stats: {
-      likes: 456,
-      comments: 67,
-      shares: 23
-    },
-    isSaved: true
-  }
-];
 
 export default function Home() {
   const { user } = useAuth();
@@ -162,11 +102,7 @@ export default function Home() {
           </Button>
         </div>
         
-        <div className="space-y-6">
-          {mockIdeas.map((idea) => (
-            <IdeaCard key={idea.id} {...idea} />
-          ))}
-        </div>
+        <DiscoveryFeed />
       </section>
     </div>
   );
