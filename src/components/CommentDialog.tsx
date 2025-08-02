@@ -12,7 +12,8 @@ interface Comment {
   id: string;
   content: string;
   created_at: string;
-  profiles: {
+  user_id: string;
+  profiles?: {
     full_name?: string | null;
     username?: string | null;
     avatar_url?: string | null;
@@ -43,21 +44,29 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('media_comments')
-        .select(`
-          *,
-          profiles!media_comments_user_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
+      // Simple query without joins for now
+      const { data: commentsData, error } = await supabase
+        .from('media_comments' as any)
+        .select('*')
         .eq('media_id', mediaId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setComments(data || []);
+
+      // Get profiles for all users
+      const userIds = [...new Set(commentsData?.map((c: any) => c.user_id) || [])];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, username, avatar_url')
+        .in('user_id', userIds);
+
+      // Merge data
+      const commentsWithProfiles = (commentsData || []).map((comment: any) => ({
+        ...comment,
+        profiles: profilesData?.find((p: any) => p.user_id === comment.user_id)
+      }));
+
+      setComments(commentsWithProfiles);
     } catch (error) {
       console.error('Error fetching comments:', error);
       toast({
@@ -76,30 +85,52 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
 
     setSubmitting(true);
     try {
+      // Add comment with proper casting
+      const commentData = {
+        media_id: mediaId,
+        user_id: user.id,
+        content: newComment.trim()
+      };
+
       const { data, error } = await supabase
-        .from('media_comments')
-        .insert({
-          media_id: mediaId,
-          user_id: user.id,
-          content: newComment.trim()
-        })
-        .select(`
-          *,
-          profiles!media_comments_user_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
+        .from('media_comments' as any)
+        .insert(commentData)
+        .select('*')
         .single();
 
       if (error) throw error;
 
-      setComments(prev => [...prev, data]);
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, username, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const newCommentWithProfile: Comment = {
+        id: (data as any).id,
+        content: (data as any).content,
+        created_at: (data as any).created_at,
+        user_id: (data as any).user_id,
+        profiles: profile
+      };
+
+      setComments(prev => [...prev, newCommentWithProfile]);
       setNewComment('');
       
       // Update comment count in media_uploads
-      await supabase.rpc('increment_comment_count', { media_id: mediaId });
+      const { data: currentMedia } = await supabase
+        .from('media_uploads')
+        .select('comments_count')
+        .eq('id', mediaId)
+        .maybeSingle();
+        
+      if (currentMedia) {
+        await supabase
+          .from('media_uploads')
+          .update({ comments_count: currentMedia.comments_count + 1 })
+          .eq('id', mediaId);
+      }
 
       toast({
         title: "Success",

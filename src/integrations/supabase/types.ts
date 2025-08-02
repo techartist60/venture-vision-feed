@@ -50,6 +50,41 @@ export type Database = {
           },
         ]
       }
+      media_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          media_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          media_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          media_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_comments_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_likes: {
         Row: {
           created_at: string
@@ -197,6 +232,10 @@ export type Database = {
       get_media_count: {
         Args: { profile_user_id: string }
         Returns: number
+      }
+      increment_comment_count: {
+        Args: { media_id: string }
+        Returns: undefined
       }
     }
     Enums: {
