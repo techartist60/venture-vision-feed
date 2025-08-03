@@ -121,6 +121,27 @@ export type Database = {
           },
         ]
       }
+      media_saves: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       media_uploads: {
         Row: {
           comments_count: number
@@ -132,6 +153,7 @@ export type Database = {
           media_type: string
           media_url: string
           mime_type: string | null
+          saves_count: number
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -147,6 +169,7 @@ export type Database = {
           media_type: string
           media_url: string
           mime_type?: string | null
+          saves_count?: number
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -162,6 +185,7 @@ export type Database = {
           media_type?: string
           media_url?: string
           mime_type?: string | null
+          saves_count?: number
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
@@ -221,6 +245,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_saves_count: {
+        Args: { media_id: string }
+        Returns: undefined
+      }
       get_follower_count: {
         Args: { profile_user_id: string }
         Returns: number
@@ -234,6 +262,10 @@ export type Database = {
         Returns: number
       }
       increment_comment_count: {
+        Args: { media_id: string }
+        Returns: undefined
+      }
+      increment_saves_count: {
         Args: { media_id: string }
         Returns: undefined
       }

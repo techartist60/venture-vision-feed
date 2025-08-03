@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import IdeaCard from '@/components/ui/IdeaCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CommentDialog } from '@/components/CommentDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface MediaUpload {
   id: string;
@@ -14,6 +15,7 @@ interface MediaUpload {
   thumbnail_url?: string | null;
   likes_count: number;
   comments_count: number;
+  saves_count: number;
   created_at: string;
   profiles: {
     full_name?: string | null;
@@ -31,6 +33,7 @@ interface DiscoveryFeedProps {
 
 export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string }>({
@@ -70,25 +73,32 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
 
       if (error) throw error;
 
-      // Check if user has liked each media
-      const mediaWithLikes = await Promise.all(
-        (data || []).map(async (item) => {
-          const { data: likeData } = await supabase
-            .from('media_likes')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('media_id', item.id)
-            .single();
+      // Check if user has liked and saved each media
+      const mediaIds = (data || []).map(item => item.id);
+      
+      const [likesResponse, savesResponse] = await Promise.all([
+        supabase
+          .from('media_likes')
+          .select('media_id')
+          .eq('user_id', user.id)
+          .in('media_id', mediaIds),
+        supabase
+          .from('media_saves')
+          .select('media_id')
+          .eq('user_id', user.id)
+          .in('media_id', mediaIds)
+      ]);
 
-          return {
-            ...item,
-            is_liked: !!likeData,
-            is_saved: false // Add saved functionality later
-          };
-        })
-      );
+      const likedMediaIds = new Set(likesResponse.data?.map(like => like.media_id) || []);
+      const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
+      
+      const mediaWithInteractions = (data || []).map(item => ({
+        ...item,
+        is_liked: likedMediaIds.has(item.id),
+        is_saved: savedMediaIds.has(item.id)
+      }));
 
-      setMedia(mediaWithLikes);
+      setMedia(mediaWithInteractions);
     } catch (error) {
       console.error('Error fetching user media:', error);
     } finally {
@@ -108,38 +118,16 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           .eq('user_id', user.id)
           .eq('media_id', mediaId);
 
-        // Update likes count in database (we'll update local state below)
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('likes_count')
-          .eq('id', mediaId)
-          .single();
-          
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ likes_count: Math.max(0, currentMedia.likes_count - 1) })
-            .eq('id', mediaId);
-        }
+        // Update likes count using RPC
+        await supabase.rpc('decrement_likes_count', { media_id: mediaId });
       } else {
         // Like
         await supabase
           .from('media_likes')
           .insert({ user_id: user.id, media_id: mediaId });
 
-        // Update likes count in database (we'll update local state below)
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('likes_count')
-          .eq('id', mediaId)
-          .single();
-          
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ likes_count: currentMedia.likes_count + 1 })
-            .eq('id', mediaId);
-        }
+        // Update likes count using RPC
+        await supabase.rpc('increment_likes_count', { media_id: mediaId });
       }
 
       // Update local state
@@ -148,12 +136,71 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           ? { 
               ...item, 
               is_liked: !isLiked,
-              likes_count: isLiked ? item.likes_count - 1 : item.likes_count + 1
+              likes_count: isLiked ? Math.max(0, item.likes_count - 1) : item.likes_count + 1
             }
           : item
       ));
     } catch (error) {
       console.error('Error toggling like:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSave = async (mediaId: string, isSaved: boolean) => {
+    if (!user) return;
+
+    try {
+      if (isSaved) {
+        // Unsave
+        await supabase
+          .from('media_saves')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('media_id', mediaId);
+
+        // Update saves count using RPC
+        await supabase.rpc('decrement_saves_count', { media_id: mediaId });
+
+        toast({
+          title: "Removed from saved",
+          description: "Idea removed from your saved items",
+        });
+      } else {
+        // Save
+        await supabase
+          .from('media_saves')
+          .insert({ user_id: user.id, media_id: mediaId });
+
+        // Update saves count using RPC
+        await supabase.rpc('increment_saves_count', { media_id: mediaId });
+
+        toast({
+          title: "Saved successfully",
+          description: "Idea saved to your collection",
+        });
+      }
+
+      // Update local state
+      setMedia(prev => prev.map(item => 
+        item.id === mediaId 
+          ? { 
+              ...item, 
+              is_saved: !isSaved,
+              saves_count: isSaved ? Math.max(0, item.saves_count - 1) : item.saves_count + 1
+            }
+          : item
+      ));
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update save status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -203,7 +250,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           stats={{
             likes: item.likes_count,
             comments: item.comments_count,
-            shares: 0
+            shares: item.saves_count
           }}
           isLiked={item.is_liked || false}
           isSaved={item.is_saved || false}
@@ -211,7 +258,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           onLike={() => handleLike(item.id, item.is_liked || false)}
           onComment={() => setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title })}
           onShare={() => {}}
-          onSave={() => {}}
+          onSave={() => handleSave(item.id, item.is_saved || false)}
         />
       ))}
       
