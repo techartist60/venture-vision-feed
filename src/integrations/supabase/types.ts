@@ -245,6 +245,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_likes_count: {
+        Args: { media_id: string }
+        Returns: undefined
+      }
       decrement_saves_count: {
         Args: { media_id: string }
         Returns: undefined
@@ -262,6 +266,10 @@ export type Database = {
         Returns: number
       }
       increment_comment_count: {
+        Args: { media_id: string }
+        Returns: undefined
+      }
+      increment_likes_count: {
         Args: { media_id: string }
         Returns: undefined
       }

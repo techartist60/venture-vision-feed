@@ -118,16 +118,38 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           .eq('user_id', user.id)
           .eq('media_id', mediaId);
 
-        // Update likes count using RPC
-        await supabase.rpc('decrement_likes_count', { media_id: mediaId });
+        // Update likes count directly with SQL
+        const { data: currentMedia } = await supabase
+          .from('media_uploads')
+          .select('likes_count')
+          .eq('id', mediaId)
+          .single();
+
+        if (currentMedia) {
+          await supabase
+            .from('media_uploads')
+            .update({ likes_count: Math.max(0, currentMedia.likes_count - 1) })
+            .eq('id', mediaId);
+        }
       } else {
         // Like
         await supabase
           .from('media_likes')
           .insert({ user_id: user.id, media_id: mediaId });
 
-        // Update likes count using RPC
-        await supabase.rpc('increment_likes_count', { media_id: mediaId });
+        // Update likes count directly with SQL
+        const { data: currentMedia } = await supabase
+          .from('media_uploads')
+          .select('likes_count')
+          .eq('id', mediaId)
+          .single();
+
+        if (currentMedia) {
+          await supabase
+            .from('media_uploads')
+            .update({ likes_count: currentMedia.likes_count + 1 })
+            .eq('id', mediaId);
+        }
       }
 
       // Update local state
@@ -162,8 +184,19 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           .eq('user_id', user.id)
           .eq('media_id', mediaId);
 
-        // Update saves count using RPC
-        await supabase.rpc('decrement_saves_count', { media_id: mediaId });
+        // Update saves count directly with SQL
+        const { data: currentMedia } = await supabase
+          .from('media_uploads')
+          .select('saves_count')
+          .eq('id', mediaId)
+          .single();
+
+        if (currentMedia) {
+          await supabase
+            .from('media_uploads')
+            .update({ saves_count: Math.max(0, currentMedia.saves_count - 1) })
+            .eq('id', mediaId);
+        }
 
         toast({
           title: "Removed from saved",
@@ -175,8 +208,19 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           .from('media_saves')
           .insert({ user_id: user.id, media_id: mediaId });
 
-        // Update saves count using RPC
-        await supabase.rpc('increment_saves_count', { media_id: mediaId });
+        // Update saves count directly with SQL
+        const { data: currentMedia } = await supabase
+          .from('media_uploads')
+          .select('saves_count')
+          .eq('id', mediaId)
+          .single();
+
+        if (currentMedia) {
+          await supabase
+            .from('media_uploads')
+            .update({ saves_count: currentMedia.saves_count + 1 })
+            .eq('id', mediaId);
+        }
 
         toast({
           title: "Saved successfully",
