@@ -201,6 +201,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string
+          content: string | null
+          created_at: string
+          id: string
+          media_id: string | null
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          media_id?: string | null
+          read?: boolean
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          media_id?: string | null
+          read?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -245,6 +278,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          recipient_id: string
+          actor_id: string
+          notification_type: string
+          media_id?: string
+          comment_content?: string
+        }
+        Returns: undefined
+      }
       decrement_likes_count: {
         Args: { media_id: string }
         Returns: undefined

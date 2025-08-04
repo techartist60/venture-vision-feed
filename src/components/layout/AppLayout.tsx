@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NotificationBell } from '@/components/NotificationBell';
 import BottomNavigation from './BottomNavigation';
 
 interface AppLayoutProps {
@@ -30,8 +31,9 @@ export default function AppLayout({ children, showNavigation = true }: AppLayout
 
   return (
     <div className="min-h-screen bg-gradient-discovery">
-      {/* Header with theme toggle */}
-      <header className="fixed top-0 right-0 z-50 p-4">
+      {/* Header with theme toggle and notifications */}
+      <header className="fixed top-0 right-0 z-50 p-4 flex items-center gap-2">
+        <NotificationBell />
         <ThemeToggle />
       </header>
       <main className={cn(
