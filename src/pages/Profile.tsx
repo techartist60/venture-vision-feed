@@ -3,12 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useProfileData } from '@/hooks/useProfileData';
 import { ProfileEditDialog } from '@/components/ProfileEditDialog';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { supabase } from '@/integrations/supabase/client';
+import QRCode from 'qrcode';
 import { 
   Share, 
   Settings, 
@@ -19,7 +21,10 @@ import {
   Grid,
   Video,
   Bookmark,
-  ExternalLink
+  ExternalLink,
+  Copy,
+  QrCode,
+  Download
 } from 'lucide-react';
 
 interface UserProfile {
@@ -33,6 +38,8 @@ interface UserProfile {
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("ideas");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [profile, setProfile] = useState<UserProfile>({});
   const [profileUserId, setProfileUserId] = useState<string>('');
   const [isOwnProfile, setIsOwnProfile] = useState(true);
@@ -43,30 +50,29 @@ export default function Profile() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
     // Determine whose profile to show
-    const targetUserId = userId || user.id;
-    setProfileUserId(targetUserId);
-    setIsOwnProfile(targetUserId === user.id);
-    
-    fetchProfile(targetUserId);
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) {
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+    } else {
+      setProfileUserId(targetUserId);
+      setIsOwnProfile(user ? targetUserId === user.id : false);
+      fetchProfile(targetUserId);
+    }
   }, [user, navigate, userId]);
 
   const fetchProfile = async (targetUserId: string) => {
-    if (!user) return;
-
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', targetUserId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -74,6 +80,56 @@ export default function Profile() {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
+  };
+
+  const generateQRCode = async () => {
+    try {
+      const profileUrl = `${window.location.origin}/profile/${profileUserId}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(profileUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrCodeDataUrl);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  };
+
+  const handleShare = () => {
+    generateQRCode();
+    setShareDialogOpen(true);
+  };
+
+  const copyProfileLink = async () => {
+    const profileUrl = `${window.location.origin}/profile/${profileUserId}`;
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      toast({
+        title: "Link copied!",
+        description: "Profile link has been copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadQRCode = () => {
+    if (!qrCodeUrl) return;
+    
+    const link = document.createElement('a');
+    link.download = `${profile.username || 'profile'}-qrcode.png`;
+    link.href = qrCodeUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleSignOut = async () => {
@@ -93,7 +149,7 @@ export default function Profile() {
     }
   };
 
-  if (!user) {
+  if (!profileUserId) {
     return null;
   }
 
@@ -107,10 +163,10 @@ export default function Profile() {
               {isOwnProfile ? 'Profile' : profile.full_name || 'Profile'}
             </h1>
             <div className="flex gap-2">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={handleShare}>
                 <Share className="h-5 w-5" />
               </Button>
-              {isOwnProfile && (
+              {isOwnProfile && user && (
                 <>
                   <Button variant="ghost" size="icon">
                     <Settings className="h-5 w-5" />
@@ -137,10 +193,10 @@ export default function Profile() {
             </Avatar>
             
             <h2 className="text-2xl font-bold text-foreground mb-1">
-              {profile.full_name || user.email?.split('@')[0] || 'User'}
+              {profile.full_name || user?.email?.split('@')[0] || 'User'}
             </h2>
             <p className="text-muted-foreground mb-4">
-              @{profile.username || user.email?.split('@')[0] || 'user'}
+              @{profile.username || user?.email?.split('@')[0] || 'user'}
             </p>
             
             {profile.bio && (
@@ -172,7 +228,7 @@ export default function Profile() {
               }) : 'Recently'}
             </div>
 
-            {isOwnProfile ? (
+            {isOwnProfile && user ? (
               <Button 
                 variant="innovation" 
                 size="sm" 
@@ -182,7 +238,7 @@ export default function Profile() {
                 <Edit className="h-4 w-4" />
                 Edit Profile
               </Button>
-            ) : (
+            ) : user ? (
               <Button 
                 variant={isFollowing ? "outline" : "innovation"} 
                 size="sm" 
@@ -190,6 +246,14 @@ export default function Profile() {
                 disabled={statsLoading}
               >
                 {isFollowing ? "Following" : "Follow"}
+              </Button>
+            ) : (
+              <Button 
+                variant="innovation" 
+                size="sm" 
+                onClick={() => navigate('/auth')}
+              >
+                Sign up to follow
               </Button>
             )}
           </div>
@@ -293,8 +357,62 @@ export default function Profile() {
         </section>
       </div>
 
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-center">Share Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Copy Link Section */}
+            <div className="text-center">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={copyProfileLink}
+              >
+                <Copy className="h-4 w-4" />
+                Copy Profile Link
+              </Button>
+            </div>
+            
+            {/* QR Code Section */}
+            <div className="text-center">
+              <div className="mb-4">
+                <h4 className="text-sm font-medium mb-2">Scan QR Code</h4>
+                <div className="flex justify-center">
+                  {qrCodeUrl ? (
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="Profile QR Code" 
+                      className="w-48 h-48 border rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-48 h-48 border rounded-lg flex items-center justify-center bg-muted">
+                      <QrCode className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {qrCodeUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={downloadQRCode}
+                >
+                  <Download className="h-4 w-4" />
+                  Download QR Code
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Profile Edit Dialog - Only show for own profile */}
-      {isOwnProfile && (
+      {isOwnProfile && user && (
         <ProfileEditDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
