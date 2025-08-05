@@ -60,12 +60,12 @@ export const ProfileEditDialog = ({ open, onOpenChange, profile, onProfileUpdate
     try {
       // Create safe filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `avatar-${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
 
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage - using correct path structure for policies
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
-        .upload(`avatars/${fileName}`, file, {
+        .upload(`avatars/${user.id}/${fileName}`, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -75,7 +75,7 @@ export const ProfileEditDialog = ({ open, onOpenChange, profile, onProfileUpdate
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('media')
-        .getPublicUrl(`avatars/${fileName}`);
+        .getPublicUrl(`avatars/${user.id}/${fileName}`);
 
       setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
       
