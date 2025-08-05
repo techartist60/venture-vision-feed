@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProfileData } from '@/hooks/useProfileData';
 import { ProfileEditDialog } from '@/components/ProfileEditDialog';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
+import { SavedContent } from '@/components/SavedContent';
 import { supabase } from '@/integrations/supabase/client';
 import QRCode from 'qrcode';
 import { 
@@ -168,7 +169,7 @@ export default function Profile() {
               </Button>
               {isOwnProfile && user && (
                 <>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
                     <Settings className="h-5 w-5" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={handleSignOut}>
@@ -323,18 +324,7 @@ export default function Profile() {
             </TabsContent>
 
             <TabsContent value="saved" className="mt-6">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gradient-innovation rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bookmark className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">No saved ideas</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Ideas you save will appear here
-                </p>
-                <Button variant="discovery" size="sm" onClick={() => navigate('/')}>
-                  Discover Ideas
-                </Button>
-              </div>
+              <SavedContent userId={profileUserId} />
             </TabsContent>
           </Tabs>
         </section>
