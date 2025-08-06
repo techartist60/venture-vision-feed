@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      boost_payments: {
+        Row: {
+          amount: number
+          checkout_request_id: string | null
+          created_at: string
+          id: string
+          media_id: string
+          merchant_request_id: string | null
+          mpesa_receipt_number: string | null
+          phone_number: string
+          status: string
+          transaction_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          media_id: string
+          merchant_request_id?: string | null
+          mpesa_receipt_number?: string | null
+          phone_number: string
+          status?: string
+          transaction_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          media_id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt_number?: string | null
+          phone_number?: string
+          status?: string
+          transaction_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string
@@ -144,11 +189,13 @@ export type Database = {
       }
       media_uploads: {
         Row: {
+          boost_expires_at: string | null
           comments_count: number
           created_at: string
           description: string | null
           file_size: number | null
           id: string
+          is_boosted: boolean
           likes_count: number
           media_type: string
           media_url: string
@@ -160,11 +207,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          boost_expires_at?: string | null
           comments_count?: number
           created_at?: string
           description?: string | null
           file_size?: number | null
           id?: string
+          is_boosted?: boolean
           likes_count?: number
           media_type: string
           media_url: string
@@ -176,11 +225,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          boost_expires_at?: string | null
           comments_count?: number
           created_at?: string
           description?: string | null
           file_size?: number | null
           id?: string
+          is_boosted?: boolean
           likes_count?: number
           media_type?: string
           media_url?: string

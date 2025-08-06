@@ -1,7 +1,8 @@
-import { Heart, MessageCircle, Share, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Zap } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
+import { BoostDialog } from '../BoostDialog';
 
 interface IdeaCardProps {
   id: string;
@@ -14,6 +15,7 @@ interface IdeaCardProps {
     name: string;
     avatar?: string;
     username: string;
+    id?: string;
   };
   stats: {
     likes: number;
@@ -22,6 +24,9 @@ interface IdeaCardProps {
   };
   isLiked?: boolean;
   isSaved?: boolean;
+  isBoosted?: boolean;
+  isOwner?: boolean;
+  currentUserId?: string;
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
@@ -29,6 +34,7 @@ interface IdeaCardProps {
 }
 
 export default function IdeaCard({ 
+  id,
   title, 
   description, 
   category, 
@@ -38,6 +44,9 @@ export default function IdeaCard({
   stats,
   isLiked = false,
   isSaved = false,
+  isBoosted = false,
+  isOwner = false,
+  currentUserId,
   onLike,
   onComment,
   onShare,
@@ -63,9 +72,17 @@ export default function IdeaCard({
             Your browser does not support the video tag.
           </video>
         )}
-        <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
-          {category}
-        </Badge>
+        <div className="absolute top-3 left-3 flex gap-2">
+          <Badge className="bg-background/90 text-foreground">
+            {category}
+          </Badge>
+          {isBoosted && (
+            <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Boosted
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -119,17 +136,32 @@ export default function IdeaCard({
             </Button>
           </div>
 
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className={cn(
-              "hover:text-accent transition-colors",
-              isSaved && "text-accent"
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <BoostDialog mediaId={id} isOwner={isOwner}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
+                >
+                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <span className="text-xs">Boost</span>
+                </Button>
+              </BoostDialog>
             )}
-            onClick={onSave}
-          >
-            <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
-          </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className={cn(
+                "hover:text-accent transition-colors",
+                isSaved && "text-accent"
+              )}
+              onClick={onSave}
+            >
+              <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
