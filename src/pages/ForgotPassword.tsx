@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Lightbulb } from 'lucide-react';
 import { validateEmail } from '@/utils/security';
@@ -13,7 +13,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const { resetPassword } = useAuth();
+  
   const { toast } = useToast();
 
   const handleResetPassword = async () => {
@@ -36,7 +36,9 @@ export default function ForgotPassword() {
     }
 
     setLoading(true);
-    const { error } = await resetPassword(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
 
     if (error) {
       toast({

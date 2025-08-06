@@ -20,18 +20,39 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have the necessary URL parameters
+    // Set up auth state listener to handle password reset
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // User is now authenticated and can update their password
+        console.log('Password recovery session established');
+      }
+    });
+
+    // Check if we have the necessary URL parameters for password reset
+    const type = searchParams.get('type');
     const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
     
-    if (!accessToken || !refreshToken) {
+    if (type !== 'recovery' || !accessToken) {
       toast({
         title: "Invalid reset link",
         description: "This password reset link is invalid or has expired.",
         variant: "destructive",
       });
       navigate('/auth');
+    } else {
+      // Exchange the tokens to establish a session
+      supabase.auth.exchangeCodeForSession(window.location.href).catch((error) => {
+        console.error('Error exchanging code for session:', error);
+        toast({
+          title: "Invalid reset link",
+          description: "This password reset link is invalid or has expired.",
+          variant: "destructive",
+        });
+        navigate('/auth');
+      });
     }
+
+    return () => subscription.unsubscribe();
   }, [searchParams, navigate, toast]);
 
   const handleResetPassword = async () => {
