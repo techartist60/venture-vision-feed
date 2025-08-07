@@ -17,6 +17,9 @@ interface MediaUpload {
   comments_count: number;
   saves_count: number;
   created_at: string;
+  user_id: string;
+  is_boosted?: boolean;
+  boost_expires_at?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
@@ -289,7 +292,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           user={{
             name: item.profiles?.full_name || 'Anonymous',
             username: item.profiles?.username || 'user',
-            avatar: item.profiles?.avatar_url || ''
+            avatar: item.profiles?.avatar_url || '',
+            id: item.user_id
           }}
           stats={{
             likes: item.likes_count,
@@ -298,6 +302,9 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
           }}
           isLiked={item.is_liked || false}
           isSaved={item.is_saved || false}
+          isBoosted={item.is_boosted || false}
+          isOwner={user?.id === item.user_id}
+          currentUserId={user?.id}
           category="Personal"
           onLike={() => handleLike(item.id, item.is_liked || false)}
           onComment={() => setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title })}
