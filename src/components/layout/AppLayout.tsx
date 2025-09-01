@@ -1,9 +1,11 @@
 import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { NotificationBell } from '@/components/NotificationBell';
 import BottomNavigation from './BottomNavigation';
+import DesktopLayout from './DesktopLayout';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -13,6 +15,7 @@ interface AppLayoutProps {
 export default function AppLayout({ children, showNavigation = true }: AppLayoutProps) {
   const { loading } = useAuth();
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   // Don't show navigation on auth page
   const hideNavigation = location.pathname === '/auth';
@@ -29,6 +32,16 @@ export default function AppLayout({ children, showNavigation = true }: AppLayout
     );
   }
 
+  // Desktop layout
+  if (!isMobile && !hideNavigation) {
+    return (
+      <DesktopLayout showTrendingSidebar={location.pathname === '/'}>
+        {children}
+      </DesktopLayout>
+    );
+  }
+
+  // Mobile layout (existing design)
   return (
     <div className="min-h-screen bg-gradient-discovery">
       {/* Header with theme toggle and notifications */}
