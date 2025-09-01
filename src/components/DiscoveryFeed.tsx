@@ -32,9 +32,10 @@ interface MediaUpload {
 interface DiscoveryFeedProps {
   userOnly?: boolean;
   userId?: string;
+  mediaType?: 'image' | 'video';
 }
 
-export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
@@ -49,7 +50,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
     if (!user) return;
     
     fetchMedia();
-  }, [user, userOnly, userId]);
+  }, [user, userOnly, userId, mediaType]);
 
   const fetchMedia = async () => {
     if (!user) return;
@@ -70,6 +71,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
       if (userOnly) {
         const targetUserId = userId || user.id;
         query = query.eq('user_id', targetUserId);
+      }
+
+      // If mediaType is specified, filter by media type
+      if (mediaType) {
+        query = query.eq('media_type', mediaType);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -271,10 +277,15 @@ export const DiscoveryFeed = ({ userOnly = false, userId }: DiscoveryFeedProps =
   }
 
   if (media.length === 0) {
+    const emptyMessage = mediaType === 'video' ? 'No videos yet' : 'No uploads yet';
+    const emptyDescription = mediaType === 'video' 
+      ? 'Upload your first video to see it here!' 
+      : 'Upload your first photo or video to see it here!';
+      
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">No uploads yet</h3>
-        <p className="text-muted-foreground">Upload your first photo or video to see it here!</p>
+        <h3 className="text-lg font-semibold mb-2">{emptyMessage}</h3>
+        <p className="text-muted-foreground">{emptyDescription}</p>
       </div>
     );
   }

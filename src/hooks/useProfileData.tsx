@@ -6,11 +6,19 @@ interface ProfileStats {
   followers: number;
   following: number;
   mediaCount: number;
+  videoCount: number;
+  totalLikes: number;
 }
 
 export const useProfileData = (userId?: string) => {
   const { user } = useAuth();
-  const [stats, setStats] = useState<ProfileStats>({ followers: 0, following: 0, mediaCount: 0 });
+  const [stats, setStats] = useState<ProfileStats>({ 
+    followers: 0, 
+    following: 0, 
+    mediaCount: 0, 
+    videoCount: 0, 
+    totalLikes: 0 
+  });
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -36,10 +44,22 @@ export const useProfileData = (userId?: string) => {
           profile_user_id: targetUserId
         });
 
+        // Get video count
+        const { data: videoCount } = await supabase.rpc('get_video_count' as any, {
+          profile_user_id: targetUserId
+        });
+
+        // Get total likes count
+        const { data: totalLikes } = await supabase.rpc('get_total_likes_count' as any, {
+          profile_user_id: targetUserId
+        });
+
         setStats({
           followers: followerCount || 0,
           following: followingCount || 0,
-          mediaCount: mediaCount || 0
+          mediaCount: mediaCount || 0,
+          videoCount: videoCount || 0,
+          totalLikes: totalLikes || 0
         });
 
         // Check if current user is following this profile (if different users)
@@ -49,7 +69,7 @@ export const useProfileData = (userId?: string) => {
             .select('id')
             .eq('follower_id', user.id)
             .eq('following_id', userId)
-            .single();
+            .maybeSingle();
           
           setIsFollowing(!!followData);
         }

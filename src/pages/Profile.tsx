@@ -268,7 +268,9 @@ export default function Profile() {
               <div className="text-xs text-muted-foreground">Ideas</div>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border">
-              <div className="text-xl font-bold text-foreground">0</div>
+              <div className="text-xl font-bold text-foreground">
+                {statsLoading ? '...' : stats.totalLikes}
+              </div>
               <div className="text-xs text-muted-foreground">Likes</div>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border">
@@ -309,18 +311,7 @@ export default function Profile() {
             </TabsContent>
 
             <TabsContent value="videos" className="mt-6">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Video className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">No videos yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Start sharing your ideas through videos
-                </p>
-                <Button variant="innovation" size="sm" onClick={() => navigate('/upload')}>
-                  Create Video
-                </Button>
-              </div>
+              <DiscoveryFeed userOnly={true} userId={profileUserId} mediaType="video" />
             </TabsContent>
 
             <TabsContent value="saved" className="mt-6">
