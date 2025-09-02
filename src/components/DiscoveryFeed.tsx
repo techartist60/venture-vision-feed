@@ -317,6 +317,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
           description={item.description || ''}
           mediaType={(item.media_type === 'image' || item.media_type === 'video') ? item.media_type : 'image'}
           mediaUrl={item.media_url}
+          thumbnailUrl={item.thumbnail_url || undefined}
           user={{
             name: item.profiles?.full_name || 'Anonymous',
             username: item.profiles?.username || 'user',

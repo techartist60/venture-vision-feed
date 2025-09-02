@@ -11,6 +11,7 @@ interface IdeaCardProps {
   category: string;
   mediaType: 'image' | 'video';
   mediaUrl: string;
+  thumbnailUrl?: string;
   user: {
     name: string;
     avatar?: string;
@@ -39,7 +40,8 @@ export default function IdeaCard({
   description, 
   category, 
   mediaType, 
-  mediaUrl, 
+  mediaUrl,
+  thumbnailUrl, 
   user, 
   stats,
   isLiked = false,
@@ -67,7 +69,7 @@ export default function IdeaCard({
             src={mediaUrl} 
             controls
             className="w-full h-full object-cover"
-            poster={mediaUrl.replace(/\.[^/.]+$/, '_thumbnail.jpg')}
+            poster={thumbnailUrl}
           >
             Your browser does not support the video tag.
           </video>
