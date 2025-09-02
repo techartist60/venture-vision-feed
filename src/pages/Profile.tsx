@@ -11,6 +11,7 @@ import { ProfileEditDialog } from '@/components/ProfileEditDialog';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { SavedContent } from '@/components/SavedContent';
 import { supabase } from '@/integrations/supabase/client';
+import SignupPrompt from '@/components/SignupPrompt';
 import QRCode from 'qrcode';
 import { 
   Share, 
@@ -44,6 +45,7 @@ export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>({});
   const [profileUserId, setProfileUserId] = useState<string>('');
   const [isOwnProfile, setIsOwnProfile] = useState(true);
+  const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
   const { user, signOut } = useAuth();
   const { userId } = useParams();
   const { stats, loading: statsLoading, isFollowing, toggleFollow } = useProfileData(userId);
@@ -54,7 +56,7 @@ export default function Profile() {
     // Determine whose profile to show
     const targetUserId = userId || user?.id;
     if (!targetUserId) {
-      if (!user) {
+      if (!user && !userId) {
         navigate('/auth');
         return;
       }
@@ -131,6 +133,14 @@ export default function Profile() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleFollowToggle = () => {
+    if (!user) {
+      setSignupPrompt({ open: true, action: 'follow this creator' });
+      return;
+    }
+    toggleFollow();
   };
 
   const handleSignOut = async () => {
@@ -239,22 +249,13 @@ export default function Profile() {
                 <Edit className="h-4 w-4" />
                 Edit Profile
               </Button>
-            ) : user ? (
-              <Button 
-                variant={isFollowing ? "outline" : "innovation"} 
-                size="sm" 
-                onClick={toggleFollow}
-                disabled={statsLoading}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
             ) : (
               <Button 
                 variant="innovation" 
                 size="sm" 
-                onClick={() => navigate('/auth')}
+                onClick={handleFollowToggle}
               >
-                Sign up to follow
+                {isFollowing ? "Following" : "Follow"}
               </Button>
             )}
           </div>
@@ -401,6 +402,12 @@ export default function Profile() {
           onProfileUpdate={() => fetchProfile(profileUserId)}
         />
       )}
+      
+      <SignupPrompt
+        open={signupPrompt.open}
+        onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
+        action={signupPrompt.action}
+      />
     </div>
   );
 }

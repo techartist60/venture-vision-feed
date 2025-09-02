@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
+import SignupPrompt from '@/components/SignupPrompt';
 
 interface MediaUpload {
   id: string;
@@ -38,6 +39,7 @@ export default function IdeaDetail() {
   const [loading, setLoading] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
 
   useEffect(() => {
     if (id) {
@@ -64,8 +66,8 @@ export default function IdeaDetail() {
 
       if (error) throw error;
 
-      // Check if user has liked and saved this media
       if (user && data) {
+        // Check if user has liked and saved this media
         const [likesResponse, savesResponse] = await Promise.all([
           supabase
             .from('media_likes')
@@ -87,7 +89,12 @@ export default function IdeaDetail() {
           is_saved: !!savesResponse.data
         });
       } else {
-        setIdea(data);
+        // For unauthenticated users
+        setIdea({
+          ...data,
+          is_liked: false,
+          is_saved: false
+        });
       }
 
       // Auto-play video if it's a video
@@ -108,7 +115,11 @@ export default function IdeaDetail() {
   };
 
   const handleLike = async () => {
-    if (!user || !idea) return;
+    if (!user) {
+      setSignupPrompt({ open: true, action: 'like this video' });
+      return;
+    }
+    if (!idea) return;
 
     try {
       const isLiked = idea.is_liked;
@@ -173,7 +184,11 @@ export default function IdeaDetail() {
   };
 
   const handleSave = async () => {
-    if (!user || !idea) return;
+    if (!user) {
+      setSignupPrompt({ open: true, action: 'save this video' });
+      return;
+    }
+    if (!idea) return;
 
     try {
       const isSaved = idea.is_saved;
@@ -359,7 +374,13 @@ export default function IdeaDetail() {
               variant="ghost" 
               size="sm" 
               className="gap-2" 
-              onClick={() => setCommentDialogOpen(true)}
+              onClick={() => {
+                if (!user) {
+                  setSignupPrompt({ open: true, action: 'comment on this video' });
+                  return;
+                }
+                setCommentDialogOpen(true);
+              }}
             >
               <MessageCircle className="h-5 w-5" />
               <span>{idea.comments_count}</span>
@@ -390,6 +411,12 @@ export default function IdeaDetail() {
         onOpenChange={setCommentDialogOpen}
         mediaId={idea.id}
         mediaTitle={idea.title}
+      />
+      
+      <SignupPrompt
+        open={signupPrompt.open}
+        onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
+        action={signupPrompt.action}
       />
     </div>
   );

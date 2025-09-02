@@ -5,6 +5,7 @@ import IdeaCard from '@/components/ui/IdeaCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CommentDialog } from '@/components/CommentDialog';
 import { useToast } from '@/hooks/use-toast';
+import SignupPrompt from './SignupPrompt';
 
 interface MediaUpload {
   id: string;
@@ -45,16 +46,13 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
     mediaId: '',
     mediaTitle: ''
   });
+  const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
 
   useEffect(() => {
-    if (!user) return;
-    
     fetchMedia();
   }, [user, userOnly, userId, mediaType]);
 
   const fetchMedia = async () => {
-    if (!user) return;
-
     try {
       let query = supabase
         .from('media_uploads')
@@ -69,7 +67,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
 
       // If userOnly is true, filter by specified user or current user
       if (userOnly) {
-        const targetUserId = userId || user.id;
+        const targetUserId = userId || user?.id;
+        if (!targetUserId) {
+          setLoading(false);
+          return;
+        }
         query = query.eq('user_id', targetUserId);
       }
 
@@ -82,32 +84,41 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
 
       if (error) throw error;
 
-      // Check if user has liked and saved each media
-      const mediaIds = (data || []).map(item => item.id);
-      
-      const [likesResponse, savesResponse] = await Promise.all([
-        supabase
-          .from('media_likes')
-          .select('media_id')
-          .eq('user_id', user.id)
-          .in('media_id', mediaIds),
-        supabase
-          .from('media_saves')
-          .select('media_id')
-          .eq('user_id', user.id)
-          .in('media_id', mediaIds)
-      ]);
+      if (user) {
+        // Check if user has liked and saved each media
+        const mediaIds = (data || []).map(item => item.id);
+        
+        const [likesResponse, savesResponse] = await Promise.all([
+          supabase
+            .from('media_likes')
+            .select('media_id')
+            .eq('user_id', user.id)
+            .in('media_id', mediaIds),
+          supabase
+            .from('media_saves')
+            .select('media_id')
+            .eq('user_id', user.id)
+            .in('media_id', mediaIds)
+        ]);
 
-      const likedMediaIds = new Set(likesResponse.data?.map(like => like.media_id) || []);
-      const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
-      
-      const mediaWithInteractions = (data || []).map(item => ({
-        ...item,
-        is_liked: likedMediaIds.has(item.id),
-        is_saved: savedMediaIds.has(item.id)
-      }));
+        const likedMediaIds = new Set(likesResponse.data?.map(like => like.media_id) || []);
+        const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
+        
+        const mediaWithInteractions = (data || []).map(item => ({
+          ...item,
+          is_liked: likedMediaIds.has(item.id),
+          is_saved: savedMediaIds.has(item.id)
+        }));
 
-      setMedia(mediaWithInteractions);
+        setMedia(mediaWithInteractions);
+      } else {
+        // For unauthenticated users, just set the media without interaction states
+        setMedia((data || []).map(item => ({
+          ...item,
+          is_liked: false,
+          is_saved: false
+        })));
+      }
     } catch (error) {
       console.error('Error fetching user media:', error);
     } finally {
@@ -116,7 +127,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
   };
 
   const handleLike = async (mediaId: string, isLiked: boolean) => {
-    if (!user) return;
+    if (!user) {
+      setSignupPrompt({ open: true, action: 'like this video' });
+      return;
+    }
 
     try {
       if (isLiked) {
@@ -182,7 +196,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
   };
 
   const handleSave = async (mediaId: string, isSaved: boolean) => {
-    if (!user) return;
+    if (!user) {
+      setSignupPrompt({ open: true, action: 'save this video' });
+      return;
+    }
 
     try {
       if (isSaved) {
@@ -318,7 +335,13 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
           currentUserId={user?.id}
           category="Personal"
           onLike={() => handleLike(item.id, item.is_liked || false)}
-          onComment={() => setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title })}
+          onComment={() => {
+            if (!user) {
+              setSignupPrompt({ open: true, action: 'comment on this video' });
+              return;
+            }
+            setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title });
+          }}
           onShare={() => {}}
           onSave={() => handleSave(item.id, item.is_saved || false)}
         />
@@ -329,6 +352,12 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
         onOpenChange={(open) => setCommentDialog(prev => ({ ...prev, open }))}
         mediaId={commentDialog.mediaId}
         mediaTitle={commentDialog.mediaTitle}
+      />
+      
+      <SignupPrompt
+        open={signupPrompt.open}
+        onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
+        action={signupPrompt.action}
       />
     </div>
   );
