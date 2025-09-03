@@ -200,15 +200,15 @@ export default function Profile() {
             <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-primary/20">
               <AvatarImage src={profile.avatar_url || ''} />
               <AvatarFallback className="bg-gradient-primary text-primary-foreground text-xl">
-                {profile.full_name?.slice(0, 2).toUpperCase() || user?.email?.slice(0, 2).toUpperCase() || 'U'}
+                {profile.full_name?.slice(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             
             <h2 className="text-2xl font-bold text-foreground mb-1">
-              {profile.full_name || user?.email?.split('@')[0] || 'User'}
+              {profile.full_name || 'User'}
             </h2>
             <p className="text-muted-foreground mb-4">
-              @{profile.username || user?.email?.split('@')[0] || 'user'}
+              @{profile.username || 'user'}
             </p>
             
             {profile.bio && (
@@ -231,14 +231,6 @@ export default function Profile() {
               </div>
             )}
 
-            {/* Join Date */}
-            <div className="flex items-center justify-center gap-2 mb-4 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { 
-                month: 'long', 
-                year: 'numeric' 
-              }) : 'Recently'}
-            </div>
 
             {isOwnProfile && user ? (
               <Button 
