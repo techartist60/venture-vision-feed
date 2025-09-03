@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Play, Pause } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Play, Pause, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ interface MediaUpload {
   likes_count: number;
   comments_count: number;
   saves_count: number;
+  views_count: number;
   profiles?: {
     full_name?: string;
     username?: string;
@@ -46,6 +47,21 @@ export default function IdeaDetail() {
       fetchIdea();
     }
   }, [id, user]);
+
+  const trackView = async (mediaId: string) => {
+    try {
+      await supabase.rpc('increment_view_count', {
+        media_id: mediaId,
+        viewer_user_id: user?.id || null,
+        viewer_ip: null
+      });
+      
+      // Update local state to reflect the view count
+      setIdea(prev => prev ? { ...prev, views_count: prev.views_count + 1 } : null);
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
 
   const fetchIdea = async () => {
     if (!id) return;
@@ -100,6 +116,11 @@ export default function IdeaDetail() {
       // Auto-play video if it's a video
       if (data && data.media_type.startsWith('video/')) {
         setVideoPlaying(true);
+      }
+
+      // Track view for this media
+      if (data) {
+        await trackView(data.id);
       }
     } catch (error) {
       console.error('Error fetching idea:', error);
@@ -351,8 +372,14 @@ export default function IdeaDetail() {
         <div className="mb-6">
           <h2 className="text-xl font-bold text-foreground mb-3">{idea.title}</h2>
           {idea.description && (
-            <p className="text-muted-foreground leading-relaxed">{idea.description}</p>
+            <p className="text-muted-foreground leading-relaxed mb-3">{idea.description}</p>
           )}
+          
+          {/* View Count */}
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Eye className="h-4 w-4" />
+            <span className="text-sm">{idea.views_count.toLocaleString()} views</span>
+          </div>
         </div>
 
         {/* Actions */}

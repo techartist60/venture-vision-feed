@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Zap } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Zap, Eye } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -22,6 +22,7 @@ interface IdeaCardProps {
     likes: number;
     comments: number;
     shares: number;
+    views: number;
   };
   isLiked?: boolean;
   isSaved?: boolean;
@@ -110,6 +111,12 @@ export default function IdeaCard({
         <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
           {description}
         </p>
+
+        {/* View Count */}
+        <div className="flex items-center gap-1 mb-4 text-muted-foreground">
+          <Eye className="h-4 w-4" />
+          <span className="text-xs">{stats.views.toLocaleString()} views</span>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between">

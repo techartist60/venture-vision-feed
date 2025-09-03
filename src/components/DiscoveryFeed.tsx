@@ -17,6 +17,7 @@ interface MediaUpload {
   likes_count: number;
   comments_count: number;
   saves_count: number;
+  views_count: number;
   created_at: string;
   user_id: string;
   is_boosted?: boolean;
@@ -51,6 +52,19 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
   useEffect(() => {
     fetchMedia();
   }, [user, userOnly, userId, mediaType]);
+
+  // Track view for media when component mounts
+  const trackView = async (mediaId: string) => {
+    try {
+      await supabase.rpc('increment_view_count', {
+        media_id: mediaId,
+        viewer_user_id: user?.id || null,
+        viewer_ip: null // Will be handled server-side if needed
+      });
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
 
   const fetchMedia = async () => {
     try {
@@ -327,7 +341,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
           stats={{
             likes: item.likes_count,
             comments: item.comments_count,
-            shares: item.saves_count
+            shares: item.saves_count,
+            views: item.views_count
           }}
           isLiked={item.is_liked || false}
           isSaved={item.is_saved || false}

@@ -26,7 +26,8 @@ import {
   ExternalLink,
   Copy,
   QrCode,
-  Download
+  Download,
+  BarChart3
 } from 'lucide-react';
 
 interface UserProfile {
@@ -260,6 +261,21 @@ export default function Profile() {
             )}
           </div>
 
+          {/* Analytics Button for Own Profile */}
+          {isOwnProfile && user && (
+            <div className="mb-6">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 w-full"
+                onClick={() => navigate('/analytics')}
+              >
+                <BarChart3 className="h-4 w-4" />
+                View Analytics
+              </Button>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4 text-center">
             <div className="p-3 rounded-xl bg-card border border-border">
@@ -270,9 +286,9 @@ export default function Profile() {
             </div>
             <div className="p-3 rounded-xl bg-card border border-border">
               <div className="text-xl font-bold text-foreground">
-                {statsLoading ? '...' : stats.totalLikes}
+                {statsLoading ? '...' : stats.totalViews}
               </div>
-              <div className="text-xs text-muted-foreground">Likes</div>
+              <div className="text-xs text-muted-foreground">Views</div>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border">
               <div className="text-xl font-bold text-foreground">

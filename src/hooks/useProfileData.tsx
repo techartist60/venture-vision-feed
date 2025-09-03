@@ -8,6 +8,7 @@ interface ProfileStats {
   mediaCount: number;
   videoCount: number;
   totalLikes: number;
+  totalViews: number;
 }
 
 export const useProfileData = (userId?: string) => {
@@ -17,7 +18,8 @@ export const useProfileData = (userId?: string) => {
     following: 0, 
     mediaCount: 0, 
     videoCount: 0, 
-    totalLikes: 0 
+    totalLikes: 0,
+    totalViews: 0
   });
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -54,12 +56,21 @@ export const useProfileData = (userId?: string) => {
           profile_user_id: targetUserId
         });
 
+        // Get total views count
+        const { data: totalViews } = await supabase
+          .from('media_uploads')
+          .select('views_count')
+          .eq('user_id', targetUserId);
+
+        const viewsSum = totalViews?.reduce((sum, item) => sum + (item.views_count || 0), 0) || 0;
+
         setStats({
           followers: followerCount || 0,
           following: followingCount || 0,
           mediaCount: mediaCount || 0,
           videoCount: videoCount || 0,
-          totalLikes: totalLikes || 0
+          totalLikes: totalLikes || 0,
+          totalViews: viewsSum
         });
 
         // Check if current user is following this profile (if different users)

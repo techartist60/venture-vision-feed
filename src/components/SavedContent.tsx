@@ -18,6 +18,7 @@ interface MediaUpload {
   likes_count: number;
   comments_count: number;
   saves_count: number;
+  views_count: number;
   created_at: string;
   user_id: string;
   is_liked: boolean;
@@ -270,6 +271,7 @@ export const SavedContent: React.FC<SavedContentProps> = ({ userId }) => {
               likes: media.likes_count,
               comments: media.comments_count,
               shares: 0,
+              views: media.views_count || 0,
             }}
             isLiked={media.is_liked}
             isSaved={media.is_saved}

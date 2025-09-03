@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -205,6 +205,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          views_count: number
         }
         Insert: {
           boost_expires_at?: string | null
@@ -223,6 +224,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          views_count?: number
         }
         Update: {
           boost_expires_at?: string | null
@@ -241,6 +243,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          views_count?: number
         }
         Relationships: [
           {
@@ -251,6 +254,30 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      media_views: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          media_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          media_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          media_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -331,11 +358,11 @@ export type Database = {
     Functions: {
       create_notification: {
         Args: {
-          recipient_id: string
           actor_id: string
-          notification_type: string
-          media_id?: string
           comment_content?: string
+          media_id?: string
+          notification_type: string
+          recipient_id: string
         }
         Returns: undefined
       }
@@ -369,6 +396,10 @@ export type Database = {
       }
       increment_saves_count: {
         Args: { media_id: string }
+        Returns: undefined
+      }
+      increment_view_count: {
+        Args: { media_id: string; viewer_ip?: string; viewer_user_id?: string }
         Returns: undefined
       }
     }

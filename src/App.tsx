@@ -12,6 +12,7 @@ import Upload from "./pages/Upload";
 import Inventions from "./pages/Inventions";
 import IdeaDetail from "./pages/IdeaDetail";
 import Profile from "./pages/Profile";
+import Analytics from "./pages/Analytics";
 import Search from "./pages/Search";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -37,7 +38,8 @@ const App = () => (
               <Route path="/inventions" element={<Inventions />} />
               <Route path="/idea/:id" element={<IdeaDetail />} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
