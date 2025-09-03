@@ -208,7 +208,7 @@ export default function Profile() {
               {profile.full_name || 'User'}
             </h2>
             <p className="text-muted-foreground mb-4">
-              @{profile.username || 'user'}
+              @{profile.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}
             </p>
             
             {profile.bio && (
