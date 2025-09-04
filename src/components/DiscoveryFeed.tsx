@@ -83,6 +83,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
       if (userOnly) {
         const targetUserId = userId || user?.id;
         if (!targetUserId) {
+          setMedia([]);
           setLoading(false);
           return;
         }
@@ -97,8 +98,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
       // Random ordering like YouTube algorithm - using PostgreSQL RANDOM() function
       const { data, error } = await query.order('id', { ascending: false }).limit(50);
       
-      // Shuffle the results client-side for random ordering
-      if (data) {
+      // Shuffle the results client-side for random ordering (only if not userOnly)
+      if (data && !userOnly) {
         for (let i = data.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [data[i], data[j]] = [data[j], data[i]];
