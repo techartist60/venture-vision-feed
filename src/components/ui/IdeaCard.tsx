@@ -3,6 +3,7 @@ import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
 import { BoostDialog } from '../BoostDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface IdeaCardProps {
   id: string;
@@ -55,6 +56,13 @@ export default function IdeaCard({
   onShare,
   onSave
 }: IdeaCardProps) {
+  const navigate = useNavigate();
+
+  const handleProfileClick = () => {
+    if (user.id) {
+      navigate(`/profile/${user.id}`);
+    }
+  };
   return (
     <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
       {/* Media */}
@@ -91,14 +99,14 @@ export default function IdeaCard({
       {/* Content */}
       <div className="p-6">
         {/* User Info */}
-        <div className="flex items-center gap-3 mb-4">
-          <Avatar className="h-10 w-10">
+        <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={handleProfileClick}>
+          <Avatar className="h-10 w-10 hover:ring-2 hover:ring-primary/20 transition-all">
             <AvatarImage src={user.avatar} />
             <AvatarFallback className="bg-gradient-primary text-primary-foreground">
               {user.name.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div>
+          <div className="hover:opacity-80 transition-opacity">
             <p className="font-semibold text-sm text-foreground">{user.name}</p>
             <p className="text-xs text-muted-foreground">@{user.username}</p>
           </div>

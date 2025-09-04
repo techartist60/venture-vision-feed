@@ -386,6 +386,14 @@ export type Database = {
         Args: { profile_user_id: string }
         Returns: number
       }
+      get_total_likes_count: {
+        Args: { profile_user_id: string }
+        Returns: number
+      }
+      get_video_count: {
+        Args: { profile_user_id: string }
+        Returns: number
+      }
       increment_comment_count: {
         Args: { media_id: string }
         Returns: undefined

@@ -47,12 +47,12 @@ export const useProfileData = (userId?: string) => {
         });
 
         // Get video count
-        const { data: videoCount } = await supabase.rpc('get_video_count' as any, {
+        const { data: videoCount } = await supabase.rpc('get_video_count', {
           profile_user_id: targetUserId
         });
 
         // Get total likes count
-        const { data: totalLikes } = await supabase.rpc('get_total_likes_count' as any, {
+        const { data: totalLikes } = await supabase.rpc('get_total_likes_count', {
           profile_user_id: targetUserId
         });
 

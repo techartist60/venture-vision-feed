@@ -10,6 +10,8 @@ import { useProfileData } from '@/hooks/useProfileData';
 import { ProfileEditDialog } from '@/components/ProfileEditDialog';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { SavedContent } from '@/components/SavedContent';
+import { FollowersList } from '@/components/FollowersList';
+import { FollowingList } from '@/components/FollowingList';
 import { supabase } from '@/integrations/supabase/client';
 import SignupPrompt from '@/components/SignupPrompt';
 import QRCode from 'qrcode';
@@ -42,6 +44,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("ideas");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
+  const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [profile, setProfile] = useState<UserProfile>({});
   const [profileUserId, setProfileUserId] = useState<string>('');
@@ -282,13 +286,19 @@ export default function Profile() {
               </div>
               <div className="text-xs text-muted-foreground">Views</div>
             </div>
-            <div className="p-3 rounded-xl bg-card border border-border">
+            <div 
+              className="p-3 rounded-xl bg-card border border-border cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => setFollowersDialogOpen(true)}
+            >
               <div className="text-xl font-bold text-foreground">
                 {statsLoading ? '...' : stats.followers}
               </div>
               <div className="text-xs text-muted-foreground">Followers</div>
             </div>
-            <div className="p-3 rounded-xl bg-card border border-border">
+            <div 
+              className="p-3 rounded-xl bg-card border border-border cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => setFollowingDialogOpen(true)}
+            >
               <div className="text-xl font-bold text-foreground">
                 {statsLoading ? '...' : stats.following}
               </div>
@@ -397,6 +407,30 @@ export default function Profile() {
                 </Button>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Followers Dialog */}
+      <Dialog open={followersDialogOpen} onOpenChange={setFollowersDialogOpen}>
+        <DialogContent className="max-w-sm mx-auto max-h-[70vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-center">Followers</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto">
+            <FollowersList userId={profileUserId} onClose={() => setFollowersDialogOpen(false)} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Following Dialog */}
+      <Dialog open={followingDialogOpen} onOpenChange={setFollowingDialogOpen}>
+        <DialogContent className="max-w-sm mx-auto max-h-[70vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-center">Following</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto">
+            <FollowingList userId={profileUserId} onClose={() => setFollowingDialogOpen(false)} />
           </div>
         </DialogContent>
       </Dialog>
