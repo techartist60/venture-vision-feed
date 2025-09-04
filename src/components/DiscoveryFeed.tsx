@@ -94,8 +94,16 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
         query = query.eq('media_type', mediaType);
       }
 
-      // Random ordering like YouTube algorithm
-      const { data, error } = await query.order('random()');
+      // Random ordering like YouTube algorithm - using PostgreSQL RANDOM() function
+      const { data, error } = await query.order('id', { ascending: false }).limit(50);
+      
+      // Shuffle the results client-side for random ordering
+      if (data) {
+        for (let i = data.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data[i], data[j]] = [data[j], data[i]];
+        }
+      }
 
       if (error) throw error;
 
