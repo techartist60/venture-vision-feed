@@ -16,59 +16,8 @@ export default function Home() {
   if (!isMobile) {
     return (
       <div className="space-y-8">
-        {/* Hero Section */}
-        <section className="relative rounded-3xl overflow-hidden bg-gradient-innovation p-12 text-center text-primary-foreground">
-          <div className="relative z-10">
-            <h2 className="text-4xl font-bold mb-4">
-              Share Your Innovation
-            </h2>
-            <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-              Turn your ideas into reality and inspire the world with breakthrough innovations
-            </p>
-            <Button 
-              variant="discovery" 
-              size="lg" 
-              className="bg-background text-primary hover:bg-white px-8 py-4 text-lg"
-              onClick={() => navigate('/upload')}
-            >
-              Start Creating
-            </Button>
-          </div>
-          <div className="absolute inset-0 opacity-20">
-            <img 
-              src={heroImage} 
-              alt="Innovation" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </section>
-
-        {/* Trending Categories */}
-        <section>
-          <h3 className="text-2xl font-semibold mb-6">Trending Categories</h3>
-          <div className="flex gap-3 flex-wrap">
-            {['Tech', 'Fashion', 'Agriculture', 'Art', 'Design', 'Health', 'AI & ML', 'Green Energy'].map((category) => (
-              <Button
-                key={category}
-                variant="secondary"
-                size="lg"
-                className="whitespace-nowrap rounded-full px-6"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </section>
-
         {/* Ideas Feed */}
         <section>
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-2xl font-semibold">Latest Ideas</h3>
-            <Button variant="ghost" size="lg">
-              View All
-            </Button>
-          </div>
-          
           <DiscoveryFeed />
         </section>
       </div>
@@ -119,61 +68,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="px-4 py-8 max-w-md mx-auto">
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-innovation p-8 text-center text-primary-foreground">
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">
-              Share Your Innovation
-            </h2>
-            <p className="text-primary-foreground/90 mb-6">
-              Turn your ideas into reality and inspire the world
-            </p>
-            <Button 
-              variant="discovery" 
-              size="lg" 
-              className="bg-background text-primary hover:bg-white"
-              onClick={() => navigate('/upload')}
-            >
-              Start Creating
-            </Button>
-          </div>
-          <div className="absolute inset-0 opacity-20">
-            <img 
-              src={heroImage} 
-              alt="Innovation" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Trending Categories */}
-      <section className="px-4 mb-8 max-w-md mx-auto">
-        <h3 className="text-lg font-semibold mb-4">Trending Categories</h3>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {['Tech', 'Fashion', 'Agriculture', 'Art', 'Design', 'Health'].map((category) => (
-            <Button
-              key={category}
-              variant="secondary"
-              size="sm"
-              className="whitespace-nowrap rounded-full"
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
-      </section>
-
       {/* Ideas Feed */}
       <section className="px-4 pb-8 max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold">Latest Ideas</h3>
-          <Button variant="ghost" size="sm">
-            View All
-          </Button>
-        </div>
-        
         <DiscoveryFeed />
       </section>
     </div>

@@ -94,7 +94,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
         query = query.eq('media_type', mediaType);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      // Random ordering like YouTube algorithm
+      const { data, error } = await query.order('random()');
 
       if (error) throw error;
 
