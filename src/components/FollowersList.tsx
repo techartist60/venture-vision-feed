@@ -19,9 +19,10 @@ interface Follower {
 interface FollowersListProps {
   userId: string;
   onClose?: () => void;
+  refresh?: number; // Add refresh trigger
 }
 
-export const FollowersList = ({ userId, onClose }: FollowersListProps) => {
+export const FollowersList = ({ userId, onClose, refresh }: FollowersListProps) => {
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -30,25 +31,40 @@ export const FollowersList = ({ userId, onClose }: FollowersListProps) => {
 
   useEffect(() => {
     fetchFollowers();
-  }, [userId]);
+  }, [userId, refresh]);
 
   const fetchFollowers = async () => {
     try {
-      const { data, error } = await supabase
+      // First get the followers
+      const { data: followersData, error: followersError } = await supabase
         .from('followers')
-        .select(`
-          id,
-          follower_id,
-          profiles!followers_follower_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
+        .select('id, follower_id')
         .eq('following_id', userId);
 
-      if (error) throw error;
-      setFollowers(data || []);
+      if (followersError) throw followersError;
+
+      if (!followersData || followersData.length === 0) {
+        setFollowers([]);
+        return;
+      }
+
+      // Get profile data for each follower
+      const followerIds = followersData.map(f => f.follower_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, username, avatar_url')
+        .in('user_id', followerIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine the data
+      const combinedData = followersData.map(follower => ({
+        id: follower.id,
+        follower_id: follower.follower_id,
+        profiles: profilesData?.find(p => p.user_id === follower.follower_id) || {}
+      }));
+
+      setFollowers(combinedData);
     } catch (error) {
       console.error('Error fetching followers:', error);
       toast({

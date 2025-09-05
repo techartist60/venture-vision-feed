@@ -19,9 +19,10 @@ interface Following {
 interface FollowingListProps {
   userId: string;
   onClose?: () => void;
+  refresh?: number; // Add refresh trigger
 }
 
-export const FollowingList = ({ userId, onClose }: FollowingListProps) => {
+export const FollowingList = ({ userId, onClose, refresh }: FollowingListProps) => {
   const [following, setFollowing] = useState<Following[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -30,25 +31,40 @@ export const FollowingList = ({ userId, onClose }: FollowingListProps) => {
 
   useEffect(() => {
     fetchFollowing();
-  }, [userId]);
+  }, [userId, refresh]);
 
   const fetchFollowing = async () => {
     try {
-      const { data, error } = await supabase
+      // First get the following
+      const { data: followingData, error: followingError } = await supabase
         .from('followers')
-        .select(`
-          id,
-          following_id,
-          profiles!followers_following_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
+        .select('id, following_id')
         .eq('follower_id', userId);
 
-      if (error) throw error;
-      setFollowing(data || []);
+      if (followingError) throw followingError;
+
+      if (!followingData || followingData.length === 0) {
+        setFollowing([]);
+        return;
+      }
+
+      // Get profile data for each following
+      const followingIds = followingData.map(f => f.following_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, username, avatar_url')
+        .in('user_id', followingIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine the data
+      const combinedData = followingData.map(following => ({
+        id: following.id,
+        following_id: following.following_id,
+        profiles: profilesData?.find(p => p.user_id === following.following_id) || {}
+      }));
+
+      setFollowing(combinedData);
     } catch (error) {
       console.error('Error fetching following:', error);
       toast({

@@ -100,25 +100,31 @@ export const useProfileData = (userId?: string) => {
     try {
       if (isFollowing) {
         // Unfollow
-        await supabase
+        const { error } = await supabase
           .from('followers')
           .delete()
           .eq('follower_id', user.id)
           .eq('following_id', userId);
         
+        if (error) throw error;
+        
         setIsFollowing(false);
         setStats(prev => ({ ...prev, followers: prev.followers - 1 }));
       } else {
         // Follow
-        await supabase
+        const { error } = await supabase
           .from('followers')
           .insert({ follower_id: user.id, following_id: userId });
+        
+        if (error) throw error;
         
         setIsFollowing(true);
         setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
+      // Revert optimistic update on error
+      setIsFollowing(!isFollowing);
     }
   };
 

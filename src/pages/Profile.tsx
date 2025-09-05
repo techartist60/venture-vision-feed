@@ -46,6 +46,7 @@ export default function Profile() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [profile, setProfile] = useState<UserProfile>({});
   const [profileUserId, setProfileUserId] = useState<string>('');
@@ -140,12 +141,13 @@ export default function Profile() {
     document.body.removeChild(link);
   };
 
-  const handleFollowToggle = () => {
+  const handleFollowToggle = async () => {
     if (!user) {
       setSignupPrompt({ open: true, action: 'follow this creator' });
       return;
     }
-    toggleFollow();
+    await toggleFollow();
+    setRefreshTrigger(prev => prev + 1); // Trigger refresh of lists
   };
 
   const handleSignOut = async () => {
@@ -418,7 +420,11 @@ export default function Profile() {
             <DialogTitle className="text-center">Followers</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto">
-            <FollowersList userId={profileUserId} onClose={() => setFollowersDialogOpen(false)} />
+            <FollowersList 
+              userId={profileUserId} 
+              onClose={() => setFollowersDialogOpen(false)} 
+              refresh={refreshTrigger}
+            />
           </div>
         </DialogContent>
       </Dialog>
@@ -430,7 +436,11 @@ export default function Profile() {
             <DialogTitle className="text-center">Following</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto">
-            <FollowingList userId={profileUserId} onClose={() => setFollowingDialogOpen(false)} />
+            <FollowingList 
+              userId={profileUserId} 
+              onClose={() => setFollowingDialogOpen(false)} 
+              refresh={refreshTrigger}
+            />
           </div>
         </DialogContent>
       </Dialog>
