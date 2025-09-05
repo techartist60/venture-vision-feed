@@ -359,7 +359,6 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
           isBoosted={item.is_boosted || false}
           isOwner={user?.id === item.user_id}
           currentUserId={user?.id}
-          category="Personal"
           onLike={() => handleLike(item.id, item.is_liked || false)}
           onComment={() => {
             if (!user) {

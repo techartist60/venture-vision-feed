@@ -1,4 +1,4 @@
-import { Search, Bell, User } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,10 +47,10 @@ export default function Home() {
                   </Button>
                 </Link>
               ) : (
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" />
-                </Button>
+                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium">
+                  <User className="h-5 w-5" />
+                  {user?.user_metadata?.full_name || 'Profile'}
+                </Link>
               )}
             </div>
           </div>

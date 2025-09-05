@@ -9,7 +9,7 @@ interface IdeaCardProps {
   id: string;
   title: string;
   description: string;
-  category: string;
+  category?: string;
   mediaType: 'image' | 'video';
   mediaUrl: string;
   thumbnailUrl?: string;
@@ -88,9 +88,11 @@ export default function IdeaCard({
               </div>
             </div>
             <div className="flex gap-1">
-              <Badge className="bg-background/90 text-foreground text-xs">
-                {category}
-              </Badge>
+              {category && (
+                <Badge className="bg-background/90 text-foreground text-xs">
+                  {category}
+                </Badge>
+              )}
               {isBoosted && (
                 <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
                   <Zap className="h-2.5 w-2.5" />
@@ -194,9 +196,11 @@ export default function IdeaCard({
           Your browser does not support the video tag.
         </video>
         <div className="absolute top-3 left-3 flex gap-2">
-          <Badge className="bg-background/90 text-foreground">
-            {category}
-          </Badge>
+          {category && (
+            <Badge className="bg-background/90 text-foreground">
+              {category}
+            </Badge>
+          )}
           {isBoosted && (
             <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
               <Zap className="h-3 w-3" />

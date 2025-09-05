@@ -1,10 +1,9 @@
-import { Search, Bell, User } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { NotificationBell } from '@/components/NotificationBell';
 
 export default function DesktopHeader() {
   const { user } = useAuth();
@@ -28,7 +27,6 @@ export default function DesktopHeader() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          <NotificationBell />
           <ThemeToggle />
           
           {!user ? (
