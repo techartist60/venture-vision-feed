@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
+import { VideoProvider } from "./contexts/VideoContext";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -26,9 +27,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+        <VideoProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <AppLayout>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -48,7 +50,8 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
-        </BrowserRouter>
+          </BrowserRouter>
+        </VideoProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

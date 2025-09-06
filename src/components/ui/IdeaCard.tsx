@@ -1,9 +1,11 @@
-import { Heart, MessageCircle, Share, Bookmark, Zap, Eye } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
 import { BoostDialog } from '../BoostDialog';
 import { useNavigate } from 'react-router-dom';
+import { useVideo } from '@/contexts/VideoContext';
+import { useEffect, useRef, useState } from 'react';
 
 interface IdeaCardProps {
   id: string;
@@ -57,6 +59,53 @@ export default function IdeaCard({
   onSave
 }: IdeaCardProps) {
   const navigate = useNavigate();
+  const { currentlyPlaying, setCurrentlyPlaying, videoRefs } = useVideo();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (mediaType === 'video' && videoRef.current) {
+      videoRefs.current[id] = videoRef.current;
+      
+      const video = videoRef.current;
+      
+      const handlePlay = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
+      const handleEnded = () => {
+        setIsPlaying(false);
+        setCurrentlyPlaying(null);
+      };
+
+      video.addEventListener('play', handlePlay);
+      video.addEventListener('pause', handlePause);
+      video.addEventListener('ended', handleEnded);
+
+      return () => {
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+        video.removeEventListener('ended', handleEnded);
+        delete videoRefs.current[id];
+      };
+    }
+  }, [id, mediaType, videoRefs, setCurrentlyPlaying]);
+
+  useEffect(() => {
+    if (mediaType === 'video') {
+      setIsPlaying(currentlyPlaying === id);
+    }
+  }, [currentlyPlaying, id, mediaType]);
+
+  const handleVideoClick = () => {
+    if (mediaType !== 'video' || !videoRef.current) return;
+
+    if (currentlyPlaying === id) {
+      videoRef.current.pause();
+      setCurrentlyPlaying(null);
+    } else {
+      videoRef.current.play();
+      setCurrentlyPlaying(id);
+    }
+  };
 
   const handleProfileClick = () => {
     if (user.id) {
@@ -186,15 +235,28 @@ export default function IdeaCard({
   return (
     <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
       {/* Media */}
-      <div className="relative aspect-video bg-muted">
+      <div className="relative aspect-video bg-muted cursor-pointer" onClick={handleVideoClick}>
         <video 
+          ref={videoRef}
           src={mediaUrl} 
-          controls
           className="w-full h-full object-cover"
           poster={thumbnailUrl}
+          preload="metadata"
         >
           Your browser does not support the video tag.
         </video>
+        
+        {/* Play/Pause Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity">
+          <div className="bg-black/50 rounded-full p-4 hover:bg-black/70 transition-colors">
+            {isPlaying ? (
+              <Pause className="h-8 w-8 text-white" />
+            ) : (
+              <Play className="h-8 w-8 text-white ml-1" />
+            )}
+          </div>
+        </div>
+
         <div className="absolute top-3 left-3 flex gap-2">
           {category && (
             <Badge className="bg-background/90 text-foreground">
