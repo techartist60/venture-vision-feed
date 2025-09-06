@@ -54,7 +54,7 @@ export default function Profile() {
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
   const { user, signOut } = useAuth();
   const { userId } = useParams();
-  const { stats, loading: statsLoading, isFollowing, toggleFollow } = useProfileData(userId);
+  const { stats, loading: statsLoading, isFollowing, toggleFollow, refetch } = useProfileData(userId);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -147,7 +147,7 @@ export default function Profile() {
       return;
     }
     await toggleFollow();
-    setRefreshTrigger(prev => prev + 1); // Trigger refresh of lists
+    // The real-time listeners will handle the updates automatically
   };
 
   const handleSignOut = async () => {

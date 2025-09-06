@@ -33,6 +33,31 @@ export const FollowersList = ({ userId, onClose, refresh }: FollowersListProps) 
     fetchFollowers();
   }, [userId, refresh]);
 
+  // Real-time updates for followers
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`followers-list-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'followers',
+          filter: `following_id=eq.${userId}`,
+        },
+        () => {
+          fetchFollowers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const fetchFollowers = async () => {
     try {
       // First get the followers

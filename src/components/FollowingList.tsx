@@ -33,6 +33,31 @@ export const FollowingList = ({ userId, onClose, refresh }: FollowingListProps) 
     fetchFollowing();
   }, [userId, refresh]);
 
+  // Real-time updates for following
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`following-list-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'followers',
+          filter: `follower_id=eq.${userId}`,
+        },
+        () => {
+          fetchFollowing();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const fetchFollowing = async () => {
     try {
       // First get the following
@@ -99,6 +124,8 @@ export const FollowingList = ({ userId, onClose, refresh }: FollowingListProps) 
         title: "Unfollowed",
         description: "You are no longer following this user",
       });
+      
+      // The real-time listener will automatically update the lists
     } catch (error) {
       console.error('Error unfollowing:', error);
       toast({
