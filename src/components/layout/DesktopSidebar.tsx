@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, Plus, Video, User, Search, Settings, Bell } from 'lucide-react';
+import { Home, Grid3X3, Plus, Video, User, Search, Settings, Scan } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,12 @@ const navItems = [
     icon: Home, 
     label: 'Home',
     exact: true
+  },
+  { 
+    to: '/idescan', 
+    icon: Scan, 
+    label: 'Idescan',
+    highlight: true
   },
   { 
     to: '/categories', 
@@ -78,10 +84,11 @@ export default function DesktopSidebar() {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                 isActive 
                   ? "bg-primary/10 text-primary" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                item.highlight && !isActive && "border border-primary/20"
               )}
             >
               <item.icon 
@@ -91,6 +98,11 @@ export default function DesktopSidebar() {
                 )} 
               />
               <span className="font-medium">{item.label}</span>
+              {item.highlight && !isActive && (
+                <span className="ml-auto text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  New
+                </span>
+              )}
               {isActive && (
                 <div className="ml-auto w-1 h-6 bg-primary rounded-full" />
               )}

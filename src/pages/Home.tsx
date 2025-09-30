@@ -1,7 +1,8 @@
-import { Search, User } from 'lucide-react';
+import { Search, User, Scan, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -16,6 +17,41 @@ export default function Home() {
   if (!isMobile) {
     return (
       <div className="space-y-8">
+        {/* Idescan Feature Banner */}
+        <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 shadow-glow">
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Scan className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-xl">Idescan</CardTitle>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                  NEW
+                </span>
+              </div>
+            </div>
+            <CardDescription className="text-base">
+              Shazam for Innovations - Discover similar patents, startups & innovations instantly
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Button 
+                onClick={() => navigate('/idescan')}
+                className="gap-2"
+                size="lg"
+              >
+                <Sparkles className="h-5 w-5" />
+                Try Idescan Now
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Search across global patent databases, startup directories & more
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Ideas Feed */}
         <section>
           <DiscoveryFeed />
@@ -67,6 +103,34 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Idescan Banner */}
+      <div className="px-4 py-4 max-w-md mx-auto">
+        <Card 
+          className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 cursor-pointer hover:shadow-glow transition-all"
+          onClick={() => navigate('/idescan')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                <Scan className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-sm">Idescan</h3>
+                  <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  Find similar innovations instantly
+                </p>
+              </div>
+              <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Ideas Feed */}
       <section className="px-4 pb-8 max-w-md mx-auto">

@@ -95,6 +95,90 @@ export type Database = {
           },
         ]
       }
+      idescan_scans: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          image_url: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          image_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          image_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      innovation_records: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          legal_status: string | null
+          metadata: Json | null
+          owner: string | null
+          patent_number: string | null
+          publication_date: string | null
+          source_type: string
+          source_url: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          legal_status?: string | null
+          metadata?: Json | null
+          owner?: string | null
+          patent_number?: string | null
+          publication_date?: string | null
+          source_type: string
+          source_url?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          legal_status?: string | null
+          metadata?: Json | null
+          owner?: string | null
+          patent_number?: string | null
+          publication_date?: string | null
+          source_type?: string
+          source_url?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       media_comments: {
         Row: {
           content: string
@@ -350,6 +434,57 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: []
+      }
+      scan_results: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_similarity: number | null
+          innovation_id: string
+          metadata_similarity: number | null
+          scan_id: string
+          similarity_score: number
+          similarity_tier: string
+          text_similarity: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_similarity?: number | null
+          innovation_id: string
+          metadata_similarity?: number | null
+          scan_id: string
+          similarity_score: number
+          similarity_tier: string
+          text_similarity?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_similarity?: number | null
+          innovation_id?: string
+          metadata_similarity?: number | null
+          scan_id?: string
+          similarity_score?: number
+          similarity_tier?: string
+          text_similarity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_results_innovation_id_fkey"
+            columns: ["innovation_id"]
+            isOneToOne: false
+            referencedRelation: "innovation_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_results_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "idescan_scans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
