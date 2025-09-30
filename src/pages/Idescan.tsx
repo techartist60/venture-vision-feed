@@ -106,6 +106,15 @@ export default function Idescan() {
         description: "Your innovation scan is being processed...",
       });
 
+      // Trigger processing in background
+      supabase.functions.invoke('process-idescan', {
+        body: { scanId: scan.id }
+      }).then(({ error }) => {
+        if (error) {
+          console.error('Processing error:', error);
+        }
+      });
+
       // Navigate to scan results
       navigate(`/idescan/results/${scan.id}`);
     } catch (error) {

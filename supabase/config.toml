@@ -68,6 +68,9 @@ verify_jwt = true
 [functions.mpesa-callback]
 verify_jwt = false
 
+[functions.process-idescan]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 port = 54328
