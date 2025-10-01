@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { X } from 'lucide-react';
 
 interface ScanData {
   id: string;
@@ -40,6 +41,7 @@ interface ResultData {
     source_url: string | null;
     legal_status: string | null;
     patent_number: string | null;
+    metadata: any;
   };
 }
 
@@ -54,6 +56,7 @@ export default function IdescanResults() {
   const [searchQuery, setSearchQuery] = useState('');
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'score' | 'source'>('score');
+  const [fullscaleMedia, setFullscaleMedia] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -255,7 +258,8 @@ export default function IdescanResults() {
                     <img
                       src={scan.image_url}
                       alt={scan.title}
-                      className="w-32 h-32 object-cover rounded-lg ml-4"
+                      className="w-32 h-32 object-cover rounded-lg ml-4 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setFullscaleMedia(scan.image_url)}
                     />
                   )}
                 </div>
@@ -407,39 +411,53 @@ export default function IdescanResults() {
               <div className="space-y-4">
                 {filteredAndSortedResults.map((result) => (
                   <Card key={result.id} className="hover:shadow-glow transition-all">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            {getSourceIcon(result.innovation_records.source_type)}
-                            <Badge variant="outline" className="text-xs">
-                              {result.innovation_records.source_type}
-                            </Badge>
-                            {result.innovation_records.country && (
-                              <Badge variant="outline" className="text-xs">
-                                {result.innovation_records.country}
-                              </Badge>
-                            )}
-                          </div>
-                          <CardTitle className="text-lg">
-                            {result.innovation_records.title}
-                          </CardTitle>
-                          {result.innovation_records.owner && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              By {result.innovation_records.owner}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <Badge className={`${getSimilarityColor(result.similarity_tier)} text-lg px-3 py-1`}>
-                            {result.similarity_score.toFixed(0)}%
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1 capitalize">
-                            {result.similarity_tier.replace('_', ' ')}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
+                     <CardHeader>
+                       <div className="flex items-start justify-between gap-4">
+                         <div className="flex-1">
+                           <div className="flex items-center gap-2 mb-2">
+                             {getSourceIcon(result.innovation_records.source_type)}
+                             <Badge variant="outline" className="text-xs">
+                               {result.innovation_records.source_type}
+                             </Badge>
+                             {result.innovation_records.country && (
+                               <Badge variant="outline" className="text-xs">
+                                 {result.innovation_records.country}
+                               </Badge>
+                             )}
+                           </div>
+                           <CardTitle className="text-lg">
+                             {result.innovation_records.title}
+                           </CardTitle>
+                           {result.innovation_records.owner && (
+                             <p className="text-sm text-muted-foreground mt-1">
+                               By {result.innovation_records.owner}
+                             </p>
+                           )}
+                         </div>
+                         
+                         {/* Display media thumbnail if available */}
+                         {result.innovation_records.metadata?.thumbnail_url && (
+                           <img
+                             src={result.innovation_records.metadata.thumbnail_url}
+                             alt={result.innovation_records.title}
+                             className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                             onClick={() => setFullscaleMedia(
+                               result.innovation_records.metadata.media_url || 
+                               result.innovation_records.metadata.thumbnail_url
+                             )}
+                           />
+                         )}
+                         
+                         <div className="text-right">
+                           <Badge className={`${getSimilarityColor(result.similarity_tier)} text-lg px-3 py-1`}>
+                             {result.similarity_score.toFixed(0)}%
+                           </Badge>
+                           <p className="text-xs text-muted-foreground mt-1 capitalize">
+                             {result.similarity_tier.replace('_', ' ')}
+                           </p>
+                         </div>
+                       </div>
+                     </CardHeader>
                     <CardContent>
                       {result.innovation_records.description && (
                         <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
@@ -535,6 +553,38 @@ export default function IdescanResults() {
           </div>
         )}
       </div>
+
+      {/* Fullscale Media Viewer Dialog */}
+      {fullscaleMedia && (
+        <Dialog open={!!fullscaleMedia} onOpenChange={() => setFullscaleMedia(null)}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+            <div className="relative w-full h-full flex items-center justify-center bg-black/95">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
+                onClick={() => setFullscaleMedia(null)}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+              {fullscaleMedia.includes('.mp4') || fullscaleMedia.includes('video') ? (
+                <video
+                  src={fullscaleMedia}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[90vh] object-contain"
+                />
+              ) : (
+                <img
+                  src={fullscaleMedia}
+                  alt="Fullscale view"
+                  className="max-w-full max-h-[90vh] object-contain"
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

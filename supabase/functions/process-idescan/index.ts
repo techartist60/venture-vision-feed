@@ -65,11 +65,25 @@ serve(async (req) => {
     const { data: innovations } = await supabaseClient
       .from('innovation_records')
       .select('*')
-      .limit(100);
+      .limit(500); // Increased limit to search more records
 
     const results = [];
     
     for (const innovation of innovations || []) {
+      // Generate embedding if missing
+      if (!innovation.text_embedding && (innovation.title || innovation.description)) {
+        const innovationText = `${innovation.title} ${innovation.description || ''}`;
+        const embedding = generateSimpleEmbedding(innovationText);
+        
+        // Update the innovation record with the embedding
+        await supabaseClient
+          .from('innovation_records')
+          .update({ text_embedding: embedding })
+          .eq('id', innovation.id);
+        
+        innovation.text_embedding = embedding;
+      }
+      
       if (!innovation.text_embedding) continue;
 
       // Calculate text similarity
@@ -113,8 +127,8 @@ serve(async (req) => {
 
       const similarityScore = Math.round(weightedScore);
 
-      // Only store relevant matches (30%+ similarity)
-      if (similarityScore >= 30) {
+      // Only store relevant matches (20%+ similarity) - lowered threshold
+      if (similarityScore >= 20) {
         const tier = calculateTier(similarityScore);
         
         results.push({
