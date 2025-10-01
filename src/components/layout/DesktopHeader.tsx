@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export default function DesktopHeader() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export default function DesktopHeader() {
         {/* Right Actions */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
+          <NotificationBell />
           
           {!user ? (
             <Link to="/auth">

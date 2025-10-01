@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { NotificationBell } from '@/components/NotificationBell';
 import heroImage from '@/assets/hero-innovation.jpg';
 
 export default function Home() {
@@ -75,6 +76,7 @@ export default function Home() {
               <p className="text-sm text-muted-foreground">Discover Innovation</p>
             </div>
             <div className="flex items-center gap-2">
+              <NotificationBell />
               {!user ? (
                 <Link to="/auth">
                   <Button variant="innovation" size="sm">
