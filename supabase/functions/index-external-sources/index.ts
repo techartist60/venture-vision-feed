@@ -32,11 +32,15 @@ serve(async (req) => {
       case 'news':
         indexed = await indexNewsData(supabaseClient);
         break;
+      case 'idestrim':
+        indexed = await indexIdestrimData(supabaseClient);
+        break;
       case 'all':
         const patents = await indexPatentData(supabaseClient);
         const startups = await indexStartupData(supabaseClient);
         const news = await indexNewsData(supabaseClient);
-        indexed = patents + startups + news;
+        const idestrim = await indexIdestrimData(supabaseClient);
+        indexed = patents + startups + news + idestrim;
         break;
       default:
         throw new Error('Invalid source type');
@@ -231,6 +235,101 @@ async function indexNewsData(supabase: any): Promise<number> {
 
   console.log(`Indexed ${sampleNews.length} news items`);
   return sampleNews.length;
+}
+
+async function indexIdestrimData(supabase: any): Promise<number> {
+  console.log('Fetching Idestrim media uploads...');
+  
+  // Fetch all media uploads from Idestrim
+  const { data: mediaUploads, error } = await supabase
+    .from('media_uploads')
+    .select(`
+      id,
+      title,
+      description,
+      media_type,
+      media_url,
+      created_at,
+      profiles!media_uploads_user_id_fkey (
+        full_name,
+        username
+      )
+    `)
+    .limit(100);
+
+  if (error) {
+    console.error('Error fetching media uploads:', error);
+    return 0;
+  }
+
+  if (!mediaUploads || mediaUploads.length === 0) {
+    console.log('No media uploads found');
+    return 0;
+  }
+
+  let indexed = 0;
+
+  for (const media of mediaUploads) {
+    // Extract tags from title and description
+    const tags = extractTags(media.title, media.description);
+    
+    const embedding = generateSimpleEmbedding(
+      `${media.title} ${media.description || ''} ${tags.join(' ')}`
+    );
+
+    const innovationRecord = {
+      title: media.title,
+      description: media.description || '',
+      owner: media.profiles?.full_name || media.profiles?.username || 'Anonymous',
+      country: 'Kenya', // Default for Idestrim content
+      source_type: 'idestrim',
+      source_url: media.media_url,
+      publication_date: media.created_at?.split('T')[0],
+      tags: tags,
+      text_embedding: embedding,
+      metadata: {
+        media_id: media.id,
+        media_type: media.media_type
+      }
+    };
+
+    // Use upsert with metadata to avoid duplicates
+    const { error: insertError } = await supabase
+      .from('innovation_records')
+      .upsert(innovationRecord, { 
+        onConflict: 'source_url',
+        ignoreDuplicates: false 
+      });
+
+    if (!insertError) {
+      indexed++;
+    } else {
+      console.error('Error inserting record:', insertError);
+    }
+  }
+
+  console.log(`Indexed ${indexed} Idestrim media uploads`);
+  return indexed;
+}
+
+function extractTags(title: string, description: string | null): string[] {
+  const text = `${title} ${description || ''}`.toLowerCase();
+  const commonWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+    'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would'
+  ]);
+
+  const words = text
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 3 && !commonWords.has(word));
+
+  // Get unique words
+  const uniqueWords = [...new Set(words)];
+  
+  // Return top 10 most relevant words
+  return uniqueWords.slice(0, 10);
 }
 
 function generateSimpleEmbedding(text: string): number[] {

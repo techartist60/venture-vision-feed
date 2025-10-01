@@ -22,27 +22,35 @@ export default function IdescanDataSources() {
 
   const dataSources = [
     {
+      id: 'idestrim',
+      title: 'Idestrim Database',
+      description: 'All innovations shared by Idestrim community',
+      icon: Database,
+      stats: 'Primary source',
+      color: 'text-primary'
+    },
+    {
       id: 'patents',
       title: 'Patent Databases',
-      description: 'WIPO PATENTSCOPE, USPTO, Espacenet, The Lens',
+      description: 'Sample patents from global databases',
       icon: FileText,
-      stats: 'Global patent records',
+      stats: 'Sample patent data',
       color: 'text-blue-500'
     },
     {
       id: 'startups',
       title: 'Startup Directories',
-      description: 'Crunchbase, AngelList, startup ecosystems',
+      description: 'Sample startup innovation data',
       icon: Building2,
-      stats: 'Startup innovations',
+      stats: 'Sample startup data',
       color: 'text-purple-500'
     },
     {
       id: 'news',
       title: 'Innovation News',
-      description: 'TechCrunch, VentureBeat, Google News',
+      description: 'Sample innovation news articles',
       icon: Newspaper,
-      stats: 'Latest tech news',
+      stats: 'Sample news data',
       color: 'text-orange-500'
     }
   ];
@@ -126,9 +134,9 @@ export default function IdescanDataSources() {
         {/* Overview Card */}
         <Card className="mb-8 shadow-glow">
           <CardHeader>
-            <CardTitle>External Innovation Sources</CardTitle>
+            <CardTitle>Innovation Data Sources</CardTitle>
             <CardDescription>
-              Index data from global patent databases, startup directories, and innovation news to enhance Idescan matching
+              Index data from Idestrim database and external sources to enhance Idescan matching
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -215,11 +223,12 @@ export default function IdescanDataSources() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Patent data is sourced from public patent databases worldwide</li>
-              <li>• Startup information comes from verified business directories</li>
-              <li>• News articles are aggregated from trusted technology publications</li>
+              <li>• <strong>Idestrim Database</strong>: Real innovations from community members (primary source)</li>
+              <li>• <strong>Patent data</strong>: Sample data from public patent databases</li>
+              <li>• <strong>Startup information</strong>: Sample data from business directories</li>
+              <li>• <strong>News articles</strong>: Sample innovation news from tech publications</li>
               <li>• All data is indexed with AI embeddings for semantic similarity matching</li>
-              <li>• Indexing runs automatically but can be manually triggered for updates</li>
+              <li>• Index regularly to keep the database up-to-date with latest Idestrim content</li>
             </ul>
           </CardContent>
         </Card>
