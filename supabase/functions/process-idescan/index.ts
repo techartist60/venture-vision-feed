@@ -72,16 +72,49 @@ serve(async (req) => {
     for (const innovation of innovations || []) {
       if (!innovation.text_embedding) continue;
 
-      // Calculate cosine similarity
+      // Calculate text similarity
       const textSim = calculateCosineSimilarity(
         textEmbedding,
         innovation.text_embedding
       );
 
-      // Calculate weighted score (text only for now)
-      const similarityScore = Math.round(textSim * 100);
+      // Calculate metadata similarity
+      const metadataSim = calculateMetadataSimilarity(
+        {
+          title: scan.title,
+          description: scan.description,
+          tags: extractKeywords(scan.description)
+        },
+        {
+          title: innovation.title,
+          description: innovation.description,
+          tags: innovation.tags || []
+        }
+      );
 
-      if (similarityScore >= 30) { // Only store relevant matches
+      // Image similarity (placeholder for now, would use CLIP embeddings in production)
+      let imageSim = 0;
+      if (scan.image_url && innovation.image_embedding) {
+        imageSim = 0.5; // Placeholder - would calculate actual image similarity
+      }
+
+      // Calculate weighted similarity score
+      // Weights: 50% text, 40% image (if available), 10% metadata
+      const hasImage = scan.image_url && innovation.image_embedding;
+      const textWeight = hasImage ? 0.5 : 0.6;
+      const imageWeight = hasImage ? 0.4 : 0;
+      const metadataWeight = hasImage ? 0.1 : 0.4;
+
+      const weightedScore = (
+        textSim * textWeight +
+        imageSim * imageWeight +
+        metadataSim * metadataWeight
+      ) * 100;
+
+      const similarityScore = Math.round(weightedScore);
+
+      // Only store relevant matches (30%+ similarity)
+      if (similarityScore >= 30) {
         const tier = calculateTier(similarityScore);
         
         results.push({
@@ -89,10 +122,15 @@ serve(async (req) => {
           innovation_id: innovation.id,
           similarity_score: similarityScore,
           similarity_tier: tier,
-          text_similarity: similarityScore,
+          text_similarity: Math.round(textSim * 100),
+          image_similarity: hasImage ? Math.round(imageSim * 100) : null,
+          metadata_similarity: Math.round(metadataSim * 100),
         });
       }
     }
+
+    // Sort by similarity score
+    results.sort((a, b) => b.similarity_score - a.similarity_score);
 
     // Store results
     if (results.length > 0) {
@@ -208,7 +246,106 @@ function calculateCosineSimilarity(a: number[], b: number[]): number {
     normB += b[i] * b[i];
   }
   
+  if (normA === 0 || normB === 0) return 0;
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function calculateMetadataSimilarity(
+  scan: { title: string; description: string; tags: string[] },
+  innovation: { title: string; description: string; tags: string[] }
+): number {
+  let score = 0;
+  let factors = 0;
+
+  // Title similarity (Jaccard similarity on words)
+  const titleSim = calculateJaccardSimilarity(
+    scan.title.toLowerCase().split(/\s+/),
+    innovation.title.toLowerCase().split(/\s+/)
+  );
+  score += titleSim;
+  factors++;
+
+  // Tag overlap
+  if (scan.tags.length > 0 && innovation.tags.length > 0) {
+    const tagSim = calculateJaccardSimilarity(
+      scan.tags.map(t => t.toLowerCase()),
+      innovation.tags.map(t => t.toLowerCase())
+    );
+    score += tagSim * 2; // Give tags higher weight
+    factors += 2;
+  }
+
+  // Domain/category matching
+  const scanDomain = inferDomain(scan.description);
+  const innovationDomain = inferDomain(innovation.description);
+  if (scanDomain === innovationDomain && scanDomain !== 'general') {
+    score += 1;
+    factors++;
+  }
+
+  return factors > 0 ? score / factors : 0;
+}
+
+function calculateJaccardSimilarity(set1: string[], set2: string[]): number {
+  const s1 = new Set(set1.filter(w => w.length > 2)); // Filter short words
+  const s2 = new Set(set2.filter(w => w.length > 2));
+  
+  if (s1.size === 0 && s2.size === 0) return 0;
+  
+  const intersection = new Set([...s1].filter(x => s2.has(x)));
+  const union = new Set([...s1, ...s2]);
+  
+  return intersection.size / union.size;
+}
+
+function inferDomain(text: string): string {
+  const lower = text.toLowerCase();
+  
+  const domains = {
+    healthcare: ['health', 'medical', 'diagnosis', 'patient', 'disease', 'treatment'],
+    energy: ['energy', 'solar', 'battery', 'renewable', 'power', 'electric'],
+    agriculture: ['farm', 'crop', 'agriculture', 'food', 'harvest', 'soil'],
+    technology: ['ai', 'machine learning', 'software', 'algorithm', 'data', 'computing'],
+    environment: ['environmental', 'sustainable', 'eco', 'green', 'climate', 'pollution'],
+    transportation: ['vehicle', 'transport', 'automotive', 'drone', 'delivery', 'logistics'],
+    manufacturing: ['manufacturing', 'production', 'factory', 'industrial', 'process'],
+    education: ['education', 'learning', 'teaching', 'student', 'school', 'training']
+  };
+
+  for (const [domain, keywords] of Object.entries(domains)) {
+    if (keywords.some(keyword => lower.includes(keyword))) {
+      return domain;
+    }
+  }
+
+  return 'general';
+}
+
+function extractKeywords(text: string): string[] {
+  // Remove common stop words and extract meaningful keywords
+  const stopWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+    'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those'
+  ]);
+
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 3 && !stopWords.has(word));
+
+  // Count word frequency
+  const wordCount = new Map<string, number>();
+  words.forEach(word => {
+    wordCount.set(word, (wordCount.get(word) || 0) + 1);
+  });
+
+  // Get top keywords by frequency
+  return Array.from(wordCount.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([word]) => word);
 }
 
 function calculateTier(score: number): string {

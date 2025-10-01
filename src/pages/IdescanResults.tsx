@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { SimilarityExplainer } from '@/components/SimilarityExplainer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ScanData {
   id: string;
@@ -137,6 +139,19 @@ export default function IdescanResults() {
             </Button>
             <TrendingUp className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">Scan Results</h1>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>How Similarity Scoring Works</DialogTitle>
+                </DialogHeader>
+                <SimilarityExplainer />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
@@ -301,13 +316,67 @@ export default function IdescanResults() {
                         </p>
                       )}
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-4 text-xs text-muted-foreground">
-                          {result.text_similarity && (
-                            <div>Text: {result.text_similarity.toFixed(0)}%</div>
+                      {/* Similarity Breakdown */}
+                      <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+                        <div className="text-xs font-medium text-muted-foreground mb-2">
+                          Similarity Breakdown
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="flex flex-col">
+                            <span className="text-muted-foreground">Text</span>
+                            <div className="flex items-center gap-1">
+                              <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-blue-500" 
+                                  style={{ width: `${result.text_similarity || 0}%` }}
+                                />
+                              </div>
+                              <span className="font-medium w-10 text-right">
+                                {result.text_similarity?.toFixed(0) || 0}%
+                              </span>
+                            </div>
+                          </div>
+                          {result.image_similarity !== null && (
+                            <div className="flex flex-col">
+                              <span className="text-muted-foreground">Image</span>
+                              <div className="flex items-center gap-1">
+                                <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-purple-500" 
+                                    style={{ width: `${result.image_similarity || 0}%` }}
+                                  />
+                                </div>
+                                <span className="font-medium w-10 text-right">
+                                  {result.image_similarity?.toFixed(0) || 0}%
+                                </span>
+                              </div>
+                            </div>
                           )}
-                          {result.image_similarity && (
-                            <div>Image: {result.image_similarity.toFixed(0)}%</div>
+                          {result.metadata_similarity !== null && (
+                            <div className="flex flex-col">
+                              <span className="text-muted-foreground">Metadata</span>
+                              <div className="flex items-center gap-1">
+                                <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-green-500" 
+                                    style={{ width: `${result.metadata_similarity || 0}%` }}
+                                  />
+                                </div>
+                                <span className="font-medium w-10 text-right">
+                                  {result.metadata_similarity?.toFixed(0) || 0}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-4 text-xs">
+                          {result.innovation_records.patent_number && (
+                            <Badge variant="outline" className="text-xs">
+                              {result.innovation_records.patent_number}
+                            </Badge>
                           )}
                           {result.innovation_records.legal_status && (
                             <Badge variant="outline" className="text-xs">
