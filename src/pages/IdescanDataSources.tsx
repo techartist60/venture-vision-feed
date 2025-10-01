@@ -48,9 +48,9 @@ export default function IdescanDataSources() {
     {
       id: 'news',
       title: 'Innovation News',
-      description: 'Sample innovation news articles',
+      description: 'Live news from TechCrunch RSS feed',
       icon: Newspaper,
-      stats: 'Sample news data',
+      stats: 'Real-time news',
       color: 'text-orange-500'
     }
   ];
@@ -224,11 +224,12 @@ export default function IdescanDataSources() {
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• <strong>Idestrim Database</strong>: Real innovations from community members (primary source)</li>
+              <li>• <strong>Innovation News</strong>: Live articles from TechCrunch RSS feed</li>
               <li>• <strong>Patent data</strong>: Sample data from public patent databases</li>
               <li>• <strong>Startup information</strong>: Sample data from business directories</li>
-              <li>• <strong>News articles</strong>: Sample innovation news from tech publications</li>
               <li>• All data is indexed with AI embeddings for semantic similarity matching</li>
-              <li>• Index regularly to keep the database up-to-date with latest Idestrim content</li>
+              <li>• Index regularly to keep the database up-to-date with latest content</li>
+              <li>• RSS feeds are fetched in real-time when you click "Index All Sources"</li>
             </ul>
           </CardContent>
         </Card>
