@@ -22,6 +22,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Idescan from "./pages/Idescan";
 import IdescanHistory from "./pages/IdescanHistory";
 import IdescanResults from "./pages/IdescanResults";
+import IdescanDataSources from "./pages/IdescanDataSources";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/idescan" element={<Idescan />} />
               <Route path="/idescan/history" element={<ProtectedRoute><IdescanHistory /></ProtectedRoute>} />
               <Route path="/idescan/results/:scanId" element={<ProtectedRoute><IdescanResults /></ProtectedRoute>} />
+              <Route path="/idescan/sources" element={<IdescanDataSources />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />

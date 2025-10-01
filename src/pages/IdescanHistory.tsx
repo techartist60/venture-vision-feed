@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2 } from 'lucide-react';
+import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Database, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -125,6 +125,24 @@ export default function IdescanHistory() {
               </Button>
               <Clock className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-bold">Scan History</h1>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/idescan/sources')}
+              >
+                <Database className="h-4 w-4 mr-2" />
+                Sources
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate('/idescan')}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Scan
+              </Button>
             </div>
           </div>
         </div>
