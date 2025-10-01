@@ -119,12 +119,22 @@ async function indexPatentData(supabase: any): Promise<number> {
       `${patent.title} ${patent.description} ${patent.tags.join(' ')}`
     );
 
-    await supabase
+    // Check if already exists
+    const { data: existing } = await supabase
       .from('innovation_records')
-      .upsert({
-        ...patent,
-        text_embedding: embedding,
-      }, { onConflict: 'patent_number' });
+      .select('id')
+      .eq('source_type', 'patent')
+      .eq('title', patent.title)
+      .single();
+
+    if (!existing) {
+      await supabase
+        .from('innovation_records')
+        .insert({
+          ...patent,
+          text_embedding: embedding,
+        });
+    }
   }
 
   console.log(`Indexed ${samplePatents.length} patents`);
@@ -217,14 +227,20 @@ async function indexNewsData(supabase: any): Promise<number> {
         text_embedding: embedding,
       };
 
-      const { error } = await supabase
+      // Check if already exists by source_url
+      const { data: existing } = await supabase
         .from('innovation_records')
-        .upsert(newsRecord, { 
-          onConflict: 'source_url',
-          ignoreDuplicates: false 
-        });
+        .select('id')
+        .eq('source_url', newsRecord.source_url)
+        .single();
 
-      if (!error) indexed++;
+      if (!existing) {
+        const { error } = await supabase
+          .from('innovation_records')
+          .insert(newsRecord);
+
+        if (!error) indexed++;
+      }
     }
 
     console.log(`Indexed ${indexed} news items from TechCrunch`);
@@ -380,18 +396,23 @@ async function indexIdestrimData(supabase: any): Promise<number> {
       }
     };
 
-    // Use upsert with metadata to avoid duplicates
-    const { error: insertError } = await supabase
+    // Check if already exists by source_url
+    const { data: existing } = await supabase
       .from('innovation_records')
-      .upsert(innovationRecord, { 
-        onConflict: 'source_url',
-        ignoreDuplicates: false 
-      });
+      .select('id')
+      .eq('source_url', innovationRecord.source_url)
+      .single();
 
-    if (!insertError) {
-      indexed++;
-    } else {
-      console.error('Error inserting record:', insertError);
+    if (!existing) {
+      const { error: insertError } = await supabase
+        .from('innovation_records')
+        .insert(innovationRecord);
+
+      if (!insertError) {
+        indexed++;
+      } else {
+        console.error('Error inserting record:', insertError);
+      }
     }
   }
 

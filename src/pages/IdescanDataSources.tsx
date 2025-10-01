@@ -1,30 +1,25 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   ArrowLeft, 
   Database, 
   Building2, 
   Newspaper, 
-  RefreshCw,
   CheckCircle2,
-  FileText
+  FileText,
+  Zap
 } from 'lucide-react';
 
 export default function IdescanDataSources() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [indexing, setIndexing] = useState<Record<string, boolean>>({});
 
   const dataSources = [
     {
       id: 'idestrim',
       title: 'Idestrim Database',
-      description: 'All innovations shared by Idestrim community',
+      description: 'All innovations shared by Idestrim community members',
       icon: Database,
       stats: 'Primary source',
       color: 'text-primary'
@@ -32,80 +27,28 @@ export default function IdescanDataSources() {
     {
       id: 'patents',
       title: 'Patent Databases',
-      description: 'Sample patents from global databases',
+      description: 'Sample patents from global patent databases',
       icon: FileText,
-      stats: 'Sample patent data',
+      stats: 'Sample data',
       color: 'text-blue-500'
     },
     {
       id: 'startups',
       title: 'Startup Directories',
-      description: 'Sample startup innovation data',
+      description: 'Sample startup innovation data from directories',
       icon: Building2,
-      stats: 'Sample startup data',
+      stats: 'Sample data',
       color: 'text-purple-500'
     },
     {
       id: 'news',
       title: 'Innovation News',
-      description: 'Live news from TechCrunch RSS feed',
+      description: 'Live tech news from TechCrunch RSS feed',
       icon: Newspaper,
-      stats: 'Real-time news',
+      stats: 'Real-time feed',
       color: 'text-orange-500'
     }
   ];
-
-  const handleIndexSource = async (sourceType: string) => {
-    setIndexing(prev => ({ ...prev, [sourceType]: true }));
-
-    try {
-      const { data, error } = await supabase.functions.invoke('index-external-sources', {
-        body: { sourceType }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: data.message || `Indexed ${sourceType} successfully`,
-      });
-    } catch (error) {
-      console.error('Error indexing source:', error);
-      toast({
-        title: "Error",
-        description: `Failed to index ${sourceType}`,
-        variant: "destructive",
-      });
-    } finally {
-      setIndexing(prev => ({ ...prev, [sourceType]: false }));
-    }
-  };
-
-  const handleIndexAll = async () => {
-    setIndexing({ all: true });
-
-    try {
-      const { data, error } = await supabase.functions.invoke('index-external-sources', {
-        body: { sourceType: 'all' }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: data.message || "Indexed all sources successfully",
-      });
-    } catch (error) {
-      console.error('Error indexing all sources:', error);
-      toast({
-        title: "Error",
-        description: "Failed to index all sources",
-        variant: "destructive",
-      });
-    } finally {
-      setIndexing({ all: false });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-discovery pb-20">
@@ -132,80 +75,41 @@ export default function IdescanDataSources() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Overview Card */}
-        <Card className="mb-8 shadow-glow">
+        <Card className="mb-8 shadow-glow border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle>Innovation Data Sources</CardTitle>
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="h-6 w-6 text-primary" />
+              <CardTitle>Automatic Source Scanning</CardTitle>
+            </div>
             <CardDescription>
-              Index data from Idestrim database and external sources to enhance Idescan matching
+              Idescan automatically searches across all these sources when you scan your innovation. No manual indexing needed!
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button 
-              onClick={handleIndexAll}
-              disabled={indexing.all}
-              className="w-full gap-2"
-              size="lg"
-            >
-              {indexing.all ? (
-                <>
-                  <RefreshCw className="h-5 w-5 animate-spin" />
-                  Indexing All Sources...
-                </>
-              ) : (
-                <>
-                  <Database className="h-5 w-5" />
-                  Index All Sources
-                </>
-              )}
-            </Button>
-          </CardContent>
         </Card>
 
         {/* Individual Sources */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Available Sources</h2>
+          <h2 className="text-lg font-semibold">Data Sources Overview</h2>
           
           {dataSources.map((source) => {
             const Icon = source.icon;
-            const isIndexing = indexing[source.id];
 
             return (
               <Card key={source.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg bg-muted ${source.color}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{source.title}</CardTitle>
-                        <CardDescription className="mt-1">
-                          {source.description}
-                        </CardDescription>
-                        <Badge variant="outline" className="mt-2">
-                          {source.stats}
-                        </Badge>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg bg-muted ${source.color}`}>
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <Button
-                      onClick={() => handleIndexSource(source.id)}
-                      disabled={isIndexing}
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      {isIndexing ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                          Indexing...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="h-4 w-4" />
-                          Index
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{source.title}</CardTitle>
+                      <CardDescription className="mt-1">
+                        {source.description}
+                      </CardDescription>
+                      <Badge variant="outline" className="mt-2">
+                        {source.stats}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -218,18 +122,18 @@ export default function IdescanDataSources() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">About Data Sources</CardTitle>
+              <CardTitle className="text-base">How It Works</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• <strong>Idestrim Database</strong>: Real innovations from community members (primary source)</li>
-              <li>• <strong>Innovation News</strong>: Live articles from TechCrunch RSS feed</li>
-              <li>• <strong>Patent data</strong>: Sample data from public patent databases</li>
-              <li>• <strong>Startup information</strong>: Sample data from business directories</li>
-              <li>• All data is indexed with AI embeddings for semantic similarity matching</li>
-              <li>• Index regularly to keep the database up-to-date with latest content</li>
-              <li>• RSS feeds are fetched in real-time when you click "Index All Sources"</li>
+              <li>• When you upload an innovation, Idescan automatically searches all these sources</li>
+              <li>• <strong>Idestrim Database</strong>: Real innovations from your community members</li>
+              <li>• <strong>Innovation News</strong>: Latest tech articles from TechCrunch RSS feed</li>
+              <li>• <strong>Patents</strong>: Sample patent data to demonstrate matching capabilities</li>
+              <li>• <strong>Startups</strong>: Sample startup data to show similar innovations</li>
+              <li>• AI embeddings enable semantic similarity matching for accurate results</li>
+              <li>• Results are filtered by similarity tier: Exact, High, Moderate, or Low</li>
             </ul>
           </CardContent>
         </Card>
