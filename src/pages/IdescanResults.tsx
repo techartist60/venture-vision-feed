@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { SimilarityExplainer } from '@/components/SimilarityExplainer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ScanData {
   id: string;
@@ -48,6 +51,9 @@ export default function IdescanResults() {
   const [scan, setScan] = useState<ScanData | null>(null);
   const [results, setResults] = useState<ResultData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [tierFilter, setTierFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'score' | 'source'>('score');
 
   useEffect(() => {
     if (!user) {
@@ -122,6 +128,66 @@ export default function IdescanResults() {
       default:
         return <Lightbulb className="h-4 w-4" />;
     }
+  };
+
+  const filteredAndSortedResults = useMemo(() => {
+    let filtered = results;
+
+    // Filter by tier
+    if (tierFilter !== 'all') {
+      filtered = filtered.filter(r => r.similarity_tier === tierFilter);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(r => 
+        r.innovation_records.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.innovation_records.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.innovation_records.owner?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Sort
+    const sorted = [...filtered];
+    if (sortBy === 'score') {
+      sorted.sort((a, b) => b.similarity_score - a.similarity_score);
+    } else if (sortBy === 'source') {
+      sorted.sort((a, b) => a.innovation_records.source_type.localeCompare(b.innovation_records.source_type));
+    }
+
+    return sorted;
+  }, [results, tierFilter, searchQuery, sortBy]);
+
+  const exportToCSV = () => {
+    const headers = ['Title', 'Source Type', 'Similarity Score', 'Tier', 'Owner', 'Country', 'Patent Number', 'Source URL'];
+    const rows = filteredAndSortedResults.map(r => [
+      r.innovation_records.title,
+      r.innovation_records.source_type,
+      r.similarity_score.toFixed(1),
+      r.similarity_tier,
+      r.innovation_records.owner || '',
+      r.innovation_records.country || '',
+      r.innovation_records.patent_number || '',
+      r.innovation_records.source_url || ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `idescan-results-${scan?.title || 'export'}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export successful",
+      description: "Results exported to CSV",
+    });
   };
 
   return (
@@ -209,14 +275,21 @@ export default function IdescanResults() {
               </CardContent>
             </Card>
 
-            {/* Results Summary */}
+            {/* Filters and Controls */}
             {results.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Found {results.length} Similar Innovations</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Found {results.length} Similar Innovations</CardTitle>
+                    <Button variant="outline" size="sm" onClick={exportToCSV}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-4 text-center">
+                <CardContent className="space-y-4">
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-4 gap-4 text-center mb-4">
                     <div>
                       <div className="text-2xl font-bold text-red-500">
                         {results.filter(r => r.similarity_tier === 'near_duplicate').length}
@@ -241,6 +314,48 @@ export default function IdescanResults() {
                       </div>
                       <div className="text-xs text-muted-foreground">Distant</div>
                     </div>
+                  </div>
+
+                  {/* Search and Filter Controls */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search results..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                      <SelectTrigger className="w-[180px]">
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="score">Sort by Score</SelectItem>
+                        <SelectItem value="source">Sort by Source</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Tier Filter Tabs */}
+                  <Tabs value={tierFilter} onValueChange={setTierFilter}>
+                    <TabsList className="grid w-full grid-cols-5">
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="near_duplicate">
+                        <span className="hidden sm:inline">Near Dup</span>
+                        <span className="sm:hidden">ND</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="strong">Strong</TabsTrigger>
+                      <TabsTrigger value="related">Related</TabsTrigger>
+                      <TabsTrigger value="distant">Distant</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+
+                  {/* Results Count */}
+                  <div className="text-sm text-muted-foreground text-center">
+                    Showing {filteredAndSortedResults.length} of {results.length} results
                   </div>
                 </CardContent>
               </Card>
@@ -272,9 +387,25 @@ export default function IdescanResults() {
                   </Button>
                 </CardContent>
               </Card>
+            ) : filteredAndSortedResults.length === 0 && results.length > 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Results Match Filters</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Try adjusting your filters or search query
+                  </p>
+                  <Button variant="outline" onClick={() => {
+                    setSearchQuery('');
+                    setTierFilter('all');
+                  }}>
+                    Clear Filters
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-4">
-                {results.map((result) => (
+                {filteredAndSortedResults.map((result) => (
                   <Card key={result.id} className="hover:shadow-glow transition-all">
                     <CardHeader>
                       <div className="flex items-start justify-between">
