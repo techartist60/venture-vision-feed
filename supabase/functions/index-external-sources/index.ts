@@ -352,13 +352,14 @@ async function indexIdestrimData(supabase: any): Promise<number> {
       description,
       media_type,
       media_url,
+      thumbnail_url,
       created_at,
       profiles!media_uploads_user_id_fkey (
         full_name,
         username
       )
     `)
-    .limit(100);
+    .limit(200);
 
   if (error) {
     console.error('Error fetching media uploads:', error);
@@ -386,24 +387,27 @@ async function indexIdestrimData(supabase: any): Promise<number> {
       owner: media.profiles?.full_name || media.profiles?.username || 'Anonymous',
       country: 'Kenya', // Default for Idestrim content
       source_type: 'idestrim',
-      source_url: media.media_url,
+      source_url: `https://gnhimfnwkwhusiggcowq.supabase.co/storage/v1/object/public/media/${media.media_url}`,
       publication_date: media.created_at?.split('T')[0],
       tags: tags,
       text_embedding: embedding,
       metadata: {
         media_id: media.id,
-        media_type: media.media_type
+        media_type: media.media_type,
+        media_url: media.media_url,
+        thumbnail_url: media.thumbnail_url || media.media_url
       }
     };
 
-    // Check if already exists by source_url
+    // Check if already exists by media_id in metadata
     const { data: existing } = await supabase
       .from('innovation_records')
-      .select('id')
-      .eq('source_url', innovationRecord.source_url)
-      .single();
+      .select('id, metadata')
+      .eq('source_type', 'idestrim');
 
-    if (!existing) {
+    const existingMediaIds = existing?.map(r => r.metadata?.media_id).filter(Boolean) || [];
+    
+    if (!existingMediaIds.includes(media.id)) {
       const { error: insertError } = await supabase
         .from('innovation_records')
         .insert(innovationRecord);

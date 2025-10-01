@@ -61,29 +61,46 @@ serve(async (req) => {
       .update({ text_embedding: textEmbedding })
       .eq('id', scanId);
 
-    // Search for similar innovations
+    // Check if we have enough innovation records to compare against
+    const { count } = await supabaseClient
+      .from('innovation_records')
+      .select('*', { count: 'exact', head: true });
+
+    console.log(`Found ${count} innovation records in database`);
+
+    // If we have less than 20 records, trigger auto-indexing
+    if (!count || count < 20) {
+      console.log('Auto-indexing data sources...');
+      
+      try {
+        // Index all sources
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/index-external-sources`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          },
+          body: JSON.stringify({ sourceType: 'all' })
+        });
+        
+        console.log('Auto-indexing completed');
+      } catch (indexError) {
+        console.error('Auto-indexing failed:', indexError);
+      }
+    }
+
+    // Search for similar innovations - get ALL records with embeddings
     const { data: innovations } = await supabaseClient
       .from('innovation_records')
       .select('*')
-      .limit(500); // Increased limit to search more records
+      .not('text_embedding', 'is', null)
+      .limit(1000);
+
+    console.log(`Comparing against ${innovations?.length || 0} innovations`);
 
     const results = [];
     
     for (const innovation of innovations || []) {
-      // Generate embedding if missing
-      if (!innovation.text_embedding && (innovation.title || innovation.description)) {
-        const innovationText = `${innovation.title} ${innovation.description || ''}`;
-        const embedding = generateSimpleEmbedding(innovationText);
-        
-        // Update the innovation record with the embedding
-        await supabaseClient
-          .from('innovation_records')
-          .update({ text_embedding: embedding })
-          .eq('id', innovation.id);
-        
-        innovation.text_embedding = embedding;
-      }
-      
       if (!innovation.text_embedding) continue;
 
       // Calculate text similarity
@@ -127,8 +144,10 @@ serve(async (req) => {
 
       const similarityScore = Math.round(weightedScore);
 
-      // Only store relevant matches (20%+ similarity) - lowered threshold
-      if (similarityScore >= 20) {
+      console.log(`Innovation "${innovation.title.substring(0, 50)}" - Score: ${similarityScore}%, Text: ${Math.round(textSim * 100)}%, Metadata: ${Math.round(metadataSim * 100)}%`);
+
+      // Only store relevant matches (15%+ similarity) - lowered threshold further
+      if (similarityScore >= 15) {
         const tier = calculateTier(similarityScore);
         
         results.push({

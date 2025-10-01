@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ export default function Idescan() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [signupPrompt, setSignupPrompt] = useState(false);
+  const [indexingData, setIndexingData] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -24,6 +25,34 @@ export default function Idescan() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+
+  // Auto-index data sources on component mount
+  useEffect(() => {
+    const indexDataSources = async () => {
+      try {
+        setIndexingData(true);
+        
+        // Check if we need to index
+        const { count } = await supabase
+          .from('innovation_records')
+          .select('*', { count: 'exact', head: true });
+
+        // Index if we have less than 50 records
+        if (!count || count < 50) {
+          console.log('Auto-indexing innovation sources...');
+          await supabase.functions.invoke('index-external-sources', {
+            body: { sourceType: 'all' }
+          });
+        }
+      } catch (error) {
+        console.error('Error checking/indexing data:', error);
+      } finally {
+        setIndexingData(false);
+      }
+    };
+
+    indexDataSources();
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -252,9 +281,14 @@ export default function Idescan() {
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={loading}
+                disabled={loading || indexingData}
               >
-                {loading ? (
+                {indexingData ? (
+                  <>
+                    <Upload className="mr-2 h-5 w-5 animate-spin" />
+                    Preparing Databases...
+                  </>
+                ) : loading ? (
                   <>
                     <Upload className="mr-2 h-5 w-5 animate-spin" />
                     Processing Scan...
