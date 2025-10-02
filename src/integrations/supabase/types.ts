@@ -131,6 +131,7 @@ export type Database = {
           id: string
           image_embedding: string | null
           image_url: string | null
+          metadata: Json | null
           status: string
           text_embedding: string | null
           title: string
@@ -143,6 +144,7 @@ export type Database = {
           id?: string
           image_embedding?: string | null
           image_url?: string | null
+          metadata?: Json | null
           status?: string
           text_embedding?: string | null
           title: string
@@ -155,6 +157,7 @@ export type Database = {
           id?: string
           image_embedding?: string | null
           image_url?: string | null
+          metadata?: Json | null
           status?: string
           text_embedding?: string | null
           title?: string

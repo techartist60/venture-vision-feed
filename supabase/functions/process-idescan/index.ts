@@ -109,8 +109,8 @@ serve(async (req) => {
         innovation.text_embedding
       );
 
-      // Calculate metadata similarity
-      const metadataSim = calculateMetadataSimilarity(
+      // Calculate enhanced metadata similarity
+      const metadataSim = calculateEnhancedMetadataSimilarity(
         {
           title: scan.title,
           description: scan.description,
@@ -123,14 +123,13 @@ serve(async (req) => {
         }
       );
 
-      // Image similarity (placeholder for now, would use CLIP embeddings in production)
+      // Image similarity (placeholder)
       let imageSim = 0;
       if (scan.image_url && innovation.image_embedding) {
-        imageSim = 0.5; // Placeholder - would calculate actual image similarity
+        imageSim = 0.5;
       }
 
       // Calculate weighted similarity score
-      // Weights: 50% text, 40% image (if available), 10% metadata
       const hasImage = scan.image_url && innovation.image_embedding;
       const textWeight = hasImage ? 0.5 : 0.6;
       const imageWeight = hasImage ? 0.4 : 0;
@@ -142,11 +141,10 @@ serve(async (req) => {
         metadataSim * metadataWeight
       ) * 100;
 
-      const similarityScore = Math.round(weightedScore);
+      const similarityScore = Math.round(weightedScore * 100) / 100; // 2 decimal places
 
       console.log(`Innovation "${innovation.title.substring(0, 50)}" - Score: ${similarityScore}%, Text: ${Math.round(textSim * 100)}%, Metadata: ${Math.round(metadataSim * 100)}%`);
 
-      // Only store relevant matches (15%+ similarity) - lowered threshold further
       if (similarityScore >= 15) {
         const tier = calculateTier(similarityScore);
         
@@ -155,21 +153,45 @@ serve(async (req) => {
           innovation_id: innovation.id,
           similarity_score: similarityScore,
           similarity_tier: tier,
-          text_similarity: Math.round(textSim * 100),
-          image_similarity: hasImage ? Math.round(imageSim * 100) : null,
-          metadata_similarity: Math.round(metadataSim * 100),
+          text_similarity: Math.round(textSim * 10000) / 100, // As percentage
+          image_similarity: hasImage ? Math.round(imageSim * 10000) / 100 : null,
+          metadata_similarity: Math.round(metadataSim * 10000) / 100,
+          innovation_data: innovation // Store for clustering
         });
       }
     }
 
-    // Sort by similarity score
+    // Sort by similarity score descending
     results.sort((a, b) => b.similarity_score - a.similarity_score);
 
-    // Store results
+    // Perform clustering on results
+    const clusteredData = performClustering(results);
+    
+    console.log(`Found ${results.length} similar innovations in ${clusteredData.clusters.length} clusters`);
+
+    // Store results with clean data (remove innovation_data before inserting)
     if (results.length > 0) {
+      const cleanResults = results.map(r => ({
+        scan_id: r.scan_id,
+        innovation_id: r.innovation_id,
+        similarity_score: r.similarity_score,
+        similarity_tier: r.similarity_tier,
+        text_similarity: r.text_similarity,
+        image_similarity: r.image_similarity,
+        metadata_similarity: r.metadata_similarity
+      }));
+
       await supabaseClient
         .from('scan_results')
-        .insert(results);
+        .insert(cleanResults);
+
+      // Store cluster information in scan metadata
+      await supabaseClient
+        .from('idescan_scans')
+        .update({
+          metadata: clusteredData
+        })
+        .eq('id', scanId);
     }
 
     // Update scan status to completed
@@ -283,28 +305,34 @@ function calculateCosineSimilarity(a: number[], b: number[]): number {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function calculateMetadataSimilarity(
+function calculateEnhancedMetadataSimilarity(
   scan: { title: string; description: string; tags: string[] },
   innovation: { title: string; description: string; tags: string[] }
 ): number {
   let score = 0;
   let factors = 0;
 
-  // Title similarity (Jaccard similarity on words)
-  const titleSim = calculateJaccardSimilarity(
-    scan.title.toLowerCase().split(/\s+/),
-    innovation.title.toLowerCase().split(/\s+/)
-  );
-  score += titleSim;
+  // Title similarity with higher weight
+  const scanTitleWords = scan.title.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const innovationTitleWords = innovation.title.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const titleSim = calculateJaccardSimilarity(scanTitleWords, innovationTitleWords);
+  score += titleSim * 1.5;
+  factors += 1.5;
+
+  // Description keyword overlap
+  const scanKeywords = extractKeywords(scan.description).slice(0, 15);
+  const innovationKeywords = extractKeywords(innovation.description).slice(0, 15);
+  const descSim = calculateJaccardSimilarity(scanKeywords, innovationKeywords);
+  score += descSim;
   factors++;
 
-  // Tag overlap
+  // Tag overlap with high weight
   if (scan.tags.length > 0 && innovation.tags.length > 0) {
     const tagSim = calculateJaccardSimilarity(
       scan.tags.map(t => t.toLowerCase()),
       innovation.tags.map(t => t.toLowerCase())
     );
-    score += tagSim * 2; // Give tags higher weight
+    score += tagSim * 2;
     factors += 2;
   }
 
@@ -317,6 +345,63 @@ function calculateMetadataSimilarity(
   }
 
   return factors > 0 ? score / factors : 0;
+}
+
+function performClustering(results: any[]): any {
+  if (results.length === 0) return { clusters: [], summary: {} };
+
+  const clusters: any[] = [];
+  const used = new Set<number>();
+
+  // Group by similarity score ranges and related themes
+  for (let i = 0; i < results.length; i++) {
+    if (used.has(i)) continue;
+
+    const cluster: any = {
+      id: clusters.length + 1,
+      lead_innovation: {
+        title: results[i].innovation_data.title,
+        source_type: results[i].innovation_data.source_type,
+        similarity_score: results[i].similarity_score
+      },
+      members: [results[i]],
+      avg_similarity: results[i].similarity_score,
+      tier: results[i].similarity_tier,
+      size: 1
+    };
+
+    used.add(i);
+
+    // Find similar innovations to cluster (within 10% score and same tier)
+    for (let j = i + 1; j < results.length; j++) {
+      if (used.has(j)) continue;
+
+      const scoreDiff = Math.abs(results[i].similarity_score - results[j].similarity_score);
+      if (scoreDiff <= 10 && results[i].similarity_tier === results[j].similarity_tier) {
+        cluster.members.push(results[j]);
+        cluster.size++;
+        cluster.avg_similarity = cluster.members.reduce((sum: number, m: any) => 
+          sum + m.similarity_score, 0) / cluster.members.length;
+        used.add(j);
+      }
+    }
+
+    clusters.push(cluster);
+  }
+
+  // Generate summary statistics
+  const summary = {
+    total_matches: results.length,
+    cluster_count: clusters.length,
+    highest_similarity: results[0]?.similarity_score || 0,
+    avg_cluster_size: results.length / clusters.length,
+    tier_distribution: results.reduce((acc: any, r: any) => {
+      acc[r.similarity_tier] = (acc[r.similarity_tier] || 0) + 1;
+      return acc;
+    }, {})
+  };
+
+  return { clusters, summary };
 }
 
 function calculateJaccardSimilarity(set1: string[], set2: string[]): number {

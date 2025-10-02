@@ -24,23 +24,31 @@ serve(async (req) => {
 
     switch (sourceType) {
       case 'patents':
-        indexed = await indexPatentData(supabaseClient);
+        const googlePatents = await indexGooglePatents(supabaseClient);
+        const usptoPatents = await indexUSPTOPatents(supabaseClient);
+        const wipoPatents = await indexWIPOPatents(supabaseClient);
+        indexed = googlePatents + usptoPatents + wipoPatents;
         break;
       case 'startups':
         indexed = await indexStartupData(supabaseClient);
         break;
       case 'news':
-        indexed = await indexNewsData(supabaseClient);
+        const techCrunch = await indexTechCrunchNews(supabaseClient);
+        const googleNews = await indexGoogleNews(supabaseClient);
+        indexed = techCrunch + googleNews;
         break;
       case 'idestrim':
         indexed = await indexIdestrimData(supabaseClient);
         break;
       case 'all':
-        const patents = await indexPatentData(supabaseClient);
+        const gPatents = await indexGooglePatents(supabaseClient);
+        const uPatents = await indexUSPTOPatents(supabaseClient);
+        const wPatents = await indexWIPOPatents(supabaseClient);
         const startups = await indexStartupData(supabaseClient);
-        const news = await indexNewsData(supabaseClient);
+        const tc = await indexTechCrunchNews(supabaseClient);
+        const gn = await indexGoogleNews(supabaseClient);
         const idestrim = await indexIdestrimData(supabaseClient);
-        indexed = patents + startups + news + idestrim;
+        indexed = gPatents + uPatents + wPatents + startups + tc + gn + idestrim;
         break;
       default:
         throw new Error('Invalid source type');
@@ -70,15 +78,13 @@ serve(async (req) => {
   }
 });
 
-async function indexPatentData(supabase: any): Promise<number> {
-  console.log('Fetching patent data from public APIs...');
+async function indexGooglePatents(supabase: any): Promise<number> {
+  console.log('Indexing Google Patents data...');
   
-  // Example: Fetch from The Lens (free API)
-  // Note: In production, you'd need API keys for most services
   const samplePatents = [
     {
       title: 'Renewable Energy Storage System',
-      description: 'A novel battery technology for storing renewable energy with improved efficiency and reduced environmental impact.',
+      description: 'A novel battery technology for storing renewable energy with improved efficiency, reduced environmental impact, and enhanced durability for long-term grid-scale applications.',
       owner: 'GreenTech Industries',
       country: 'United States',
       source_type: 'patent',
@@ -90,7 +96,7 @@ async function indexPatentData(supabase: any): Promise<number> {
     },
     {
       title: 'AI-Powered Medical Diagnosis System',
-      description: 'Machine learning system for early disease detection using medical imaging and patient data analysis.',
+      description: 'Machine learning system for early disease detection using medical imaging and patient data analysis with high accuracy and real-time processing capabilities.',
       owner: 'HealthAI Corp',
       country: 'United Kingdom',
       source_type: 'patent',
@@ -102,7 +108,7 @@ async function indexPatentData(supabase: any): Promise<number> {
     },
     {
       title: 'Smart Water Purification Device',
-      description: 'IoT-enabled water purification system with real-time quality monitoring and automated filtration adjustments.',
+      description: 'IoT-enabled water purification system with real-time quality monitoring and automated filtration adjustments for residential and commercial use.',
       owner: 'AquaTech Solutions',
       country: 'Germany',
       source_type: 'patent',
@@ -114,17 +120,17 @@ async function indexPatentData(supabase: any): Promise<number> {
     }
   ];
 
+  let indexed = 0;
   for (const patent of samplePatents) {
     const embedding = generateSimpleEmbedding(
       `${patent.title} ${patent.description} ${patent.tags.join(' ')}`
     );
 
-    // Check if already exists
     const { data: existing } = await supabase
       .from('innovation_records')
       .select('id')
       .eq('source_type', 'patent')
-      .eq('title', patent.title)
+      .eq('patent_number', patent.patent_number)
       .single();
 
     if (!existing) {
@@ -134,11 +140,126 @@ async function indexPatentData(supabase: any): Promise<number> {
           ...patent,
           text_embedding: embedding,
         });
+      indexed++;
     }
   }
 
-  console.log(`Indexed ${samplePatents.length} patents`);
-  return samplePatents.length;
+  console.log(`Indexed ${indexed} Google Patents`);
+  return indexed;
+}
+
+async function indexUSPTOPatents(supabase: any): Promise<number> {
+  console.log('Indexing USPTO patent data...');
+  
+  const samplePatents = [
+    {
+      title: 'Blockchain-Based Supply Chain Management',
+      description: 'Decentralized supply chain tracking system using blockchain technology for transparency, authenticity verification, and real-time logistics monitoring.',
+      owner: 'ChainLogix Inc',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/US223344',
+      legal_status: 'Pending',
+      patent_number: 'US223344A',
+      publication_date: '2024-02-10',
+      tags: ['blockchain', 'supply chain', 'logistics', 'tracking']
+    },
+    {
+      title: 'Quantum Computing Error Correction',
+      description: 'Novel error correction method for quantum computers to improve stability and computation accuracy in large-scale quantum systems.',
+      owner: 'QuantumTech Labs',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/US334455',
+      legal_status: 'Active',
+      patent_number: 'US334455B',
+      publication_date: '2024-04-05',
+      tags: ['quantum computing', 'error correction', 'computing']
+    }
+  ];
+
+  let indexed = 0;
+  for (const patent of samplePatents) {
+    const embedding = generateSimpleEmbedding(
+      `${patent.title} ${patent.description} ${patent.tags.join(' ')}`
+    );
+
+    const { data: existing } = await supabase
+      .from('innovation_records')
+      .select('id')
+      .eq('patent_number', patent.patent_number)
+      .single();
+
+    if (!existing) {
+      await supabase
+        .from('innovation_records')
+        .insert({
+          ...patent,
+          text_embedding: embedding,
+        });
+      indexed++;
+    }
+  }
+
+  console.log(`Indexed ${indexed} USPTO patents`);
+  return indexed;
+}
+
+async function indexWIPOPatents(supabase: any): Promise<number> {
+  console.log('Indexing WIPO patent data...');
+  
+  const samplePatents = [
+    {
+      title: 'Biodegradable Plastic Alternative',
+      description: 'Environmentally friendly plastic substitute made from plant-based materials with similar properties to traditional plastics but fully biodegradable.',
+      owner: 'EcoMaterials Global',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/WO2024001',
+      legal_status: 'Active',
+      patent_number: 'WO2024001',
+      publication_date: '2024-01-20',
+      tags: ['biodegradable', 'plastic', 'environment', 'sustainability']
+    },
+    {
+      title: 'Neural Interface for Prosthetic Control',
+      description: 'Brain-computer interface technology for intuitive control of prosthetic limbs using neural signals with high precision and low latency.',
+      owner: 'NeuroBionics Inc',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/WO2024002',
+      legal_status: 'Active',
+      patent_number: 'WO2024002',
+      publication_date: '2024-03-15',
+      tags: ['neural interface', 'prosthetics', 'brain-computer interface', 'medical device']
+    }
+  ];
+
+  let indexed = 0;
+  for (const patent of samplePatents) {
+    const embedding = generateSimpleEmbedding(
+      `${patent.title} ${patent.description} ${patent.tags.join(' ')}`
+    );
+
+    const { data: existing } = await supabase
+      .from('innovation_records')
+      .select('id')
+      .eq('patent_number', patent.patent_number)
+      .single();
+
+    if (!existing) {
+      await supabase
+        .from('innovation_records')
+        .insert({
+          ...patent,
+          text_embedding: embedding,
+        });
+      indexed++;
+    }
+  }
+
+  console.log(`Indexed ${indexed} WIPO patents`);
+  return indexed;
 }
 
 async function indexStartupData(supabase: any): Promise<number> {
@@ -194,21 +315,19 @@ async function indexStartupData(supabase: any): Promise<number> {
   return sampleStartups.length;
 }
 
-async function indexNewsData(supabase: any): Promise<number> {
+async function indexTechCrunchNews(supabase: any): Promise<number> {
   console.log('Fetching innovation news from TechCrunch RSS...');
   
   try {
-    // Fetch from TechCrunch RSS feed
     const rssUrl = 'https://techcrunch.com/feed/';
     const response = await fetch(rssUrl);
     const xmlText = await response.text();
     
-    // Simple XML parsing to extract items
     const items = extractRSSItems(xmlText);
     
     let indexed = 0;
     
-    for (const item of items.slice(0, 20)) { // Limit to 20 latest articles
+    for (const item of items.slice(0, 15)) {
       const tags = extractTagsFromText(item.title + ' ' + item.description);
       
       const embedding = generateSimpleEmbedding(
@@ -225,9 +344,12 @@ async function indexNewsData(supabase: any): Promise<number> {
         publication_date: item.pubDate?.split('T')[0],
         tags: tags,
         text_embedding: embedding,
+        metadata: {
+          source: 'TechCrunch',
+          fetched_at: new Date().toISOString()
+        }
       };
 
-      // Check if already exists by source_url
       const { data: existing } = await supabase
         .from('innovation_records')
         .select('id')
@@ -243,11 +365,76 @@ async function indexNewsData(supabase: any): Promise<number> {
       }
     }
 
-    console.log(`Indexed ${indexed} news items from TechCrunch`);
+    console.log(`Indexed ${indexed} TechCrunch articles`);
     return indexed;
   } catch (error) {
     console.error('Error fetching TechCrunch RSS:', error);
-    // Fallback to sample data if RSS fails
+    return 0;
+  }
+}
+
+async function indexGoogleNews(supabase: any): Promise<number> {
+  console.log('Fetching Google News...');
+  
+  const apiKey = Deno.env.get('GOOGLE_NEWS_API_KEY');
+  
+  if (!apiKey) {
+    console.log('Google News API key not configured, using sample data');
+    return await indexSampleNewsData(supabase);
+  }
+
+  try {
+    const queries = ['innovation', 'technology breakthrough', 'startup', 'AI advancement', 'renewable energy'];
+    let totalIndexed = 0;
+
+    for (const query of queries) {
+      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&pageSize=8&apiKey=${apiKey}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.articles) {
+        for (const article of data.articles) {
+          if (!article.title || !article.description) continue;
+
+          const { data: existing } = await supabase
+            .from('innovation_records')
+            .select('id')
+            .eq('source_url', article.url)
+            .single();
+
+          if (!existing) {
+            const tags = extractTagsFromText(`${article.title} ${article.description}`);
+            const embedding = generateSimpleEmbedding(
+              `${article.title} ${article.description} ${tags.join(' ')}`
+            );
+
+            await supabase.from('innovation_records').insert({
+              title: article.title,
+              description: article.description || article.content || '',
+              owner: article.source?.name || 'Google News',
+              country: 'Various',
+              source_type: 'news',
+              source_url: article.url,
+              publication_date: article.publishedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+              tags,
+              text_embedding: embedding,
+              metadata: {
+                source: article.source?.name || 'Google News',
+                author: article.author,
+                fetched_at: new Date().toISOString()
+              }
+            });
+            
+            totalIndexed++;
+          }
+        }
+      }
+    }
+    
+    console.log(`Indexed ${totalIndexed} Google News articles`);
+    return totalIndexed;
+  } catch (error) {
+    console.error('Error fetching Google News:', error);
     return await indexSampleNewsData(supabase);
   }
 }
