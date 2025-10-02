@@ -59,6 +59,35 @@ export type Database = {
         }
         Relationships: []
       }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "media_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       followers: {
         Row: {
           created_at: string
@@ -196,6 +225,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          likes_count: number
           media_id: string
           updated_at: string
           user_id: string
@@ -204,6 +234,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          likes_count?: number
           media_id: string
           updated_at?: string
           user_id: string
@@ -212,6 +243,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          likes_count?: number
           media_id?: string
           updated_at?: string
           user_id?: string
@@ -521,6 +553,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      decrement_comment_likes_count: {
+        Args: { comment_id: string }
+        Returns: undefined
+      }
       decrement_likes_count: {
         Args: { media_id: string }
         Returns: undefined
@@ -583,6 +619,10 @@ export type Database = {
       }
       increment_comment_count: {
         Args: { media_id: string }
+        Returns: undefined
+      }
+      increment_comment_likes_count: {
+        Args: { comment_id: string }
         Returns: undefined
       }
       increment_likes_count: {

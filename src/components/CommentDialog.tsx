@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send } from 'lucide-react';
+import { Send, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Comment {
@@ -15,6 +15,8 @@ interface Comment {
   user_id: string;
   user_name?: string;
   user_avatar?: string;
+  likes_count: number;
+  is_liked?: boolean;
 }
 
 interface CommentDialogProps {
@@ -59,13 +61,25 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
 
-      // Combine comments with user data
+      // Check which comments are liked by current user
+      let likedComments: string[] = [];
+      if (user) {
+        const { data: likesData } = await supabase
+          .from('comment_likes')
+          .select('comment_id')
+          .eq('user_id', user.id)
+          .in('comment_id', commentsData?.map(c => c.id) || []);
+        likedComments = likesData?.map(l => l.comment_id) || [];
+      }
+
+      // Combine comments with user data and like status
       const commentsWithUsers = commentsData?.map(comment => {
         const profile = profilesData?.find(p => p.user_id === comment.user_id);
         return {
           ...comment,
           user_name: profile?.full_name || 'Anonymous',
-          user_avatar: profile?.avatar_url || ''
+          user_avatar: profile?.avatar_url || '',
+          is_liked: likedComments.includes(comment.id)
         };
       }) || [];
 
@@ -112,7 +126,8 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
       const newCommentWithUser = {
         ...commentData,
         user_name: profileData?.full_name || 'Anonymous',
-        user_avatar: profileData?.avatar_url || ''
+        user_avatar: profileData?.avatar_url || '',
+        is_liked: false
       };
 
       setComments(prev => [...prev, newCommentWithUser]);
@@ -148,6 +163,70 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
     }
   };
 
+  const handleCommentLike = async (commentId: string, isLiked: boolean) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to like comments",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Optimistic update
+    setComments(prev => prev.map(comment => 
+      comment.id === commentId 
+        ? { 
+            ...comment, 
+            is_liked: !isLiked,
+            likes_count: isLiked ? comment.likes_count - 1 : comment.likes_count + 1
+          }
+        : comment
+    ));
+
+    try {
+      if (isLiked) {
+        // Unlike
+        const { error: deleteError } = await supabase
+          .from('comment_likes')
+          .delete()
+          .eq('comment_id', commentId)
+          .eq('user_id', user.id);
+
+        if (deleteError) throw deleteError;
+
+        await supabase.rpc('decrement_comment_likes_count', { comment_id: commentId });
+      } else {
+        // Like
+        const { error: insertError } = await supabase
+          .from('comment_likes')
+          .insert({ comment_id: commentId, user_id: user.id });
+
+        if (insertError) throw insertError;
+
+        await supabase.rpc('increment_comment_likes_count', { comment_id: commentId });
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setComments(prev => prev.map(comment => 
+        comment.id === commentId 
+          ? { 
+              ...comment, 
+              is_liked: isLiked,
+              likes_count: isLiked ? comment.likes_count + 1 : comment.likes_count - 1
+            }
+          : comment
+      ));
+      
+      console.error('Error toggling comment like:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md mx-auto max-h-[80vh] flex flex-col">
@@ -180,7 +259,18 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
                       {new Date(comment.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="text-sm text-foreground break-words">{comment.content}</p>
+                  <p className="text-sm text-foreground break-words mb-2">{comment.content}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 gap-1.5"
+                    onClick={() => handleCommentLike(comment.id, comment.is_liked || false)}
+                  >
+                    <Heart 
+                      className={`h-3.5 w-3.5 ${comment.is_liked ? 'fill-primary text-primary' : ''}`} 
+                    />
+                    <span className="text-xs">{comment.likes_count || 0}</span>
+                  </Button>
                 </div>
               </div>
             ))
