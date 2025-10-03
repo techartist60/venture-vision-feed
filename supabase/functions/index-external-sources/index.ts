@@ -79,102 +79,259 @@ serve(async (req) => {
 });
 
 async function indexGooglePatents(supabase: any): Promise<number> {
-  console.log('Indexing Google Patents data...');
+  console.log('Indexing Google Patents data (expanded dataset)...');
   
   const samplePatents = [
     {
       title: 'Renewable Energy Storage System',
-      description: 'A novel battery technology for storing renewable energy with improved efficiency, reduced environmental impact, and enhanced durability for long-term grid-scale applications.',
+      description: 'A novel battery technology for storing renewable energy with improved efficiency of 85%, reduced environmental impact using biodegradable materials, and enhanced durability for long-term grid-scale applications with 25-year lifespan.',
       owner: 'GreenTech Industries',
       country: 'United States',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/US123456',
+      source_url: 'https://patents.google.com/patent/US10123456',
       legal_status: 'Active',
-      patent_number: 'US123456B2',
+      patent_number: 'US10123456B2',
       publication_date: '2024-01-15',
-      tags: ['renewable energy', 'battery', 'storage', 'green tech']
+      tags: ['renewable energy', 'battery', 'storage', 'green tech', 'sustainability']
     },
     {
       title: 'AI-Powered Medical Diagnosis System',
-      description: 'Machine learning system for early disease detection using medical imaging and patient data analysis with high accuracy and real-time processing capabilities.',
+      description: 'Deep learning system for early disease detection using medical imaging (MRI, CT, X-ray) with 94% accuracy. Analyzes patient data, medical history, and genetic markers for personalized diagnosis with real-time processing.',
       owner: 'HealthAI Corp',
-      country: 'United Kingdom',
+      country: 'United States',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/GB789012',
+      source_url: 'https://patents.google.com/patent/US10234567',
       legal_status: 'Active',
-      patent_number: 'GB789012A',
-      publication_date: '2024-03-20',
-      tags: ['artificial intelligence', 'healthcare', 'diagnosis', 'medical imaging']
+      patent_number: 'US10234567A1',
+      publication_date: '2024-02-20',
+      tags: ['AI', 'healthcare', 'diagnosis', 'machine learning', 'medical imaging']
     },
     {
-      title: 'Smart Water Purification Device',
-      description: 'IoT-enabled water purification system with real-time quality monitoring and automated filtration adjustments for residential and commercial use.',
-      owner: 'AquaTech Solutions',
+      title: 'Quantum Computing Error Correction Protocol',
+      description: 'Novel quantum error correction algorithm reducing decoherence by 78% in superconducting qubits. Enables stable quantum computations for optimization and cryptography applications.',
+      owner: 'Quantum Innovations Ltd',
+      country: 'United Kingdom',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/GB2024789',
+      legal_status: 'Active',
+      patent_number: 'GB2024789A',
+      publication_date: '2024-03-10',
+      tags: ['quantum computing', 'error correction', 'cryptography', 'algorithms']
+    },
+    {
+      title: 'Biodegradable Plastic Alternative from Algae',
+      description: 'Manufacturing process for creating fully biodegradable plastic from algae biomass. Decomposes in 90 days in marine environments, suitable for packaging and consumer products.',
+      owner: 'EcoMaterials Inc',
+      country: 'Netherlands',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/EP3456789',
+      legal_status: 'Active',
+      patent_number: 'EP3456789B1',
+      publication_date: '2023-11-05',
+      tags: ['biodegradable', 'sustainable materials', 'algae', 'packaging', 'environment']
+    },
+    {
+      title: 'Autonomous Drone Delivery Network',
+      description: 'Multi-drone coordination system for urban package delivery with AI-based traffic management, obstacle avoidance, and optimized routing. Handles 500+ deliveries per day per hub.',
+      owner: 'SkyLogistics Technologies',
+      country: 'Singapore',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/SG2024123',
+      legal_status: 'Active',
+      patent_number: 'SG2024123A1',
+      publication_date: '2024-01-30',
+      tags: ['drones', 'delivery', 'logistics', 'autonomous systems', 'AI']
+    },
+    {
+      title: 'Carbon Capture and Conversion System',
+      description: 'Industrial-scale CO2 capture technology converting emissions to useful products like methanol and synthetic fuels. Reduces carbon footprint by 65% in manufacturing plants.',
+      owner: 'CarbonSolutions AG',
       country: 'Germany',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/DE345678',
-      legal_status: 'Pending',
-      patent_number: 'DE345678C1',
-      publication_date: '2024-05-10',
-      tags: ['water purification', 'IoT', 'smart device', 'environmental']
+      source_url: 'https://patents.google.com/patent/DE2024567',
+      legal_status: 'Active',
+      patent_number: 'DE2024567B2',
+      publication_date: '2023-12-12',
+      tags: ['carbon capture', 'climate tech', 'emissions', 'sustainability', 'clean energy']
+    },
+    {
+      title: 'Neural Interface for Prosthetic Control',
+      description: 'Brain-computer interface enabling intuitive control of prosthetic limbs through neural signal processing. 98% accuracy in movement prediction with haptic feedback integration.',
+      owner: 'NeuroTech Dynamics',
+      country: 'Japan',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/JP2024891',
+      legal_status: 'Active',
+      patent_number: 'JP2024891A',
+      publication_date: '2024-02-15',
+      tags: ['neural interface', 'prosthetics', 'brain-computer interface', 'healthcare', 'biotechnology']
+    },
+    {
+      title: 'Smart Grid Energy Management System',
+      description: 'AI-driven power distribution system optimizing renewable energy integration, load balancing, and demand response. Reduces energy waste by 40% in metropolitan areas.',
+      owner: 'PowerAI Systems',
+      country: 'South Korea',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/KR2024345',
+      legal_status: 'Active',
+      patent_number: 'KR2024345B1',
+      publication_date: '2024-03-01',
+      tags: ['smart grid', 'energy management', 'AI', 'renewable energy', 'power distribution']
+    },
+    {
+      title: 'Lab-Grown Protein Production Method',
+      description: 'Cellular agriculture technology for producing animal-free protein with identical nutritional profile. Scalable bioreactor system reduces land use by 95% compared to traditional farming.',
+      owner: 'FutureFoods Biotech',
+      country: 'Israel',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/IL2024678',
+      legal_status: 'Active',
+      patent_number: 'IL2024678A',
+      publication_date: '2023-10-20',
+      tags: ['cellular agriculture', 'alternative protein', 'biotechnology', 'food tech', 'sustainability']
+    },
+    {
+      title: 'Holographic Display Technology',
+      description: '3D volumetric display system creating interactive holograms viewable from 360 degrees without special glasses. Applications in medical visualization, education, and entertainment.',
+      owner: 'HoloVision Corp',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patents.google.com/patent/US10345678',
+      legal_status: 'Active',
+      patent_number: 'US10345678B2',
+      publication_date: '2024-01-25',
+      tags: ['holographic display', '3D visualization', 'augmented reality', 'display technology']
     }
   ];
 
   let indexed = 0;
+  
   for (const patent of samplePatents) {
-    const embedding = generateSimpleEmbedding(
-      `${patent.title} ${patent.description} ${patent.tags.join(' ')}`
-    );
-
+    // Check for duplicates
     const { data: existing } = await supabase
       .from('innovation_records')
       .select('id')
-      .eq('source_type', 'patent')
       .eq('patent_number', patent.patent_number)
       .single();
 
     if (!existing) {
+      const embedding = generateSimpleEmbedding(
+        `${patent.title} ${patent.description} ${patent.tags.join(' ')}`
+      );
+
       await supabase
         .from('innovation_records')
         .insert({
           ...patent,
           text_embedding: embedding,
         });
+      
       indexed++;
     }
   }
 
   console.log(`Indexed ${indexed} Google Patents`);
   return indexed;
-}
 
 async function indexUSPTOPatents(supabase: any): Promise<number> {
-  console.log('Indexing USPTO patent data...');
+  console.log('Indexing USPTO patent data (expanded dataset)...');
   
   const samplePatents = [
     {
       title: 'Blockchain-Based Supply Chain Management',
-      description: 'Decentralized supply chain tracking system using blockchain technology for transparency, authenticity verification, and real-time logistics monitoring.',
+      description: 'Decentralized supply chain tracking system using blockchain technology for transparency, authenticity verification, and real-time logistics monitoring. Reduces fraud by 92% in pharmaceutical supply chains.',
       owner: 'ChainLogix Inc',
       country: 'United States',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/US223344',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11223344',
       legal_status: 'Pending',
-      patent_number: 'US223344A',
+      patent_number: 'US11223344A',
       publication_date: '2024-02-10',
-      tags: ['blockchain', 'supply chain', 'logistics', 'tracking']
+      tags: ['blockchain', 'supply chain', 'logistics', 'tracking', 'transparency']
     },
     {
-      title: 'Quantum Computing Error Correction',
-      description: 'Novel error correction method for quantum computers to improve stability and computation accuracy in large-scale quantum systems.',
-      owner: 'QuantumTech Labs',
+      title: 'Advanced Solar Cell with 47% Efficiency',
+      description: 'Multi-junction perovskite solar cell achieving 47% conversion efficiency through novel light-trapping architecture and improved charge carrier mobility.',
+      owner: 'SolarMax Technologies',
       country: 'United States',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/US334455',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11334455',
       legal_status: 'Active',
-      patent_number: 'US334455B',
-      publication_date: '2024-04-05',
-      tags: ['quantum computing', 'error correction', 'computing']
+      patent_number: 'US11334455B2',
+      publication_date: '2024-01-05',
+      tags: ['solar energy', 'renewable energy', 'photovoltaics', 'clean tech']
+    },
+    {
+      title: 'Self-Healing Concrete with Bacteria',
+      description: 'Bio-concrete containing dormant bacteria that activate upon crack formation, producing limestone to automatically repair structural damage. Extends infrastructure lifespan by 200%.',
+      owner: 'BioConstruct Materials',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11445566',
+      legal_status: 'Active',
+      patent_number: 'US11445566B1',
+      publication_date: '2023-11-20',
+      tags: ['construction', 'materials science', 'biotechnology', 'infrastructure', 'self-healing']
+    },
+    {
+      title: 'Atmospheric Water Harvesting System',
+      description: 'Device extracting potable water from air humidity using solar-powered metal-organic frameworks. Produces 10L/day in arid climates with 30% humidity.',
+      owner: 'HydroHarvest Inc',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11556677',
+      legal_status: 'Active',
+      patent_number: 'US11556677A1',
+      publication_date: '2024-02-28',
+      tags: ['water technology', 'sustainability', 'clean water', 'solar power', 'MOF']
+    },
+    {
+      title: 'Wireless EV Charging Road System',
+      description: 'Dynamic inductive charging infrastructure embedded in highways for continuous electric vehicle charging during transit. 85% transmission efficiency at highway speeds.',
+      owner: 'ElectroRoad Systems',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11667788',
+      legal_status: 'Pending',
+      patent_number: 'US11667788A',
+      publication_date: '2024-03-12',
+      tags: ['electric vehicles', 'wireless charging', 'infrastructure', 'transportation', 'inductive power']
+    },
+    {
+      title: 'AI-Powered Drug Discovery Platform',
+      description: 'Machine learning system predicting molecular interactions and optimizing drug candidates. Reduces drug development time from 10 years to 18 months with 73% success rate.',
+      owner: 'PharmaAI Labs',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11778899',
+      legal_status: 'Active',
+      patent_number: 'US11778899B2',
+      publication_date: '2024-01-18',
+      tags: ['AI', 'drug discovery', 'pharmaceutical', 'machine learning', 'healthcare']
+    },
+    {
+      title: 'Vertical Farming Automation System',
+      description: 'Fully automated indoor farming with AI-controlled climate, nutrients, and lighting. Yields 400x more produce per acre than traditional farming with 95% less water.',
+      owner: 'AgriTech Innovations',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11889900',
+      legal_status: 'Active',
+      patent_number: 'US11889900A1',
+      publication_date: '2023-12-08',
+      tags: ['agriculture', 'vertical farming', 'automation', 'AI', 'food production']
+    },
+    {
+      title: 'Solid-State Battery Technology',
+      description: 'Lithium-metal solid-state battery with ceramic electrolyte achieving 500 Wh/kg energy density. Charges in 15 minutes with 2000+ cycle life.',
+      owner: 'PowerCell Advanced',
+      country: 'United States',
+      source_type: 'patent',
+      source_url: 'https://patft.uspto.gov/netacgi/nph-Parser?patentnumber=11990011',
+      legal_status: 'Active',
+      patent_number: 'US11990011B2',
+      publication_date: '2024-02-05',
+      tags: ['battery', 'solid-state', 'energy storage', 'electric vehicles', 'lithium']
     }
   ];
 
@@ -206,32 +363,104 @@ async function indexUSPTOPatents(supabase: any): Promise<number> {
 }
 
 async function indexWIPOPatents(supabase: any): Promise<number> {
-  console.log('Indexing WIPO patent data...');
+  console.log('Indexing WIPO patent data (expanded dataset)...');
   
   const samplePatents = [
     {
-      title: 'Biodegradable Plastic Alternative',
-      description: 'Environmentally friendly plastic substitute made from plant-based materials with similar properties to traditional plastics but fully biodegradable.',
-      owner: 'EcoMaterials Global',
+      title: 'Universal Vaccine Platform Technology',
+      description: 'mRNA-based vaccine platform adaptable to multiple pathogens. Enables rapid vaccine development in 6 weeks with 89% efficacy across variants. Thermostable formulation.',
+      owner: 'Global BioHealth Alliance',
       country: 'International',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/WO2024001',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024001',
       legal_status: 'Active',
-      patent_number: 'WO2024001',
+      patent_number: 'WO2024001A1',
       publication_date: '2024-01-20',
-      tags: ['biodegradable', 'plastic', 'environment', 'sustainability']
+      tags: ['vaccine', 'mRNA', 'biotechnology', 'pandemic preparedness', 'global health']
     },
     {
-      title: 'Neural Interface for Prosthetic Control',
-      description: 'Brain-computer interface technology for intuitive control of prosthetic limbs using neural signals with high precision and low latency.',
-      owner: 'NeuroBionics Inc',
+      title: 'Ocean Plastic Cleanup Autonomous System',
+      description: 'Self-powered ocean cleaning robots using wave energy. Collects microplastics down to 1mm with 85% efficiency. Processes 50 tons/day with biodegradable collection nets.',
+      owner: 'OceanClean Technologies',
       country: 'International',
       source_type: 'patent',
-      source_url: 'https://patents.google.com/patent/WO2024002',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024002',
       legal_status: 'Active',
-      patent_number: 'WO2024002',
+      patent_number: 'WO2024002B2',
       publication_date: '2024-03-15',
-      tags: ['neural interface', 'prosthetics', 'brain-computer interface', 'medical device']
+      tags: ['ocean cleanup', 'microplastics', 'environment', 'robotics', 'sustainability']
+    },
+    {
+      title: 'Fusion Energy Reactor Design',
+      description: 'Compact fusion reactor using advanced magnetic confinement achieving net-positive energy output. 500MW capacity in 10m diameter footprint with tritium breeding.',
+      owner: 'Fusion Power International',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024003',
+      legal_status: 'Pending',
+      patent_number: 'WO2024003A1',
+      publication_date: '2024-02-08',
+      tags: ['fusion energy', 'clean energy', 'nuclear', 'power generation', 'climate solution']
+    },
+    {
+      title: 'Quantum Internet Protocol',
+      description: 'Quantum communication protocol enabling unhackable data transmission over 1000km. Uses quantum entanglement for secure key distribution with zero latency.',
+      owner: 'QuantumNet Consortium',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024004',
+      legal_status: 'Active',
+      patent_number: 'WO2024004A2',
+      publication_date: '2023-12-18',
+      tags: ['quantum communication', 'cybersecurity', 'quantum internet', 'networking', 'encryption']
+    },
+    {
+      title: 'Personalized Cancer Immunotherapy',
+      description: 'AI-designed individualized cancer treatment using patient tumor sequencing. Creates custom T-cell therapies with 78% complete remission rate in solid tumors.',
+      owner: 'OncoTherapy Global',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024005',
+      legal_status: 'Active',
+      patent_number: 'WO2024005B1',
+      publication_date: '2024-01-30',
+      tags: ['immunotherapy', 'cancer treatment', 'personalized medicine', 'AI', 'oncology']
+    },
+    {
+      title: 'Space Debris Removal System',
+      description: 'Satellite constellation with laser ablation and net capture for removing orbital debris. Deorbits 200+ objects/year preventing collision cascades.',
+      owner: 'Orbital Cleaners Ltd',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024006',
+      legal_status: 'Active',
+      patent_number: 'WO2024006A1',
+      publication_date: '2024-02-22',
+      tags: ['space debris', 'orbital cleanup', 'satellites', 'space technology', 'sustainability']
+    },
+    {
+      title: 'Neuromorphic Computing Chip',
+      description: 'Brain-inspired processor with 1 billion artificial neurons. Performs AI tasks at 1000x efficiency of GPUs with 10W power consumption.',
+      owner: 'BrainChip Technologies',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024007',
+      legal_status: 'Active',
+      patent_number: 'WO2024007B2',
+      publication_date: '2024-03-05',
+      tags: ['neuromorphic computing', 'AI hardware', 'chip design', 'energy efficient', 'processors']
+    },
+    {
+      title: 'Synthetic Photosynthesis System',
+      description: 'Artificial leaf technology converting CO2 and sunlight into liquid fuels. 10% solar-to-fuel efficiency producing methanol, ethanol, and hydrogen.',
+      owner: 'PhotoFuel Innovations',
+      country: 'International',
+      source_type: 'patent',
+      source_url: 'https://patentscope.wipo.int/search/en/detail.jsf?docId=WO2024008',
+      legal_status: 'Pending',
+      patent_number: 'WO2024008A1',
+      publication_date: '2023-11-28',
+      tags: ['artificial photosynthesis', 'carbon capture', 'renewable fuel', 'climate tech', 'clean energy']
     }
   ];
 

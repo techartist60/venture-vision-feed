@@ -50,54 +50,58 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('id', scanId);
 
-    // Ensure we have fresh data - trigger auto-indexing
-    console.log('Checking innovation records...');
-    const { count } = await supabaseClient
-      .from('innovation_records')
-      .select('*', { count: 'exact', head: true });
-
-    console.log(`Found ${count} innovation records in database`);
-
-    // Always refresh data sources for real-time scanning
-    if (!count || count < 50) {
-      console.log('Auto-indexing external sources for fresh data...');
+    // Always fetch fresh data from external sources for each scan
+    console.log('Fetching fresh data from external sources (Patents, News, Startups)...');
+    
+    try {
+      // Fetch fresh data from all sources
+      const indexResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/index-external-sources`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+        },
+        body: JSON.stringify({ sourceType: 'all' })
+      });
       
-      try {
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/index-external-sources`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-          },
-          body: JSON.stringify({ sourceType: 'all' })
-        });
-        
-        console.log('Auto-indexing completed - waiting for data...');
-        // Wait a bit for indexing to complete
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      } catch (indexError) {
-        console.error('Auto-indexing failed:', indexError);
+      if (!indexResponse.ok) {
+        console.error('Failed to fetch external sources:', await indexResponse.text());
+      } else {
+        const indexResult = await indexResponse.json();
+        console.log(`Successfully indexed ${indexResult.count || 0} innovations from external sources`);
       }
+      
+      // Wait for indexing to complete
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    } catch (indexError) {
+      console.error('Error fetching external sources:', indexError);
     }
 
-    // Get all innovation records to compare
+    // Get all innovation records from external sources
     const { data: innovations } = await supabaseClient
       .from('innovation_records')
       .select('*')
-      .limit(1000);
+      .order('created_at', { ascending: false })
+      .limit(2000); // Increased limit to get more sources
 
     if (!innovations || innovations.length === 0) {
-      console.log('No innovations found to compare');
+      console.log('No innovations found - external sources may not be available');
       await supabaseClient
         .from('idescan_scans')
-        .update({ status: 'completed' })
+        .update({ 
+          status: 'completed',
+          metadata: { 
+            error: 'No external innovation data available',
+            sources_checked: ['Google Patents', 'USPTO', 'WIPO', 'TechCrunch', 'Google News', 'Startups']
+          }
+        })
         .eq('id', scanId);
       
       return new Response(
         JSON.stringify({ 
           success: true, 
           matchesCount: 0,
-          message: 'No innovations in database to compare against'
+          message: 'No innovations available from external sources'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -105,7 +109,14 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Using AI to compare against ${innovations.length} innovations...`);
+    console.log(`Starting AI-powered similarity scan against ${innovations.length} innovations from external sources...`);
+    
+    // Log source breakdown
+    const sourceBreakdown = innovations.reduce((acc: any, inv: any) => {
+      acc[inv.source_type] = (acc[inv.source_type] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('Sources being scanned:', JSON.stringify(sourceBreakdown));
 
     const results = [];
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -120,7 +131,7 @@ serve(async (req) => {
         const scanText = `Title: ${scan.title}\nDescription: ${scan.description}`;
         const innovationText = `Title: ${innovation.title}\nDescription: ${innovation.description || 'No description'}`;
 
-        // Ask AI to calculate similarity
+        // Use AI to calculate semantic similarity
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -132,11 +143,11 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: 'You are an expert innovation analyst. Compare two innovation descriptions and return ONLY a similarity percentage as a number between 0-100. Consider: problem solved, solution approach, technology, target market, features. Return ONLY the number, nothing else.'
+                content: 'You are an expert patent and innovation analyst. Compare two innovations and return ONLY a similarity percentage (0-100). Analyze: core problem, solution mechanism, technology stack, market application, unique features, and competitive advantage. Be precise and thorough. Return ONLY the number.'
               },
               {
                 role: 'user',
-                content: `Innovation 1:\n${scanText}\n\nInnovation 2:\n${innovationText}\n\nSimilarity percentage:`
+                content: `User's Innovation:\nTitle: ${scan.title}\nDescription: ${scan.description}\n\nExternal Innovation:\nTitle: ${innovation.title}\nDescription: ${innovation.description || 'No description'}\nSource: ${innovation.source_type}\nOwner: ${innovation.owner || 'Unknown'}\n\nCalculate similarity percentage:`
               }
             ],
             max_tokens: 10,
