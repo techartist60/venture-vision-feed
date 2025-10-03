@@ -19,10 +19,7 @@ export default function Idescan() {
   const [signupPrompt, setSignupPrompt] = useState(false);
   const [indexingData, setIndexingData] = useState(false);
   
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-  });
+  const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
 
@@ -83,10 +80,19 @@ export default function Idescan() {
       return;
     }
 
-    if (!formData.title.trim() || !formData.description.trim()) {
+    if (!description.trim()) {
       toast({
         title: "Missing information",
-        description: "Please provide both title and description",
+        description: "Please provide a detailed description of your innovation",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (description.trim().length < 50) {
+      toast({
+        title: "Description too short",
+        description: "Please provide at least 50 characters to enable accurate matching",
         variant: "destructive",
       });
       return;
@@ -120,8 +126,8 @@ export default function Idescan() {
         .from('idescan_scans')
         .insert({
           user_id: user.id,
-          title: formData.title,
-          description: formData.description,
+          title: description.substring(0, 100) + (description.length > 100 ? '...' : ''),
+          description: description,
           image_url: imageUrl,
           status: 'pending',
         })
@@ -202,31 +208,19 @@ export default function Idescan() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title">Innovation Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., Smart Water Bottle with Temperature Control"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Detailed Description *</Label>
+                <Label htmlFor="description">Innovation Description *</Label>
                 <Textarea
                   id="description"
                   placeholder="Describe your innovation in detail: what problem it solves, how it works, key features, technology used, target market, etc. The more details you provide, the better the similarity matching will be."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={8}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={10}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum 50 characters. Include keywords, technical details, and use cases.
+                  Minimum 50 characters. Be specific about the problem, solution, technology, and use cases for accurate matching.
                 </p>
               </div>
 

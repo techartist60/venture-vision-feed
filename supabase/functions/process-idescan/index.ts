@@ -151,24 +151,22 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: 'You are an expert patent and innovation analyst specializing in semantic similarity analysis. Compare the user\'s innovation idea with the external innovation and return ONLY a numerical similarity percentage (0-100). Consider: 1) Core problem being solved, 2) Solution approach and mechanism, 3) Target market and application, 4) Key features and technology, 5) Innovation uniqueness. Be thorough in your analysis but respond with ONLY the percentage number.'
+                content: 'You are an expert innovation analyst. Compare two innovations and return ONLY a similarity score from 0-100. Score guidelines: 80-100 = Nearly identical solutions to same problem; 60-79 = Similar approach to same problem; 40-59 = Related technology/market but different approach; 20-39 = Same industry but different focus; 0-19 = Unrelated. Analyze: problem domain, solution mechanism, target market, technical approach, and innovation novelty. Return ONLY the numeric score.'
               },
               {
                 role: 'user',
-                content: `Analyze similarity between these two innovations based on their text descriptions:
+                content: `Compare these innovations:
 
-USER'S INNOVATION IDEA:
-Title: ${scan.title}
-Description: ${scan.description}
+USER'S IDEA:
+${scan.description}
 
-EXTERNAL INNOVATION TO COMPARE:
+EXISTING INNOVATION:
 Title: ${innovation.title}
-Description: ${innovation.description || 'No detailed description available'}
-Source: ${innovation.source_type}
+Description: ${innovation.description || 'No description'}
+Type: ${innovation.source_type}
 Owner: ${innovation.owner || 'Unknown'}
-${innovation.patent_number ? `Patent #: ${innovation.patent_number}` : ''}
 
-Based on the semantic meaning and concepts in the descriptions, what is the similarity percentage (0-100)?`
+What is the similarity score (0-100)?`
               }
             ],
             max_tokens: 10,
@@ -180,9 +178,9 @@ Based on the semantic meaning and concepts in the descriptions, what is the simi
           const similarityText = data.choices[0].message.content.trim();
           const similarityScore = parseFloat(similarityText.replace(/[^0-9.]/g, ''));
           
-          console.log(`Comparing "${scan.title.substring(0, 40)}..." with "${innovation.title.substring(0, 40)}..." - Score: ${similarityScore}%`);
+          console.log(`Comparing user idea with "${innovation.title.substring(0, 50)}..." - Score: ${similarityScore}%`);
           
-          if (!isNaN(similarityScore) && similarityScore >= 3) {
+          if (!isNaN(similarityScore) && similarityScore >= 20) {
             const tier = calculateTier(similarityScore);
             
             console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Similarity: ${similarityScore}%`);
