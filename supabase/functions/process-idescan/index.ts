@@ -116,14 +116,15 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Starting AI-powered similarity scan against ${innovations.length} innovations from external sources...`);
+    console.log(`Starting AI-powered semantic similarity scan of user's idea against ${innovations.length} innovations...`);
+    console.log(`User's idea - Title: "${scan.title}", Description length: ${scan.description.length} chars`);
     
     // Log source breakdown
     const sourceBreakdown = innovations.reduce((acc: any, inv: any) => {
       acc[inv.source_type] = (acc[inv.source_type] || 0) + 1;
       return acc;
     }, {});
-    console.log('Sources being scanned:', JSON.stringify(sourceBreakdown));
+    console.log('Comparing against sources:', JSON.stringify(sourceBreakdown));
 
     const results = [];
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -138,7 +139,7 @@ serve(async (req) => {
         const scanText = `Title: ${scan.title}\nDescription: ${scan.description}`;
         const innovationText = `Title: ${innovation.title}\nDescription: ${innovation.description || 'No description'}`;
 
-        // Use AI to calculate semantic similarity
+        // Use AI to calculate semantic similarity based on user's text input
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -150,11 +151,24 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: 'You are an expert patent and innovation analyst. Compare two innovations and return ONLY a similarity percentage (0-100). Analyze: core problem, solution mechanism, technology stack, market application, unique features, and competitive advantage. Be precise and thorough. Return ONLY the number.'
+                content: 'You are an expert patent and innovation analyst specializing in semantic similarity analysis. Compare the user\'s innovation idea with the external innovation and return ONLY a numerical similarity percentage (0-100). Consider: 1) Core problem being solved, 2) Solution approach and mechanism, 3) Target market and application, 4) Key features and technology, 5) Innovation uniqueness. Be thorough in your analysis but respond with ONLY the percentage number.'
               },
               {
                 role: 'user',
-                content: `User's Innovation:\nTitle: ${scan.title}\nDescription: ${scan.description}\n\nExternal Innovation:\nTitle: ${innovation.title}\nDescription: ${innovation.description || 'No description'}\nSource: ${innovation.source_type}\nOwner: ${innovation.owner || 'Unknown'}\n\nCalculate similarity percentage:`
+                content: `Analyze similarity between these two innovations based on their text descriptions:
+
+USER'S INNOVATION IDEA:
+Title: ${scan.title}
+Description: ${scan.description}
+
+EXTERNAL INNOVATION TO COMPARE:
+Title: ${innovation.title}
+Description: ${innovation.description || 'No detailed description available'}
+Source: ${innovation.source_type}
+Owner: ${innovation.owner || 'Unknown'}
+${innovation.patent_number ? `Patent #: ${innovation.patent_number}` : ''}
+
+Based on the semantic meaning and concepts in the descriptions, what is the similarity percentage (0-100)?`
               }
             ],
             max_tokens: 10,
@@ -166,7 +180,9 @@ serve(async (req) => {
           const similarityText = data.choices[0].message.content.trim();
           const similarityScore = parseFloat(similarityText.replace(/[^0-9.]/g, ''));
           
-          if (!isNaN(similarityScore) && similarityScore >= 5) {
+          console.log(`Comparing "${scan.title.substring(0, 40)}..." with "${innovation.title.substring(0, 40)}..." - Score: ${similarityScore}%`);
+          
+          if (!isNaN(similarityScore) && similarityScore >= 3) {
             const tier = calculateTier(similarityScore);
             
             console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Similarity: ${similarityScore}%`);
@@ -188,18 +204,19 @@ serve(async (req) => {
       }
     }
 
-    // Sort by similarity score descending and limit to top 5
+    // Sort by similarity score descending and limit to top 10 (increased from 5)
     results.sort((a, b) => b.similarity_score - a.similarity_score);
-    const top5Results = results.slice(0, 5);
+    const top10Results = results.slice(0, 10);
 
-    // Perform clustering on top 5 results
-    const clusteredData = performClustering(top5Results);
+    // Perform clustering on top 10 results
+    const clusteredData = performClustering(top10Results);
     
-    console.log(`Found top 5 matches from ${results.length} total innovations`);
+    console.log(`Semantic scan complete: Found ${results.length} similar innovations based on text analysis`);
+    console.log(`Top 10 matches (scores): ${top10Results.map(r => r.similarity_score.toFixed(1) + '%').join(', ')}`);
 
-    // Store top 5 results with clean data (remove innovation_data before inserting)
-    if (top5Results.length > 0) {
-      const cleanResults = top5Results.map(r => ({
+    // Store top 10 results with clean data (remove innovation_data before inserting)
+    if (top10Results.length > 0) {
+      const cleanResults = top10Results.map(r => ({
         scan_id: r.scan_id,
         innovation_id: r.innovation_id,
         similarity_score: r.similarity_score,
@@ -234,13 +251,14 @@ serve(async (req) => {
       .update({ status: 'completed' })
       .eq('id', scanId);
 
-    console.log(`Scan completed: ${top5Results.length} top matches found from ${results.length} total`);
+    console.log(`Scan completed successfully: ${top10Results.length} matches stored from ${results.length} similar innovations found`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        matchesCount: top5Results.length,
-        totalScanned: results.length
+        matchesCount: top10Results.length,
+        totalScanned: innovations.length,
+        totalSimilar: results.length
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
