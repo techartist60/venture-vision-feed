@@ -78,9 +78,16 @@ export default function IdescanResults() {
         .from('idescan_scans')
         .select('*')
         .eq('id', scanId)
-        .single();
+        .maybeSingle();
 
       if (scanError) throw scanError;
+      
+      if (!scanData) {
+        setScan(null);
+        setLoading(false);
+        return;
+      }
+      
       setScan(scanData);
 
       // Fetch results
