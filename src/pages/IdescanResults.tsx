@@ -57,6 +57,7 @@ export default function IdescanResults() {
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'score' | 'source'>('score');
   const [fullscaleMedia, setFullscaleMedia] = useState<string | null>(null);
+  const [selectedInnovation, setSelectedInnovation] = useState<ResultData | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -520,7 +521,7 @@ export default function IdescanResults() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center justify-between">
+                       <div className="flex items-center justify-between">
                         <div className="flex gap-4 text-xs">
                           {result.innovation_records.patent_number && (
                             <Badge variant="outline" className="text-xs">
@@ -534,16 +535,25 @@ export default function IdescanResults() {
                           )}
                         </div>
                         
-                        {result.innovation_records.source_url && (
+                        <div className="flex gap-2">
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
-                            onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
+                            onClick={() => setSelectedInnovation(result)}
                           >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            View Source
+                            View Details
                           </Button>
-                        )}
+                          {result.innovation_records.source_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Source
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -580,6 +590,200 @@ export default function IdescanResults() {
                   alt="Fullscale view"
                   className="max-w-full max-h-[90vh] object-contain"
                 />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Innovation Details Modal */}
+      {selectedInnovation && (
+        <Dialog open={!!selectedInnovation} onOpenChange={() => setSelectedInnovation(null)}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl pr-8">{selectedInnovation.innovation_records.title}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* Similarity Score */}
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <h3 className="font-semibold">Similarity Match</h3>
+                  <p className="text-sm text-muted-foreground capitalize">
+                    {selectedInnovation.similarity_tier.replace('_', ' ')} Match
+                  </p>
+                </div>
+                <Badge className={`${getSimilarityColor(selectedInnovation.similarity_tier)} text-2xl px-4 py-2`}>
+                  {selectedInnovation.similarity_score.toFixed(0)}%
+                </Badge>
+              </div>
+
+              {/* Owner/Inventor Information */}
+              {(selectedInnovation.innovation_records.owner || 
+                selectedInnovation.innovation_records.metadata?.inventor || 
+                selectedInnovation.innovation_records.metadata?.ceo) && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    {selectedInnovation.innovation_records.source_type === 'patent' ? 'Inventor' : 'Company'} Information
+                  </h3>
+                  
+                  <div className="space-y-2 pl-7">
+                    {selectedInnovation.innovation_records.metadata?.inventor && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">Inventor:</span>
+                        <p className="font-medium">{selectedInnovation.innovation_records.metadata.inventor}</p>
+                      </div>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata?.ceo && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">CEO:</span>
+                        <p className="font-medium">{selectedInnovation.innovation_records.metadata.ceo}</p>
+                      </div>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.owner && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">Organization:</span>
+                        <p className="font-medium">{selectedInnovation.innovation_records.owner}</p>
+                      </div>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.country && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">Country:</span>
+                        <p className="font-medium">{selectedInnovation.innovation_records.country}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Information */}
+              {(selectedInnovation.innovation_records.metadata?.contact_email || 
+                selectedInnovation.innovation_records.metadata?.company_url) && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg">Contact</h3>
+                  <div className="space-y-2">
+                    {selectedInnovation.innovation_records.metadata.contact_email && (
+                      <a 
+                        href={`mailto:${selectedInnovation.innovation_records.metadata.contact_email}`}
+                        className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {selectedInnovation.innovation_records.metadata.contact_email}
+                      </a>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata.company_url && (
+                      <a 
+                        href={selectedInnovation.innovation_records.metadata.company_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Company Website
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Social Media Links */}
+              {(selectedInnovation.innovation_records.metadata?.linkedin || 
+                selectedInnovation.innovation_records.metadata?.twitter || 
+                selectedInnovation.innovation_records.metadata?.company_linkedin) && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg">Social Media & Professional Networks</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedInnovation.innovation_records.metadata.linkedin && (
+                      <Button
+                        variant="outline"
+                        className="justify-start"
+                        onClick={() => window.open(selectedInnovation.innovation_records.metadata.linkedin, '_blank')}
+                      >
+                        <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        Personal LinkedIn
+                      </Button>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata.company_linkedin && (
+                      <Button
+                        variant="outline"
+                        className="justify-start"
+                        onClick={() => window.open(selectedInnovation.innovation_records.metadata.company_linkedin, '_blank')}
+                      >
+                        <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        Company LinkedIn
+                      </Button>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata.twitter && (
+                      <Button
+                        variant="outline"
+                        className="justify-start"
+                        onClick={() => window.open(selectedInnovation.innovation_records.metadata.twitter, '_blank')}
+                      >
+                        <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                        </svg>
+                        Twitter/X
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {selectedInnovation.innovation_records.description && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg">Description</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selectedInnovation.innovation_records.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Technical Details */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">Technical Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-muted-foreground">Source Type:</span>
+                    <p className="font-medium capitalize">{selectedInnovation.innovation_records.source_type}</p>
+                  </div>
+                  
+                  {selectedInnovation.innovation_records.patent_number && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Patent Number:</span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.patent_number}</p>
+                    </div>
+                  )}
+                  
+                  {selectedInnovation.innovation_records.legal_status && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Legal Status:</span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.legal_status}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* View Original Source */}
+              {selectedInnovation.innovation_records.source_url && (
+                <Button
+                  className="w-full"
+                  onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Original Source
+                </Button>
               )}
             </div>
           </DialogContent>

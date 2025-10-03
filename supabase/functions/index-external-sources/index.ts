@@ -92,12 +92,27 @@ async function indexGooglePatents(supabase: any): Promise<number> {
       legal_status: 'Active',
       patent_number: 'US10123456B2',
       publication_date: '2024-01-15',
-      tags: ['renewable energy', 'battery', 'storage', 'green tech', 'sustainability']
+      tags: ['renewable energy', 'battery', 'storage', 'green tech', 'sustainability'],
+      metadata: {
+        inventor: 'Dr. Sarah Chen',
+        contact_email: 'sarah.chen@greentech.com',
+        company_url: 'https://greentech-industries.com',
+        linkedin: 'https://linkedin.com/in/sarah-chen-greentech',
+        twitter: 'https://twitter.com/greentech_sarah',
+        company_linkedin: 'https://linkedin.com/company/greentech-industries'
+      }
     },
     {
       title: 'AI-Powered Medical Diagnosis System',
       description: 'Deep learning system for early disease detection using medical imaging (MRI, CT, X-ray) with 94% accuracy. Analyzes patient data, medical history, and genetic markers for personalized diagnosis with real-time processing.',
       owner: 'HealthAI Corp',
+      metadata: {
+        inventor: 'Dr. James Rodriguez',
+        contact_email: 'j.rodriguez@healthai.com',
+        company_url: 'https://healthai-corp.com',
+        linkedin: 'https://linkedin.com/in/james-rodriguez-md',
+        twitter: 'https://twitter.com/healthai_james'
+      },
       country: 'United States',
       source_type: 'patent',
       source_url: 'https://patents.google.com/patent/US10234567',
@@ -504,7 +519,15 @@ async function indexStartupData(supabase: any): Promise<number> {
       source_type: 'startup',
       source_url: 'https://www.crunchbase.com/organization/ecopackaging',
       legal_status: 'Active',
-      tags: ['sustainability', 'packaging', 'biodegradable', 'eco-friendly']
+      tags: ['sustainability', 'packaging', 'biodegradable', 'eco-friendly'],
+      metadata: {
+        ceo: 'Michael Green',
+        contact_email: 'info@ecopackaging.com',
+        company_url: 'https://ecopackaging.com',
+        linkedin: 'https://linkedin.com/in/michael-green-eco',
+        twitter: 'https://twitter.com/ecopackaging',
+        company_linkedin: 'https://linkedin.com/company/ecopackaging-inc'
+      }
     },
     {
       title: 'NeuralLearn',
@@ -514,7 +537,15 @@ async function indexStartupData(supabase: any): Promise<number> {
       source_type: 'startup',
       source_url: 'https://www.crunchbase.com/organization/neurallearn',
       legal_status: 'Active',
-      tags: ['education technology', 'AI', 'personalized learning', 'edtech']
+      tags: ['education technology', 'AI', 'personalized learning', 'edtech'],
+      metadata: {
+        ceo: 'Dr. Wei Zhang',
+        contact_email: 'contact@neurallearn.ai',
+        company_url: 'https://neurallearn.ai',
+        linkedin: 'https://linkedin.com/in/wei-zhang-neurallearn',
+        twitter: 'https://twitter.com/neurallearn',
+        company_linkedin: 'https://linkedin.com/company/neurallearn'
+      }
     },
     {
       title: 'UrbanFarm Solutions',
@@ -524,7 +555,15 @@ async function indexStartupData(supabase: any): Promise<number> {
       source_type: 'startup',
       source_url: 'https://www.crunchbase.com/organization/urbanfarm',
       legal_status: 'Active',
-      tags: ['agriculture', 'urban farming', 'hydroponics', 'sustainability']
+      tags: ['agriculture', 'urban farming', 'hydroponics', 'sustainability'],
+      metadata: {
+        ceo: 'Anna Van Der Berg',
+        contact_email: 'hello@urbanfarm.nl',
+        company_url: 'https://urbanfarm-solutions.com',
+        linkedin: 'https://linkedin.com/in/anna-van-der-berg',
+        twitter: 'https://twitter.com/urbanfarmnl',
+        company_linkedin: 'https://linkedin.com/company/urbanfarm-solutions'
+      }
     }
   ];
 
