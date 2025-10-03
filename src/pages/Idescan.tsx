@@ -29,17 +29,24 @@ export default function Idescan() {
       try {
         setIndexingData(true);
         
-        // Check if we need to index
-        const { count } = await supabase
+        console.log('Force re-indexing innovation sources from external APIs...');
+        
+        // Clear old data and fetch fresh
+        const { data: countData } = await supabase
           .from('innovation_records')
           .select('*', { count: 'exact', head: true });
-
-        // Index if we have less than 50 records
-        if (!count || count < 50) {
-          console.log('Auto-indexing innovation sources...');
-          await supabase.functions.invoke('index-external-sources', {
-            body: { sourceType: 'all' }
-          });
+        
+        console.log(`Current records in DB: ${countData || 0}`);
+        
+        // Always trigger fresh indexing to get latest data
+        const { error: indexError } = await supabase.functions.invoke('index-external-sources', {
+          body: { sourceType: 'all' }
+        });
+        
+        if (indexError) {
+          console.error('Error indexing:', indexError);
+        } else {
+          console.log('Fresh data indexed successfully');
         }
       } catch (error) {
         console.error('Error checking/indexing data:', error);

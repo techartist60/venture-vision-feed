@@ -643,65 +643,70 @@ async function indexTechCrunchNews(supabase: any): Promise<number> {
 }
 
 async function indexGoogleNews(supabase: any): Promise<number> {
-  console.log('Fetching Google News...');
+  console.log('Fetching real Google News...');
   
-  const apiKey = Deno.env.get('GOOGLE_NEWS_API_KEY');
-  
-  if (!apiKey) {
-    console.log('Google News API key not configured, using sample data');
-    return await indexSampleNewsData(supabase);
-  }
-
   try {
-    const queries = ['innovation', 'technology breakthrough', 'startup', 'AI advancement', 'renewable energy'];
-    let totalIndexed = 0;
+    const newsTopics = [
+      'latest+technology+innovation',
+      'new+invention+2025',
+      'startup+innovation+technology',
+      'breakthrough+technology+2025',
+      'patent+filed+innovation'
+    ];
+    
+    let allArticles = [];
+    for (const topic of newsTopics) {
+      const newsResponse = await fetch(
+        `https://news.google.com/rss/search?q=${topic}&hl=en-US&gl=US&ceid=US:en`,
+        { headers: { 'User-Agent': 'Mozilla/5.0' } }
+      );
+      
+      if (newsResponse.ok) {
+        const xmlText = await newsResponse.text();
+        const articles = parseGoogleNewsRSS(xmlText);
+        allArticles = [...allArticles, ...articles.slice(0, 10)];
+      }
+      
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    let indexed = 0;
+    for (const article of allArticles) {
+      const { data: existing } = await supabase
+        .from('innovation_records')
+        .select('id')
+        .eq('source_url', article.link)
+        .single();
 
-    for (const query of queries) {
-      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&pageSize=8&apiKey=${apiKey}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      if (!existing) {
+        const tags = extractTagsFromText(article.title + ' ' + article.description);
+        const embedding = generateSimpleEmbedding(
+          `${article.title} ${article.description} ${tags.join(' ')}`
+        );
 
-      if (data.articles) {
-        for (const article of data.articles) {
-          if (!article.title || !article.description) continue;
-
-          const { data: existing } = await supabase
-            .from('innovation_records')
-            .select('id')
-            .eq('source_url', article.url)
-            .single();
-
-          if (!existing) {
-            const tags = extractTagsFromText(`${article.title} ${article.description}`);
-            const embedding = generateSimpleEmbedding(
-              `${article.title} ${article.description} ${tags.join(' ')}`
-            );
-
-            await supabase.from('innovation_records').insert({
-              title: article.title,
-              description: article.description || article.content || '',
-              owner: article.source?.name || 'Google News',
-              country: 'Various',
-              source_type: 'news',
-              source_url: article.url,
-              publication_date: article.publishedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-              tags,
-              text_embedding: embedding,
-              metadata: {
-                source: article.source?.name || 'Google News',
-                author: article.author,
-                fetched_at: new Date().toISOString()
-              }
-            });
-            
-            totalIndexed++;
+        await supabase.from('innovation_records').insert({
+          title: article.title,
+          description: article.description || article.title,
+          source_type: 'news',
+          source_url: article.link,
+          publication_date: article.pubDate,
+          owner: article.source || 'News Source',
+          country: 'Global',
+          tags: tags,
+          text_embedding: embedding,
+          metadata: {
+            source: article.source,
+            fetched_at: new Date().toISOString()
           }
-        }
+        });
+        
+        indexed++;
       }
     }
     
-    console.log(`Indexed ${totalIndexed} Google News articles`);
-    return totalIndexed;
+    console.log(`Indexed ${indexed} Google News articles`);
+    return indexed;
   } catch (error) {
     console.error('Error fetching Google News:', error);
     return await indexSampleNewsData(supabase);
@@ -900,7 +905,41 @@ function extractTags(title: string, description: string | null): string[] {
   return uniqueWords.slice(0, 10);
 }
 
-function generateSimpleEmbedding(text: string): number[] {
+function extractTagsFromText(text: string): string[] {
+  return extractTags(text, null);
+}
+
+function parseGoogleNewsRSS(xmlText: string): any[] {
+  const articles: any[] = [];
+  
+  // Simple regex-based XML parsing
+  const itemRegex = /<item>(.*?)<\/item>/gs;
+  const items = xmlText.match(itemRegex) || [];
+  
+  for (const item of items.slice(0, 20)) {
+    const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/);
+    const linkMatch = item.match(/<link>(.*?)<\/link>/);
+    const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
+    const sourceMatch = item.match(/<source.*?>(.*?)<\/source>/);
+    const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || 
+                      item.match(/<description>(.*?)<\/description>/);
+    
+    if (titleMatch && linkMatch) {
+      const title = titleMatch[1];
+      const description = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').substring(0, 800) : title;
+      
+      articles.push({
+        title: title.substring(0, 200),
+        link: linkMatch[1],
+        pubDate: pubDateMatch ? new Date(pubDateMatch[1]).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        source: sourceMatch ? sourceMatch[1] : 'News Source',
+        description: description
+      });
+    }
+  }
+  
+  return articles;
+}
   const embedding = new Array(1536).fill(0);
   const words = text.toLowerCase().split(/\s+/);
   

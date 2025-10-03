@@ -151,22 +151,22 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: 'You are an expert innovation analyst. Compare two innovations and return ONLY a similarity score from 0-100. Score guidelines: 80-100 = Nearly identical solutions to same problem; 60-79 = Similar approach to same problem; 40-59 = Related technology/market but different approach; 20-39 = Same industry but different focus; 0-19 = Unrelated. Analyze: problem domain, solution mechanism, target market, technical approach, and innovation novelty. Return ONLY the numeric score.'
+                content: 'You are an expert innovation analyst. Compare two innovations and return ONLY a similarity score from 0-100. Be generous with scoring to capture related innovations. Score guidelines: 90-100 = Nearly identical; 70-89 = Very similar concept/technology; 50-69 = Related field with similar goals; 30-49 = Same industry/domain; 15-29 = Tangentially related; 0-14 = Unrelated. Consider: core problem, solution approach, technology domain, target market, and practical applications. Return ONLY the numeric score.'
               },
               {
                 role: 'user',
-                content: `Compare these innovations:
+                content: `Compare these innovations and rate their similarity:
 
-USER'S IDEA:
+USER'S INNOVATION:
 ${scan.description}
 
 EXISTING INNOVATION:
 Title: ${innovation.title}
-Description: ${innovation.description || 'No description'}
+Description: ${innovation.description || innovation.title}
 Type: ${innovation.source_type}
 Owner: ${innovation.owner || 'Unknown'}
 
-What is the similarity score (0-100)?`
+Return similarity score (0-100):`
               }
             ],
             max_tokens: 10,
@@ -180,7 +180,7 @@ What is the similarity score (0-100)?`
           
           console.log(`Comparing user idea with "${innovation.title.substring(0, 50)}..." - Score: ${similarityScore}%`);
           
-          if (!isNaN(similarityScore) && similarityScore >= 20) {
+          if (!isNaN(similarityScore) && similarityScore >= 15) {
             const tier = calculateTier(similarityScore);
             
             console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Similarity: ${similarityScore}%`);
