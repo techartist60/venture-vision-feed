@@ -12,6 +12,13 @@ serve(async (req) => {
   }
 
   try {
+    // Use service role for database operations to bypass RLS
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Verify user authentication
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -44,8 +51,8 @@ serve(async (req) => {
       throw new Error('Scan not found');
     }
 
-    // Update status to processing
-    await supabaseClient
+    // Update status to processing using admin client
+    await supabaseAdmin
       .from('idescan_scans')
       .update({ status: 'processing' })
       .eq('id', scanId);
@@ -77,8 +84,8 @@ serve(async (req) => {
       console.error('Error fetching external sources:', indexError);
     }
 
-    // Get all innovation records from external sources
-    const { data: innovations } = await supabaseClient
+    // Get all innovation records from external sources using admin client
+    const { data: innovations } = await supabaseAdmin
       .from('innovation_records')
       .select('*')
       .order('created_at', { ascending: false })
@@ -86,7 +93,7 @@ serve(async (req) => {
 
     if (!innovations || innovations.length === 0) {
       console.log('No innovations found - external sources may not be available');
-      await supabaseClient
+      await supabaseAdmin
         .from('idescan_scans')
         .update({ 
           status: 'completed',
@@ -202,12 +209,18 @@ serve(async (req) => {
         metadata_similarity: r.metadata_similarity
       }));
 
-      await supabaseClient
+      // Use admin client to insert results
+      const { error: insertError } = await supabaseAdmin
         .from('scan_results')
         .insert(cleanResults);
 
+      if (insertError) {
+        console.error('Error inserting scan results:', insertError);
+        throw insertError;
+      }
+
       // Store cluster information in scan metadata
-      await supabaseClient
+      await supabaseAdmin
         .from('idescan_scans')
         .update({
           metadata: clusteredData
@@ -216,7 +229,7 @@ serve(async (req) => {
     }
 
     // Update scan status to completed
-    await supabaseClient
+    await supabaseAdmin
       .from('idescan_scans')
       .update({ status: 'completed' })
       .eq('id', scanId);
