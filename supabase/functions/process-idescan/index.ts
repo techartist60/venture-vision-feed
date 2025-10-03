@@ -145,7 +145,7 @@ serve(async (req) => {
 
       console.log(`Innovation "${innovation.title.substring(0, 50)}" - Score: ${similarityScore}%, Text: ${Math.round(textSim * 100)}%, Metadata: ${Math.round(metadataSim * 100)}%`);
 
-      if (similarityScore >= 15) {
+      if (similarityScore >= 5) {
         const tier = calculateTier(similarityScore);
         
         results.push({
@@ -232,8 +232,7 @@ async function generateTextEmbedding(text: string): Promise<number[]> {
     throw new Error('LOVABLE_API_KEY not configured');
   }
 
-  // Use Gemini to generate embeddings via text analysis
-  // We'll create a 1536-dimensional vector from text features
+  // Use Lovable AI to extract semantic keywords and concepts
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -245,41 +244,69 @@ async function generateTextEmbedding(text: string): Promise<number[]> {
       messages: [
         {
           role: 'system',
-          content: 'Extract key semantic features from the text as a numerical representation.'
+          content: 'Extract 30 key semantic concepts, keywords, and themes from the text. Return ONLY a comma-separated list of single words or short phrases, no explanations.'
         },
         {
           role: 'user',
           content: text
         }
       ],
-      max_tokens: 100,
+      max_tokens: 200,
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
     console.error('Embedding API error:', error);
-    throw new Error('Failed to generate embedding');
+    // Fallback to simple embedding
+    return generateSemanticEmbedding(text);
   }
 
   const data = await response.json();
-  const content = data.choices[0].message.content;
+  const keywords = data.choices[0].message.content;
   
-  // Generate deterministic embedding from text
-  return generateSimpleEmbedding(text);
+  // Generate embedding from both original text and extracted keywords
+  return generateSemanticEmbedding(text + ' ' + keywords);
 }
 
-function generateSimpleEmbedding(text: string): number[] {
-  // Simple but effective embedding generation
+function generateSemanticEmbedding(text: string): number[] {
+  // Enhanced semantic embedding using TF-IDF-like approach
   const embedding = new Array(1536).fill(0);
-  const words = text.toLowerCase().split(/\s+/);
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2);
   
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    for (let j = 0; j < word.length; j++) {
-      const charCode = word.charCodeAt(j);
-      const idx = (charCode * (i + 1) * (j + 1)) % 1536;
-      embedding[idx] += 1 / (i + 1);
+  // Create word frequency map
+  const wordFreq = new Map<string, number>();
+  words.forEach(word => {
+    wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+  });
+  
+  // Generate embedding using multiple hash functions for better distribution
+  for (const [word, freq] of wordFreq.entries()) {
+    const weight = Math.log(1 + freq); // TF-IDF style weighting
+    
+    // Use multiple hash functions to distribute word semantics
+    for (let hashFunc = 0; hashFunc < 3; hashFunc++) {
+      let hash = hashFunc * 7919; // Prime number seed
+      for (let i = 0; i < word.length; i++) {
+        hash = ((hash << 5) - hash) + word.charCodeAt(i);
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      const idx = Math.abs(hash) % 1536;
+      embedding[idx] += weight;
+    }
+    
+    // Add bigram information for better context
+    for (let i = 0; i < word.length - 1; i++) {
+      const bigram = word.substring(i, i + 2);
+      let hash = 0;
+      for (let j = 0; j < bigram.length; j++) {
+        hash = ((hash << 5) - hash) + bigram.charCodeAt(j);
+      }
+      const idx = Math.abs(hash) % 1536;
+      embedding[idx] += weight * 0.5;
     }
   }
   
