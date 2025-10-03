@@ -50,30 +50,19 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('id', scanId);
 
-    // Generate text embedding using Lovable AI
-    const textEmbedding = await generateTextEmbedding(
-      `${scan.title} ${scan.description}`
-    );
-
-    // Store embedding in scan
-    await supabaseClient
-      .from('idescan_scans')
-      .update({ text_embedding: textEmbedding })
-      .eq('id', scanId);
-
-    // Check if we have enough innovation records to compare against
+    // Ensure we have fresh data - trigger auto-indexing
+    console.log('Checking innovation records...');
     const { count } = await supabaseClient
       .from('innovation_records')
       .select('*', { count: 'exact', head: true });
 
     console.log(`Found ${count} innovation records in database`);
 
-    // If we have less than 20 records, trigger auto-indexing
-    if (!count || count < 20) {
-      console.log('Auto-indexing data sources...');
+    // Always refresh data sources for real-time scanning
+    if (!count || count < 50) {
+      console.log('Auto-indexing external sources for fresh data...');
       
       try {
-        // Index all sources
         await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/index-external-sources`, {
           method: 'POST',
           headers: {
@@ -83,95 +72,116 @@ serve(async (req) => {
           body: JSON.stringify({ sourceType: 'all' })
         });
         
-        console.log('Auto-indexing completed');
+        console.log('Auto-indexing completed - waiting for data...');
+        // Wait a bit for indexing to complete
+        await new Promise(resolve => setTimeout(resolve, 3000));
       } catch (indexError) {
         console.error('Auto-indexing failed:', indexError);
       }
     }
 
-    // Search for similar innovations - get ALL records with embeddings
+    // Get all innovation records to compare
     const { data: innovations } = await supabaseClient
       .from('innovation_records')
       .select('*')
-      .not('text_embedding', 'is', null)
       .limit(1000);
 
-    console.log(`Comparing against ${innovations?.length || 0} innovations`);
-
-    const results = [];
-    
-    for (const innovation of innovations || []) {
-      if (!innovation.text_embedding) continue;
-
-      // Calculate text similarity
-      const textSim = calculateCosineSimilarity(
-        textEmbedding,
-        innovation.text_embedding
-      );
-
-      // Calculate enhanced metadata similarity
-      const metadataSim = calculateEnhancedMetadataSimilarity(
+    if (!innovations || innovations.length === 0) {
+      console.log('No innovations found to compare');
+      await supabaseClient
+        .from('idescan_scans')
+        .update({ status: 'completed' })
+        .eq('id', scanId);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          matchesCount: 0,
+          message: 'No innovations in database to compare against'
+        }),
         {
-          title: scan.title,
-          description: scan.description,
-          tags: extractKeywords(scan.description)
-        },
-        {
-          title: innovation.title,
-          description: innovation.description,
-          tags: innovation.tags || []
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
+    }
 
-      // Image similarity (placeholder)
-      let imageSim = 0;
-      if (scan.image_url && innovation.image_embedding) {
-        imageSim = 0.5;
-      }
+    console.log(`Using AI to compare against ${innovations.length} innovations...`);
 
-      // Calculate weighted similarity score
-      const hasImage = scan.image_url && innovation.image_embedding;
-      const textWeight = hasImage ? 0.5 : 0.6;
-      const imageWeight = hasImage ? 0.4 : 0;
-      const metadataWeight = hasImage ? 0.1 : 0.4;
+    const results = [];
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
 
-      const weightedScore = (
-        textSim * textWeight +
-        imageSim * imageWeight +
-        metadataSim * metadataWeight
-      ) * 100;
+    // Use AI to calculate similarity for each innovation
+    for (const innovation of innovations) {
+      try {
+        const scanText = `Title: ${scan.title}\nDescription: ${scan.description}`;
+        const innovationText = `Title: ${innovation.title}\nDescription: ${innovation.description || 'No description'}`;
 
-      const similarityScore = Math.round(weightedScore * 100) / 100; // 2 decimal places
-
-      console.log(`Innovation "${innovation.title.substring(0, 50)}" - Score: ${similarityScore}%, Text: ${Math.round(textSim * 100)}%, Metadata: ${Math.round(metadataSim * 100)}%`);
-
-      if (similarityScore >= 5) {
-        const tier = calculateTier(similarityScore);
-        
-        results.push({
-          scan_id: scanId,
-          innovation_id: innovation.id,
-          similarity_score: similarityScore,
-          similarity_tier: tier,
-          text_similarity: Math.round(textSim * 10000) / 100, // As percentage
-          image_similarity: hasImage ? Math.round(imageSim * 10000) / 100 : null,
-          metadata_similarity: Math.round(metadataSim * 10000) / 100,
-          innovation_data: innovation // Store for clustering
+        // Ask AI to calculate similarity
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert innovation analyst. Compare two innovation descriptions and return ONLY a similarity percentage as a number between 0-100. Consider: problem solved, solution approach, technology, target market, features. Return ONLY the number, nothing else.'
+              },
+              {
+                role: 'user',
+                content: `Innovation 1:\n${scanText}\n\nInnovation 2:\n${innovationText}\n\nSimilarity percentage:`
+              }
+            ],
+            max_tokens: 10,
+          }),
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          const similarityText = data.choices[0].message.content.trim();
+          const similarityScore = parseFloat(similarityText.replace(/[^0-9.]/g, ''));
+          
+          if (!isNaN(similarityScore) && similarityScore >= 5) {
+            const tier = calculateTier(similarityScore);
+            
+            console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Similarity: ${similarityScore}%`);
+            
+            results.push({
+              scan_id: scanId,
+              innovation_id: innovation.id,
+              similarity_score: Math.round(similarityScore * 100) / 100,
+              similarity_tier: tier,
+              text_similarity: Math.round(similarityScore * 100) / 100,
+              image_similarity: null,
+              metadata_similarity: null,
+              innovation_data: innovation
+            });
+          }
+        }
+      } catch (error) {
+        console.error(`Error comparing with innovation ${innovation.id}:`, error);
       }
     }
 
-    // Sort by similarity score descending
+    // Sort by similarity score descending and limit to top 5
     results.sort((a, b) => b.similarity_score - a.similarity_score);
+    const top5Results = results.slice(0, 5);
 
-    // Perform clustering on results
-    const clusteredData = performClustering(results);
+    // Perform clustering on top 5 results
+    const clusteredData = performClustering(top5Results);
     
-    console.log(`Found ${results.length} similar innovations in ${clusteredData.clusters.length} clusters`);
+    console.log(`Found top 5 matches from ${results.length} total innovations`);
 
-    // Store results with clean data (remove innovation_data before inserting)
-    if (results.length > 0) {
-      const cleanResults = results.map(r => ({
+    // Store top 5 results with clean data (remove innovation_data before inserting)
+    if (top5Results.length > 0) {
+      const cleanResults = top5Results.map(r => ({
         scan_id: r.scan_id,
         innovation_id: r.innovation_id,
         similarity_score: r.similarity_score,
@@ -200,12 +210,13 @@ serve(async (req) => {
       .update({ status: 'completed' })
       .eq('id', scanId);
 
-    console.log(`Scan completed: ${results.length} matches found`);
+    console.log(`Scan completed: ${top5Results.length} top matches found from ${results.length} total`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        matchesCount: results.length 
+        matchesCount: top5Results.length,
+        totalScanned: results.length
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -225,154 +236,7 @@ serve(async (req) => {
   }
 });
 
-async function generateTextEmbedding(text: string): Promise<number[]> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  
-  if (!LOVABLE_API_KEY) {
-    throw new Error('LOVABLE_API_KEY not configured');
-  }
-
-  // Use Lovable AI to extract semantic keywords and concepts
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        {
-          role: 'system',
-          content: 'Extract 30 key semantic concepts, keywords, and themes from the text. Return ONLY a comma-separated list of single words or short phrases, no explanations.'
-        },
-        {
-          role: 'user',
-          content: text
-        }
-      ],
-      max_tokens: 200,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('Embedding API error:', error);
-    // Fallback to simple embedding
-    return generateSemanticEmbedding(text);
-  }
-
-  const data = await response.json();
-  const keywords = data.choices[0].message.content;
-  
-  // Generate embedding from both original text and extracted keywords
-  return generateSemanticEmbedding(text + ' ' + keywords);
-}
-
-function generateSemanticEmbedding(text: string): number[] {
-  // Enhanced semantic embedding using TF-IDF-like approach
-  const embedding = new Array(1536).fill(0);
-  const words = text.toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .split(/\s+/)
-    .filter(w => w.length > 2);
-  
-  // Create word frequency map
-  const wordFreq = new Map<string, number>();
-  words.forEach(word => {
-    wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
-  });
-  
-  // Generate embedding using multiple hash functions for better distribution
-  for (const [word, freq] of wordFreq.entries()) {
-    const weight = Math.log(1 + freq); // TF-IDF style weighting
-    
-    // Use multiple hash functions to distribute word semantics
-    for (let hashFunc = 0; hashFunc < 3; hashFunc++) {
-      let hash = hashFunc * 7919; // Prime number seed
-      for (let i = 0; i < word.length; i++) {
-        hash = ((hash << 5) - hash) + word.charCodeAt(i);
-        hash = hash & hash; // Convert to 32bit integer
-      }
-      const idx = Math.abs(hash) % 1536;
-      embedding[idx] += weight;
-    }
-    
-    // Add bigram information for better context
-    for (let i = 0; i < word.length - 1; i++) {
-      const bigram = word.substring(i, i + 2);
-      let hash = 0;
-      for (let j = 0; j < bigram.length; j++) {
-        hash = ((hash << 5) - hash) + bigram.charCodeAt(j);
-      }
-      const idx = Math.abs(hash) % 1536;
-      embedding[idx] += weight * 0.5;
-    }
-  }
-  
-  // Normalize
-  const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-  return embedding.map(val => magnitude > 0 ? val / magnitude : 0);
-}
-
-function calculateCosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) return 0;
-  
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  
-  if (normA === 0 || normB === 0) return 0;
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-function calculateEnhancedMetadataSimilarity(
-  scan: { title: string; description: string; tags: string[] },
-  innovation: { title: string; description: string; tags: string[] }
-): number {
-  let score = 0;
-  let factors = 0;
-
-  // Title similarity with higher weight
-  const scanTitleWords = scan.title.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  const innovationTitleWords = innovation.title.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  const titleSim = calculateJaccardSimilarity(scanTitleWords, innovationTitleWords);
-  score += titleSim * 1.5;
-  factors += 1.5;
-
-  // Description keyword overlap
-  const scanKeywords = extractKeywords(scan.description).slice(0, 15);
-  const innovationKeywords = extractKeywords(innovation.description).slice(0, 15);
-  const descSim = calculateJaccardSimilarity(scanKeywords, innovationKeywords);
-  score += descSim;
-  factors++;
-
-  // Tag overlap with high weight
-  if (scan.tags.length > 0 && innovation.tags.length > 0) {
-    const tagSim = calculateJaccardSimilarity(
-      scan.tags.map(t => t.toLowerCase()),
-      innovation.tags.map(t => t.toLowerCase())
-    );
-    score += tagSim * 2;
-    factors += 2;
-  }
-
-  // Domain/category matching
-  const scanDomain = inferDomain(scan.description);
-  const innovationDomain = inferDomain(innovation.description);
-  if (scanDomain === innovationDomain && scanDomain !== 'general') {
-    score += 1;
-    factors++;
-  }
-
-  return factors > 0 ? score / factors : 0;
-}
+// Helper functions for clustering and analysis
 
 function performClustering(results: any[]): any {
   if (results.length === 0) return { clusters: [], summary: {} };
@@ -429,68 +293,6 @@ function performClustering(results: any[]): any {
   };
 
   return { clusters, summary };
-}
-
-function calculateJaccardSimilarity(set1: string[], set2: string[]): number {
-  const s1 = new Set(set1.filter(w => w.length > 2)); // Filter short words
-  const s2 = new Set(set2.filter(w => w.length > 2));
-  
-  if (s1.size === 0 && s2.size === 0) return 0;
-  
-  const intersection = new Set([...s1].filter(x => s2.has(x)));
-  const union = new Set([...s1, ...s2]);
-  
-  return intersection.size / union.size;
-}
-
-function inferDomain(text: string): string {
-  const lower = text.toLowerCase();
-  
-  const domains = {
-    healthcare: ['health', 'medical', 'diagnosis', 'patient', 'disease', 'treatment'],
-    energy: ['energy', 'solar', 'battery', 'renewable', 'power', 'electric'],
-    agriculture: ['farm', 'crop', 'agriculture', 'food', 'harvest', 'soil'],
-    technology: ['ai', 'machine learning', 'software', 'algorithm', 'data', 'computing'],
-    environment: ['environmental', 'sustainable', 'eco', 'green', 'climate', 'pollution'],
-    transportation: ['vehicle', 'transport', 'automotive', 'drone', 'delivery', 'logistics'],
-    manufacturing: ['manufacturing', 'production', 'factory', 'industrial', 'process'],
-    education: ['education', 'learning', 'teaching', 'student', 'school', 'training']
-  };
-
-  for (const [domain, keywords] of Object.entries(domains)) {
-    if (keywords.some(keyword => lower.includes(keyword))) {
-      return domain;
-    }
-  }
-
-  return 'general';
-}
-
-function extractKeywords(text: string): string[] {
-  // Remove common stop words and extract meaningful keywords
-  const stopWords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
-    'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-    'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those'
-  ]);
-
-  const words = text.toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .split(/\s+/)
-    .filter(word => word.length > 3 && !stopWords.has(word));
-
-  // Count word frequency
-  const wordCount = new Map<string, number>();
-  words.forEach(word => {
-    wordCount.set(word, (wordCount.get(word) || 0) + 1);
-  });
-
-  // Get top keywords by frequency
-  return Array.from(wordCount.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([word]) => word);
 }
 
 function calculateTier(score: number): string {

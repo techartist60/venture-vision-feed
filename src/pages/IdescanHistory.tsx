@@ -126,24 +126,14 @@ export default function IdescanHistory() {
               <Clock className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-bold">Scan History</h1>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/idescan/sources')}
-              >
-                <Database className="h-4 w-4 mr-2" />
-                Sources
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => navigate('/idescan')}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Scan
-              </Button>
-            </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate('/idescan')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Scan
+            </Button>
           </div>
         </div>
       </header>
