@@ -232,6 +232,7 @@ async function indexGooglePatents(supabase: any): Promise<number> {
 
   console.log(`Indexed ${indexed} Google Patents`);
   return indexed;
+}
 
 async function indexUSPTOPatents(supabase: any): Promise<number> {
   console.log('Indexing USPTO patent data (expanded dataset)...');
