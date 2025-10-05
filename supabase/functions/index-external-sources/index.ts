@@ -940,6 +940,8 @@ function parseGoogleNewsRSS(xmlText: string): any[] {
   
   return articles;
 }
+
+function generateSimpleEmbedding(text: string): number[] {
   const embedding = new Array(1536).fill(0);
   const words = text.toLowerCase().split(/\s+/);
   
