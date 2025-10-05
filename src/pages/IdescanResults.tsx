@@ -543,23 +543,24 @@ export default function IdescanResults() {
                         </div>
                         
                         <div className="flex gap-2">
+                          {result.innovation_records.source_url && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
+                              className="gap-2"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              View Article
+                            </Button>
+                          )}
                           <Button
-                            variant="default"
+                            variant="outline"
                             size="sm"
                             onClick={() => setSelectedInnovation(result)}
                           >
-                            View Details
+                            Details
                           </Button>
-                          {result.innovation_records.source_url && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
-                            >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Source
-                            </Button>
-                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -609,6 +610,17 @@ export default function IdescanResults() {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl pr-8">{selectedInnovation.innovation_records.title}</DialogTitle>
+              {selectedInnovation.innovation_records.source_url && (
+                <a
+                  href={selectedInnovation.innovation_records.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-2"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {selectedInnovation.innovation_records.owner || 'View Source'}
+                </a>
+              )}
             </DialogHeader>
             
             <div className="space-y-6 py-4">

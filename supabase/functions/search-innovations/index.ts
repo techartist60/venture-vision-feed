@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Use AI to generate targeted search queries
+    // Use AI to generate targeted search queries - focus on finding real innovations
     const searchQueriesResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -37,14 +37,14 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a search query expert. Generate 5 diverse search queries to find similar innovations, patents, startups, and products. Return ONLY the queries, one per line, no numbering or extra text.'
+            content: 'You are an expert at finding similar innovations. Generate 6 specific search queries that will find: patents, startup companies, products, and news articles about similar innovations. Focus on: 1) Specific technical terms, 2) Company/product names, 3) Patent keywords, 4) Industry terms, 5) News-worthy angles, 6) Similar use cases. Return ONLY the queries, one per line.'
           },
           {
             role: 'user',
-            content: `Generate 5 search queries to find innovations similar to: ${ideaDescription}`
+            content: `Generate 6 targeted search queries to find real-world innovations, patents, startups, or products similar to: ${ideaDescription}`
           }
         ],
-        max_tokens: 200,
+        max_tokens: 300,
       }),
     });
 
@@ -56,62 +56,24 @@ serve(async (req) => {
     const allInnovations: any[] = [];
     const seenUrls = new Set<string>();
 
-    // Search for each query
-    for (const query of queries.slice(0, 3)) { // Limit to 3 queries to avoid rate limits
+    // Search multiple sources for each query
+    for (const query of queries) {
       try {
-        const searchResponse = await fetch('https://api.search.brave.com/res/v1/web/search', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'X-Subscription-Token': Deno.env.get('BRAVE_SEARCH_API_KEY') || '',
-          },
-        });
-
-        // Fallback to simple approach if Brave Search not available
-        if (!searchResponse.ok || !Deno.env.get('BRAVE_SEARCH_API_KEY')) {
-          console.log('Using fallback search approach');
-          // Use Google News and TechCrunch as fallback
-          await indexNewsFromRSS(supabaseClient, query);
-          continue;
-        }
-
-        const searchResults = await searchResponse.json();
+        // Always use multiple RSS/news sources for better coverage
+        console.log(`Fetching news articles for: "${query.substring(0, 60)}..."`);
+        await indexNewsFromRSS(supabaseClient, query, seenUrls, allInnovations);
         
-        for (const result of (searchResults.web?.results || []).slice(0, 5)) {
-          if (seenUrls.has(result.url)) continue;
-          seenUrls.add(result.url);
-
-          const innovation = {
-            title: result.title.substring(0, 200),
-            description: result.description?.substring(0, 800) || result.title,
-            owner: extractDomain(result.url),
-            country: 'Unknown',
-            source_type: classifySource(result.url, result.title),
-            source_url: result.url,
-            publication_date: new Date().toISOString().split('T')[0],
-            tags: extractKeywords(result.description || result.title),
-            metadata: {
-              search_query: query,
-              relevance_score: result.page_age ? 100 - result.page_age : 50
-            }
-          };
-
-          allInnovations.push(innovation);
-        }
-
-        // Small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Small delay between queries
+        await new Promise(resolve => setTimeout(resolve, 800));
       } catch (error) {
         console.error(`Error searching for "${query}":`, error);
       }
     }
 
-    // Also fetch recent news
-    await indexNewsFromRSS(supabaseClient, ideaDescription);
-
     console.log(`Found ${allInnovations.length} real innovations from web search`);
 
     // Store innovations in database
+    let storedCount = 0;
     for (const innovation of allInnovations) {
       try {
         // Check for duplicates
@@ -119,30 +81,39 @@ serve(async (req) => {
           .from('innovation_records')
           .select('id')
           .eq('source_url', innovation.source_url)
-          .single();
+          .maybeSingle();
 
         if (!existing) {
           const embedding = generateSimpleEmbedding(
             `${innovation.title} ${innovation.description} ${innovation.tags.join(' ')}`
           );
 
-          await supabaseClient
+          const { error: insertError } = await supabaseClient
             .from('innovation_records')
             .insert({
               ...innovation,
               text_embedding: embedding,
             });
+          
+          if (!insertError) {
+            storedCount++;
+          } else {
+            console.error('Insert error:', insertError.message);
+          }
         }
       } catch (error) {
         console.error('Error storing innovation:', error);
       }
     }
 
+    console.log(`Stored ${storedCount} new innovations in database`);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         count: allInnovations.length,
-        message: `Found ${allInnovations.length} real innovations`
+        stored: storedCount,
+        message: `Found ${allInnovations.length} innovations, stored ${storedCount} new ones`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -175,12 +146,38 @@ function classifySource(url: string, title: string): string {
   const urlLower = url.toLowerCase();
   const titleLower = title.toLowerCase();
   
-  if (urlLower.includes('patent') || titleLower.includes('patent')) return 'patent';
-  if (urlLower.includes('crunchbase') || urlLower.includes('startup') || titleLower.includes('startup')) return 'startup';
-  if (urlLower.includes('techcrunch') || urlLower.includes('news') || urlLower.includes('blog')) return 'news';
-  if (urlLower.includes('product') || titleLower.includes('product')) return 'product';
+  // Patent sources
+  if (urlLower.includes('patent') || 
+      urlLower.includes('uspto.gov') || 
+      urlLower.includes('espacenet') ||
+      titleLower.includes('patent')) return 'patent';
   
-  return 'news';
+  // Startup/company sources
+  if (urlLower.includes('crunchbase') || 
+      urlLower.includes('pitchbook') ||
+      urlLower.includes('angellist') ||
+      urlLower.includes('ycombinator') ||
+      urlLower.includes('startup') || 
+      titleLower.includes('startup') ||
+      titleLower.includes('raises funding') ||
+      titleLower.includes('seed round')) return 'startup';
+  
+  // Product sources
+  if (urlLower.includes('producthunt') || 
+      urlLower.includes('product') || 
+      titleLower.includes('launches') ||
+      titleLower.includes('product') ||
+      titleLower.includes('app release')) return 'product';
+  
+  // News sources (default)
+  if (urlLower.includes('techcrunch') || 
+      urlLower.includes('wired') ||
+      urlLower.includes('verge') ||
+      urlLower.includes('news') || 
+      urlLower.includes('blog') ||
+      urlLower.includes('article')) return 'news';
+  
+  return 'news'; // Default to news
 }
 
 function extractKeywords(text: string): string[] {
@@ -194,48 +191,66 @@ function extractKeywords(text: string): string[] {
   return [...new Set(words)].slice(0, 10);
 }
 
-async function indexNewsFromRSS(supabase: any, searchTerm: string): Promise<void> {
-  console.log('Fetching news articles related to:', searchTerm);
-  
+async function indexNewsFromRSS(
+  supabase: any, 
+  searchTerm: string, 
+  seenUrls: Set<string>, 
+  allInnovations: any[]
+): Promise<void> {
   try {
-    // Fetch Google News RSS
-    const keywords = searchTerm.toLowerCase().split(/\s+/).slice(0, 3).join('+');
-    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}+innovation+technology&hl=en-US&gl=US&ceid=US:en`;
-    
-    const response = await fetch(rssUrl);
-    const xmlText = await response.text();
-    
-    const articles = parseGoogleNewsRSS(xmlText);
-    
-    for (const article of articles.slice(0, 10)) {
-      const { data: existing } = await supabase
-        .from('innovation_records')
-        .select('id')
-        .eq('source_url', article.link)
-        .single();
+    // Try multiple search approaches for better coverage
+    const searches = [
+      // Google News RSS - general tech news
+      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}+innovation+technology+startup&hl=en-US&gl=US&ceid=US:en`,
+      // Google News RSS - specific to the search term
+      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}&hl=en-US&gl=US&ceid=US:en`,
+    ];
 
-      if (!existing) {
-        const embedding = generateSimpleEmbedding(
-          `${article.title} ${article.description}`
-        );
+    for (const rssUrl of searches) {
+      try {
+        const response = await fetch(rssUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; IdescanBot/1.0)'
+          }
+        });
+        
+        if (!response.ok) {
+          console.log(`RSS fetch failed with status: ${response.status}`);
+          continue;
+        }
+        
+        const xmlText = await response.text();
+        const articles = parseGoogleNewsRSS(xmlText);
+        
+        console.log(`Found ${articles.length} articles from RSS feed`);
+        
+        for (const article of articles.slice(0, 15)) {
+          if (seenUrls.has(article.link)) continue;
+          seenUrls.add(article.link);
 
-        await supabase
-          .from('innovation_records')
-          .insert({
+          const innovation = {
             title: article.title,
             description: article.description,
             owner: article.source,
             country: 'Unknown',
-            source_type: 'news',
+            source_type: classifySource(article.link, article.title),
             source_url: article.link,
             publication_date: article.pubDate,
             tags: extractKeywords(article.description),
-            text_embedding: embedding,
-          });
+            metadata: {
+              search_query: searchTerm,
+              source_feed: 'Google News RSS'
+            }
+          };
+
+          allInnovations.push(innovation);
+        }
+      } catch (feedError) {
+        console.error('Error fetching RSS feed:', feedError);
       }
     }
   } catch (error) {
-    console.error('Error fetching news:', error);
+    console.error('Error in indexNewsFromRSS:', error);
   }
 }
 
@@ -245,7 +260,7 @@ function parseGoogleNewsRSS(xmlText: string): any[] {
   const itemRegex = /<item>(.*?)<\/item>/gs;
   const items = xmlText.match(itemRegex) || [];
   
-  for (const item of items.slice(0, 20)) {
+  for (const item of items) {
     const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/);
     const linkMatch = item.match(/<link>(.*?)<\/link>/);
     const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
@@ -254,20 +269,45 @@ function parseGoogleNewsRSS(xmlText: string): any[] {
                       item.match(/<description>(.*?)<\/description>/);
     
     if (titleMatch && linkMatch) {
+      let link = linkMatch[1];
+      
+      // Try to extract actual URL from Google News redirect
+      // Google News often wraps URLs like: https://news.google.com/rss/articles/...
+      // We want to extract the actual article URL if possible
+      const urlMatch = link.match(/url=(https?:\/\/[^&]+)/);
+      if (urlMatch) {
+        link = decodeURIComponent(urlMatch[1]);
+      }
+      
       const title = titleMatch[1];
       const description = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').substring(0, 800) : title;
       
+      // Skip if title or description is too short (likely not a real article)
+      if (title.length < 10) continue;
+      
       articles.push({
         title: title.substring(0, 200),
-        link: linkMatch[1],
+        link: link,
         pubDate: pubDateMatch ? new Date(pubDateMatch[1]).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        source: sourceMatch ? sourceMatch[1] : 'News Source',
+        source: sourceMatch ? sourceMatch[1] : extractSourceFromUrl(link),
         description: description
       });
     }
   }
   
   return articles;
+}
+
+// Helper to extract source name from URL
+function extractSourceFromUrl(url: string): string {
+  try {
+    const hostname = new URL(url).hostname;
+    const parts = hostname.replace('www.', '').split('.');
+    // Capitalize first part (e.g., 'techcrunch' from 'techcrunch.com')
+    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  } catch {
+    return 'News Source';
+  }
 }
 
 function generateSimpleEmbedding(text: string): number[] {
