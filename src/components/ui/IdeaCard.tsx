@@ -264,52 +264,43 @@ export default function IdeaCard({
     );
   }
 
-  // Video layout - Click navigates to detail page
+  // Video layout - Clicking thumbnail navigates to detail page
   return (
-    <div 
-      className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden cursor-pointer"
-      onClick={() => navigate(`/video/${id}`)}
-    >
-      {/* Media */}
-      <div className="relative aspect-video bg-muted">
-        <div className="absolute inset-0" onClick={(e) => {
-          e.stopPropagation();
-          handleVideoClick();
-        }}>
-          <video 
-            ref={videoRef}
-            src={mediaUrl} 
-            className="w-full h-full object-cover"
-            poster={thumbnailUrl}
-            preload="metadata"
-          >
-            Your browser does not support the video tag.
-          </video>
-          
-          {/* Play/Pause Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity">
-            <div className="bg-black/50 rounded-full p-4 hover:bg-black/70 transition-colors">
-              {isPlaying ? (
-                <Pause className="h-8 w-8 text-white" />
-              ) : (
-                <Play className="h-8 w-8 text-white ml-1" />
-              )}
-            </div>
+    <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
+      {/* Media - Clicking thumbnail goes to video page */}
+      <div 
+        className="relative aspect-video bg-muted cursor-pointer"
+        onClick={() => navigate(`/video/${id}`)}
+      >
+        <video 
+          ref={videoRef}
+          src={mediaUrl} 
+          className="w-full h-full object-cover pointer-events-none"
+          poster={thumbnailUrl}
+          preload="metadata"
+        >
+          Your browser does not support the video tag.
+        </video>
+        
+        {/* Play button overlay - navigates to video page */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-all">
+          <div className="bg-black/70 rounded-full p-4 hover:bg-black/90 hover:scale-110 transition-all">
+            <Play className="h-8 w-8 text-white ml-1" />
           </div>
+        </div>
 
-          <div className="absolute top-3 left-3 flex gap-2">
-            {category && (
-              <Badge className="bg-background/90 text-foreground">
-                {category}
-              </Badge>
-            )}
-            {isBoosted && (
-              <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
-                <Zap className="h-3 w-3" />
-                Boosted
-              </Badge>
-            )}
-          </div>
+        <div className="absolute top-3 left-3 flex gap-2">
+          {category && (
+            <Badge className="bg-background/90 text-foreground">
+              {category}
+            </Badge>
+          )}
+          {isBoosted && (
+            <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Boosted
+            </Badge>
+          )}
         </div>
       </div>
 

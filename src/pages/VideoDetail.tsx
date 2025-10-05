@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -346,11 +346,11 @@ export default function VideoDetail() {
       </header>
 
       {/* YouTube-style layout */}
-      <div className="lg:flex lg:gap-6 lg:px-6 lg:py-4 max-w-[1800px] mx-auto">
+      <div className="lg:flex lg:gap-6 lg:px-6 lg:py-6 max-w-[1800px] mx-auto">
         {/* Main content - video and details */}
         <div className="lg:flex-1 lg:max-w-[1280px]">
           {/* Media - Full scale like YouTube */}
-          <div className="relative bg-black">
+          <div className="relative bg-black rounded-xl overflow-hidden">
             {isVideo ? (
               <video 
                 ref={videoRef}
@@ -459,42 +459,63 @@ export default function VideoDetail() {
         </div>
 
         {/* Recommendations sidebar - scrollable like YouTube */}
-        <aside className="lg:w-[402px] lg:max-h-screen lg:overflow-y-auto lg:pb-20">
-          <div className="px-4 lg:px-0 pb-20 lg:pb-0">
-            <h2 className="text-lg font-semibold mb-4 pt-4 lg:pt-0">Recommended</h2>
-            <div className="space-y-3">
+        <aside className="lg:w-[402px] lg:max-h-screen lg:overflow-y-auto lg:pb-4 lg:pr-2">
+          <div className="px-4 lg:px-0 pb-20 lg:pb-4">
+            <h2 className="text-lg font-semibold mb-3 pt-4 lg:pt-0">Recommended</h2>
+            <div className="space-y-2">
               {recommendations.map((rec) => (
                 <div
                   key={rec.id}
-                  className="flex gap-2 cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors"
+                  className="flex gap-2 cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-all group"
                   onClick={() => {
                     navigate(`/video/${rec.id}`);
                     window.scrollTo(0, 0);
                   }}
                 >
-                  <div className="relative w-40 h-24 flex-shrink-0 bg-muted rounded-lg overflow-hidden">
+                  {/* Thumbnail - YouTube proportions (168x94) */}
+                  <div className="relative w-[168px] h-[94px] flex-shrink-0 bg-muted rounded-lg overflow-hidden">
                     <img 
                       src={rec.thumbnail_url || rec.media_url} 
                       alt={rec.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                     />
+                    {/* Duration badge for videos */}
                     {rec.media_type.startsWith('video/') && (
-                      <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                      <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
                         Video
                       </div>
                     )}
+                    {/* Play icon overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-black/60 rounded-full p-2">
+                        <Play className="h-4 w-4 text-white" />
+                      </div>
+                    </div>
                   </div>
+                  
+                  {/* Video info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm line-clamp-2 mb-1">{rec.title}</h3>
+                    <h3 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
+                      {rec.title}
+                    </h3>
                     <p className="text-xs text-muted-foreground mb-1">
                       {rec.profiles?.full_name || 'Anonymous'}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <span>{rec.views_count.toLocaleString()} views</span>
+                      <span>•</span>
+                      <span>{new Date(rec.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>
                 </div>
               ))}
+              
+              {/* Show message if no recommendations */}
+              {recommendations.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No recommendations available
+                </div>
+              )}
             </div>
           </div>
         </aside>
