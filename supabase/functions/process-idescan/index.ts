@@ -57,39 +57,43 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('id', scanId);
 
-    // Always fetch fresh data from external sources for each scan
-    console.log('Fetching fresh data from external sources (Patents, News, Startups)...');
+    // Search for real innovations matching the user's idea
+    console.log('Searching for real innovations matching user idea...');
     
     try {
-      // Fetch fresh data from all sources
-      const indexResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/index-external-sources`, {
+      // Use web search to find real similar innovations
+      const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/search-innovations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
         },
-        body: JSON.stringify({ sourceType: 'all' })
+        body: JSON.stringify({ 
+          ideaDescription: scan.description,
+          scanId: scanId 
+        })
       });
       
-      if (!indexResponse.ok) {
-        console.error('Failed to fetch external sources:', await indexResponse.text());
+      if (!searchResponse.ok) {
+        console.error('Failed to search innovations:', await searchResponse.text());
       } else {
-        const indexResult = await indexResponse.json();
-        console.log(`Successfully indexed ${indexResult.count || 0} innovations from external sources`);
+        const searchResult = await searchResponse.json();
+        console.log(`Successfully found ${searchResult.count || 0} real innovations from web search`);
       }
       
-      // Wait for indexing to complete
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    } catch (indexError) {
-      console.error('Error fetching external sources:', indexError);
+      // Wait for search and indexing to complete
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    } catch (searchError) {
+      console.error('Error searching for innovations:', searchError);
+      // Continue with existing data if search fails
     }
 
-    // Get all innovation records from external sources using admin client
+    // Get innovation records, prioritizing recent ones
     const { data: innovations } = await supabaseAdmin
       .from('innovation_records')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(2000); // Increased limit to get more sources
+      .limit(100); // Focus on most recent/relevant results
 
     if (!innovations || innovations.length === 0) {
       console.log('No innovations found - external sources may not be available');
@@ -151,7 +155,7 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: 'You are an expert innovation analyst. Compare two innovations and return ONLY a similarity score from 0-100. Be generous with scoring to capture related innovations. Score guidelines: 90-100 = Nearly identical; 70-89 = Very similar concept/technology; 50-69 = Related field with similar goals; 30-49 = Same industry/domain; 15-29 = Tangentially related; 0-14 = Unrelated. Consider: core problem, solution approach, technology domain, target market, and practical applications. Return ONLY the numeric score.'
+                content: 'You are an expert innovation analyst. Compare two innovations based on their actual similarity in concept, technology, market, and problem-solving approach. Return ONLY a similarity score from 0-100. Scoring guidelines: 90-100 = Nearly identical concept and implementation; 70-89 = Very similar technology solving same problem; 50-69 = Related field with similar approach; 30-49 = Same industry but different approach; 20-29 = Loosely related; 0-19 = Different domains. Be accurate and consider: technical approach, target problem, market application, and innovation type. Return ONLY the numeric score with no explanation.'
               },
               {
                 role: 'user',
@@ -180,7 +184,7 @@ Return similarity score (0-100):`
           
           console.log(`Comparing user idea with "${innovation.title.substring(0, 50)}..." - Score: ${similarityScore}%`);
           
-          if (!isNaN(similarityScore) && similarityScore >= 15) {
+          if (!isNaN(similarityScore) && similarityScore >= 20) {
             const tier = calculateTier(similarityScore);
             
             console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Similarity: ${similarityScore}%`);
