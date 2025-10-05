@@ -12,6 +12,7 @@ import Categories from "./pages/Categories";
 import Upload from "./pages/Upload";
 import Inventions from "./pages/Inventions";
 import IdeaDetail from "./pages/IdeaDetail";
+import VideoDetail from "./pages/VideoDetail";
 import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
 import Search from "./pages/Search";
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
               <Route path="/inventions" element={<Inventions />} />
               <Route path="/idea/:id" element={<IdeaDetail />} />
+              <Route path="/video/:id" element={<VideoDetail />} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />

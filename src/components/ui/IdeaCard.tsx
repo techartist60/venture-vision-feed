@@ -115,10 +115,19 @@ export default function IdeaCard({
   // YouTube-style photo post layout
   if (mediaType === 'image') {
     return (
-      <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
+      <div 
+        className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden cursor-pointer"
+        onClick={() => navigate(`/video/${id}`)}
+      >
         {/* User Info at top */}
         <div className="p-4 pb-3">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={handleProfileClick}>
+          <div 
+            className="flex items-center gap-3 cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleProfileClick();
+            }}
+          >
             <Avatar className="h-10 w-10 hover:ring-2 hover:ring-primary/20 transition-all">
               <AvatarImage src={user.avatar} />
               <AvatarFallback className="bg-gradient-primary text-primary-foreground">
@@ -162,12 +171,12 @@ export default function IdeaCard({
           </p>
         </div>
 
-        {/* Photo */}
+        {/* Photo - Full scale */}
         <div className="relative">
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full max-h-96 object-cover"
+            className="w-full object-contain"
           />
         </div>
 
@@ -182,18 +191,37 @@ export default function IdeaCard({
                   "gap-2 hover:text-red-500 transition-colors p-0 h-auto",
                   isLiked && "text-red-500"
                 )}
-                onClick={onLike}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLike?.();
+                }}
               >
                 <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
                 <span className="text-sm">{stats.likes}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2 p-0 h-auto" onClick={onComment}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 p-0 h-auto" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onComment?.();
+                }}
+              >
                 <MessageCircle className="h-5 w-5" />
                 <span className="text-sm">{stats.comments}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2 p-0 h-auto" onClick={onShare}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 p-0 h-auto" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare?.();
+                }}
+              >
                 <Share className="h-5 w-5" />
                 <span className="text-sm">{stats.shares}</span>
               </Button>
@@ -201,16 +229,18 @@ export default function IdeaCard({
 
             <div className="flex items-center gap-2">
               {isOwner && (
-                <BoostDialog mediaId={id} isOwner={isOwner}>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                  >
-                    <Zap className="h-4 w-4 text-yellow-500" />
-                    <span className="text-xs">Boost</span>
-                  </Button>
-                </BoostDialog>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <BoostDialog mediaId={id} isOwner={isOwner}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
+                    >
+                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <span className="text-xs">Boost</span>
+                    </Button>
+                  </BoostDialog>
+                </div>
               )}
               
               <Button 
@@ -220,7 +250,10 @@ export default function IdeaCard({
                   "hover:text-accent transition-colors",
                   isSaved && "text-accent"
                 )}
-                onClick={onSave}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSave?.();
+                }}
               >
                 <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
               </Button>
@@ -231,51 +264,65 @@ export default function IdeaCard({
     );
   }
 
-  // Video layout (unchanged)
+  // Video layout - Click navigates to detail page
   return (
-    <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
+    <div 
+      className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden cursor-pointer"
+      onClick={() => navigate(`/video/${id}`)}
+    >
       {/* Media */}
-      <div className="relative aspect-video bg-muted cursor-pointer" onClick={handleVideoClick}>
-        <video 
-          ref={videoRef}
-          src={mediaUrl} 
-          className="w-full h-full object-cover"
-          poster={thumbnailUrl}
-          preload="metadata"
-        >
-          Your browser does not support the video tag.
-        </video>
-        
-        {/* Play/Pause Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity">
-          <div className="bg-black/50 rounded-full p-4 hover:bg-black/70 transition-colors">
-            {isPlaying ? (
-              <Pause className="h-8 w-8 text-white" />
-            ) : (
-              <Play className="h-8 w-8 text-white ml-1" />
+      <div className="relative aspect-video bg-muted">
+        <div className="absolute inset-0" onClick={(e) => {
+          e.stopPropagation();
+          handleVideoClick();
+        }}>
+          <video 
+            ref={videoRef}
+            src={mediaUrl} 
+            className="w-full h-full object-cover"
+            poster={thumbnailUrl}
+            preload="metadata"
+          >
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Play/Pause Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity">
+            <div className="bg-black/50 rounded-full p-4 hover:bg-black/70 transition-colors">
+              {isPlaying ? (
+                <Pause className="h-8 w-8 text-white" />
+              ) : (
+                <Play className="h-8 w-8 text-white ml-1" />
+              )}
+            </div>
+          </div>
+
+          <div className="absolute top-3 left-3 flex gap-2">
+            {category && (
+              <Badge className="bg-background/90 text-foreground">
+                {category}
+              </Badge>
+            )}
+            {isBoosted && (
+              <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                Boosted
+              </Badge>
             )}
           </div>
-        </div>
-
-        <div className="absolute top-3 left-3 flex gap-2">
-          {category && (
-            <Badge className="bg-background/90 text-foreground">
-              {category}
-            </Badge>
-          )}
-          {isBoosted && (
-            <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
-              <Zap className="h-3 w-3" />
-              Boosted
-            </Badge>
-          )}
         </div>
       </div>
 
       {/* Content */}
       <div className="p-6">
         {/* User Info */}
-        <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={handleProfileClick}>
+        <div 
+          className="flex items-center gap-3 mb-4 cursor-pointer" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleProfileClick();
+          }}
+        >
           <Avatar className="h-10 w-10 hover:ring-2 hover:ring-primary/20 transition-all">
             <AvatarImage src={user.avatar} />
             <AvatarFallback className="bg-gradient-primary text-primary-foreground">
@@ -312,18 +359,37 @@ export default function IdeaCard({
                 "gap-2 hover:text-red-500 transition-colors",
                 isLiked && "text-red-500"
               )}
-              onClick={onLike}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLike?.();
+              }}
             >
               <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
               <span className="text-xs">{stats.likes}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="gap-2" onClick={onComment}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onComment?.();
+              }}
+            >
               <MessageCircle className="h-4 w-4" />
               <span className="text-xs">{stats.comments}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="gap-2" onClick={onShare}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare?.();
+              }}
+            >
               <Share className="h-4 w-4" />
               <span className="text-xs">{stats.shares}</span>
             </Button>
@@ -331,16 +397,18 @@ export default function IdeaCard({
 
           <div className="flex items-center gap-2">
             {isOwner && (
-              <BoostDialog mediaId={id} isOwner={isOwner}>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                >
-                  <Zap className="h-4 w-4 text-yellow-500" />
-                  <span className="text-xs">Boost</span>
-                </Button>
-              </BoostDialog>
+              <div onClick={(e) => e.stopPropagation()}>
+                <BoostDialog mediaId={id} isOwner={isOwner}>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
+                  >
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    <span className="text-xs">Boost</span>
+                  </Button>
+                </BoostDialog>
+              </div>
             )}
             
             <Button 
@@ -350,7 +418,10 @@ export default function IdeaCard({
                 "hover:text-accent transition-colors",
                 isSaved && "text-accent"
               )}
-              onClick={onSave}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSave?.();
+              }}
             >
               <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
             </Button>
