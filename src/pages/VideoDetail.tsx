@@ -354,13 +354,17 @@ export default function VideoDetail() {
             {isVideo ? (
               <video 
                 ref={videoRef}
-                src={media.media_url}
                 controls
                 playsInline
-                preload="metadata"
+                preload="auto"
+                crossOrigin="anonymous"
                 className="w-full aspect-video object-contain"
                 poster={media.thumbnail_url || undefined}
+                onError={(e) => {
+                  console.error('Video error:', e);
+                }}
               >
+                <source src={media.media_url} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             ) : (
@@ -368,6 +372,7 @@ export default function VideoDetail() {
                 src={media.media_url} 
                 alt={media.title}
                 className="w-full aspect-video object-contain"
+                loading="eager"
               />
             )}
           </div>
@@ -477,18 +482,30 @@ export default function VideoDetail() {
                 >
                   {/* Thumbnail - YouTube proportions (168x94) */}
                   <div className="relative w-[168px] h-[94px] flex-shrink-0 bg-muted rounded-lg overflow-hidden">
-                    <img 
-                      src={rec.thumbnail_url || rec.media_url} 
-                      alt={rec.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      loading="lazy"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.src !== rec.media_url) {
-                          target.src = rec.media_url;
-                        }
-                      }}
-                    />
+                    {rec.media_type.startsWith('video/') ? (
+                      rec.thumbnail_url ? (
+                        <img 
+                          src={rec.thumbnail_url} 
+                          alt={rec.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <video 
+                          src={rec.media_url}
+                          className="w-full h-full object-cover"
+                          preload="metadata"
+                          muted
+                        />
+                      )
+                    ) : (
+                      <img 
+                        src={rec.media_url} 
+                        alt={rec.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                      />
+                    )}
                     {/* Duration badge for videos */}
                     {rec.media_type.startsWith('video/') && (
                       <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
@@ -498,7 +515,7 @@ export default function VideoDetail() {
                     {/* Play icon overlay */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="bg-black/60 rounded-full p-2">
-                        <Play className="h-4 w-4 text-white" />
+                        <Play className="h-4 w-4 text-white fill-white" />
                       </div>
                     </div>
                   </div>
