@@ -333,24 +333,23 @@ export default function VideoDetail() {
   const isVideo = media.media_type === 'video' || media.media_type.startsWith('video/');
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="bg-black/95 backdrop-blur-md border-b border-border/20 sticky top-0 z-40">
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white hover:bg-white/10">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Header - YouTube style */}
+      <header className="bg-background border-b border-border sticky top-0 z-40">
+        <div className="px-4 h-14 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 
-      {/* Full screen layout */}
-      <div className="lg:flex lg:gap-0 w-full">
-        {/* Main content - video and details */}
-        <div className="lg:flex-1">
-          {/* Media - Full screen */}
-          <div className="relative bg-black overflow-hidden">
+      {/* YouTube-style layout */}
+      <div className="max-w-[1800px] mx-auto">
+        <div className="lg:flex lg:gap-6 lg:px-6 lg:py-6">
+          {/* Main content */}
+          <div className="flex-1 lg:max-w-[1280px]">
+            {/* Video player */}
+            <div className="relative bg-black aspect-video w-full">
             {isVideo ? (
               <video 
                 ref={videoRef}
@@ -358,7 +357,7 @@ export default function VideoDetail() {
                 playsInline
                 preload="auto"
                 autoPlay
-                className="w-full h-screen object-contain"
+                className="w-full h-full object-contain"
                 poster={media.thumbnail_url || undefined}
                 onError={(e) => {
                   console.error('Video error:', e);
@@ -371,18 +370,19 @@ export default function VideoDetail() {
               <img 
                 src={media.media_url} 
                 alt={media.title}
-                className="w-full h-screen object-contain"
+                className="w-full h-full object-contain"
                 loading="eager"
               />
             )}
-          </div>
+            </div>
 
-          {/* Video details */}
-          <div className="p-4 lg:p-6 bg-background">
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-4">{media.title}</h1>
+            {/* Video details */}
+            <div className="p-4 space-y-4">
+              {/* Title */}
+              <h1 className="text-xl font-semibold text-foreground">{media.title}</h1>
 
-            {/* User info and actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 pb-4 border-b border-border">
+              {/* User info and actions */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div 
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => handleProfileClick(media.user_id)}
@@ -447,105 +447,109 @@ export default function VideoDetail() {
                   <Bookmark className={cn("h-5 w-5", media.is_saved && "fill-current")} />
                   <span>{media.saves_count}</span>
                 </Button>
-              </div>
-            </div>
-
-            {/* Description and stats */}
-            <div className="bg-muted/50 rounded-xl p-4">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                <div className="flex items-center gap-1">
-                  <Eye className="h-4 w-4" />
-                  <span>{media.views_count.toLocaleString()} views</span>
                 </div>
-                <span>{new Date(media.created_at).toLocaleDateString()}</span>
               </div>
-              {media.description && (
-                <p className="text-foreground leading-relaxed">{media.description}</p>
-              )}
+
+              {/* Description and stats - YouTube style */}
+              <div className="bg-muted/50 rounded-xl p-3">
+                <div className="flex items-center gap-4 text-sm font-medium text-foreground mb-2">
+                  <div className="flex items-center gap-1">
+                    <span>{media.views_count.toLocaleString()} views</span>
+                  </div>
+                  <span>•</span>
+                  <span>{new Date(media.created_at).toLocaleDateString()}</span>
+                </div>
+                {media.description && (
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{media.description}</p>
+                )}
+              </div>
+
+              {/* Comments section placeholder */}
+              <div className="pt-4 border-t border-border">
+                <h2 className="text-lg font-semibold mb-4">{media.comments_count} Comments</h2>
+                <p className="text-sm text-muted-foreground">Comments feature coming soon...</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Recommendations sidebar - scrollable */}
-        <aside className="lg:w-[420px] lg:max-h-screen lg:overflow-y-auto bg-background">
-          <div className="px-4 lg:px-6 pb-20 lg:pb-4 lg:pt-4">
-            <h2 className="text-lg font-semibold mb-3 pt-4 lg:pt-0">Recommended</h2>
-            <div className="space-y-2">
-              {recommendations.map((rec) => (
-                <div
-                  key={rec.id}
-                  className="flex gap-2 cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-all group"
-                  onClick={() => {
-                    navigate(`/video/${rec.id}`);
-                    window.scrollTo(0, 0);
-                  }}
-                >
-                  {/* Thumbnail - YouTube proportions (168x94) */}
-                  <div className="relative w-[168px] h-[94px] flex-shrink-0 bg-muted rounded-lg overflow-hidden">
-                    {(rec.media_type === 'video' || rec.media_type.startsWith('video/')) ? (
-                      rec.thumbnail_url ? (
+          {/* Recommendations sidebar - YouTube style */}
+          <aside className="lg:w-[402px] flex-shrink-0">
+            <div className="space-y-2 pb-20 lg:pb-4">
+              {/* Mobile: show recommendations below video */}
+              <div className="lg:hidden px-4 pt-6 pb-4 border-t border-border">
+                <h2 className="text-lg font-semibold mb-4">Recommended</h2>
+              </div>
+
+              {/* Desktop: sidebar recommendations */}
+              <div className="hidden lg:block px-4">
+                <h2 className="text-lg font-semibold mb-3">Recommended</h2>
+              </div>
+
+              <div className="space-y-2 px-4">
+                {recommendations.map((rec) => (
+                  <div
+                    key={rec.id}
+                    className="flex gap-2 cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-all group"
+                    onClick={() => {
+                      navigate(`/video/${rec.id}`);
+                      window.scrollTo(0, 0);
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative w-[168px] h-[94px] flex-shrink-0 bg-muted rounded-lg overflow-hidden">
+                      {(rec.media_type === 'video' || rec.media_type.startsWith('video/')) ? (
+                        rec.thumbnail_url ? (
+                          <img 
+                            src={rec.thumbnail_url} 
+                            alt={rec.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <video 
+                            src={rec.media_url}
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                            muted
+                          />
+                        )
+                      ) : (
                         <img 
-                          src={rec.thumbnail_url} 
+                          src={rec.media_url} 
                           alt={rec.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                           loading="lazy"
                         />
-                      ) : (
-                        <video 
-                          src={rec.media_url}
-                          className="w-full h-full object-cover"
-                          preload="metadata"
-                          muted
-                        />
-                      )
-                    ) : (
-                      <img 
-                        src={rec.media_url} 
-                        alt={rec.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        loading="lazy"
-                      />
-                    )}
-                    {/* Duration badge for videos */}
-                    {rec.media_type.startsWith('video/') && (
-                      <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                        Video
-                      </div>
-                    )}
-                    {/* Play icon overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-black/60 rounded-full p-2">
-                        <Play className="h-4 w-4 text-white fill-white" />
+                      )}
+                      
+                      {/* Play icon overlay for videos */}
+                      {(rec.media_type === 'video' || rec.media_type.startsWith('video/')) && (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="bg-black/60 rounded-full p-2">
+                            <Play className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-snug mb-1">
+                        {rec.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {rec.profiles?.full_name || 'Anonymous'}
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>{rec.views_count.toLocaleString()} views</span>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Video info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-                      {rec.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      {rec.profiles?.full_name || 'Anonymous'}
-                    </p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span>{rec.views_count.toLocaleString()} views</span>
-                      <span>•</span>
-                      <span>{new Date(rec.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Show message if no recommendations */}
-              {recommendations.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  No recommendations available
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+      </div>
       </div>
 
       <CommentDialog
