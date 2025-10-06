@@ -356,19 +356,13 @@ export default function VideoDetail() {
                 ref={videoRef}
                 src={media.media_url}
                 controls
-                autoPlay
-                muted
                 playsInline
+                preload="metadata"
                 className="w-full aspect-video object-contain"
-                poster={media.thumbnail_url}
-                onLoadedMetadata={(e) => {
-                  const video = e.currentTarget;
-                  video.muted = false;
-                  video.play().catch(() => {
-                    // If autoplay fails, user will need to click play
-                  });
-                }}
-              />
+                poster={media.thumbnail_url || undefined}
+              >
+                Your browser does not support the video tag.
+              </video>
             ) : (
               <img 
                 src={media.media_url} 
