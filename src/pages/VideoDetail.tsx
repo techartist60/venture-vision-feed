@@ -357,8 +357,17 @@ export default function VideoDetail() {
                 src={media.media_url}
                 controls
                 autoPlay
+                muted
+                playsInline
                 className="w-full aspect-video object-contain"
                 poster={media.thumbnail_url}
+                onLoadedMetadata={(e) => {
+                  const video = e.currentTarget;
+                  video.muted = false;
+                  video.play().catch(() => {
+                    // If autoplay fails, user will need to click play
+                  });
+                }}
               />
             ) : (
               <img 
@@ -478,6 +487,13 @@ export default function VideoDetail() {
                       src={rec.thumbnail_url || rec.media_url} 
                       alt={rec.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== rec.media_url) {
+                          target.src = rec.media_url;
+                        }
+                      }}
                     />
                     {/* Duration badge for videos */}
                     {rec.media_type.startsWith('video/') && (
