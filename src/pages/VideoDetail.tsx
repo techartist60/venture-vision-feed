@@ -46,6 +46,8 @@ export default function VideoDetail() {
 
   useEffect(() => {
     if (id) {
+      setLoading(true);
+      setMedia(null);
       fetchMedia();
       fetchRecommendations();
     }
@@ -352,6 +354,7 @@ export default function VideoDetail() {
             <div className="relative bg-black aspect-video w-full">
             {isVideo ? (
               <video 
+                key={media.id}
                 ref={videoRef}
                 controls
                 playsInline
