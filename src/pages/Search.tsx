@@ -188,7 +188,7 @@ export default function Search() {
                       <div className="flex items-start space-x-4">
                         {/* Thumbnail */}
                         <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-lg overflow-hidden">
-                          {idea.media_type.startsWith('video/') ? (
+                          {idea.media_type === 'video' ? (
                             <>
                               {idea.thumbnail_url ? (
                                 <img 
