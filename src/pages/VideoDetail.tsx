@@ -330,35 +330,35 @@ export default function VideoDetail() {
     );
   }
 
-  const isVideo = media.media_type.startsWith('video/');
+  const isVideo = media.media_type === 'video' || media.media_type.startsWith('video/');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-40 lg:hidden">
+      <header className="bg-black/95 backdrop-blur-md border-b border-border/20 sticky top-0 z-40">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white hover:bg-white/10">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </header>
 
-      {/* YouTube-style layout */}
-      <div className="lg:flex lg:gap-6 lg:px-6 lg:py-6 max-w-[1800px] mx-auto">
+      {/* Full screen layout */}
+      <div className="lg:flex lg:gap-0 w-full">
         {/* Main content - video and details */}
-        <div className="lg:flex-1 lg:max-w-[1280px]">
-          {/* Media - Full scale like YouTube */}
-          <div className="relative bg-black rounded-xl overflow-hidden">
+        <div className="lg:flex-1">
+          {/* Media - Full screen */}
+          <div className="relative bg-black overflow-hidden">
             {isVideo ? (
               <video 
                 ref={videoRef}
                 controls
                 playsInline
                 preload="auto"
-                crossOrigin="anonymous"
-                className="w-full aspect-video object-contain"
+                autoPlay
+                className="w-full h-screen object-contain"
                 poster={media.thumbnail_url || undefined}
                 onError={(e) => {
                   console.error('Video error:', e);
@@ -371,14 +371,14 @@ export default function VideoDetail() {
               <img 
                 src={media.media_url} 
                 alt={media.title}
-                className="w-full aspect-video object-contain"
+                className="w-full h-screen object-contain"
                 loading="eager"
               />
             )}
           </div>
 
           {/* Video details */}
-          <div className="p-4 lg:p-6">
+          <div className="p-4 lg:p-6 bg-background">
             <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-4">{media.title}</h1>
 
             {/* User info and actions */}
@@ -466,9 +466,9 @@ export default function VideoDetail() {
           </div>
         </div>
 
-        {/* Recommendations sidebar - scrollable like YouTube */}
-        <aside className="lg:w-[402px] lg:max-h-screen lg:overflow-y-auto lg:pb-4 lg:pr-2">
-          <div className="px-4 lg:px-0 pb-20 lg:pb-4">
+        {/* Recommendations sidebar - scrollable */}
+        <aside className="lg:w-[420px] lg:max-h-screen lg:overflow-y-auto bg-background">
+          <div className="px-4 lg:px-6 pb-20 lg:pb-4 lg:pt-4">
             <h2 className="text-lg font-semibold mb-3 pt-4 lg:pt-0">Recommended</h2>
             <div className="space-y-2">
               {recommendations.map((rec) => (
@@ -482,7 +482,7 @@ export default function VideoDetail() {
                 >
                   {/* Thumbnail - YouTube proportions (168x94) */}
                   <div className="relative w-[168px] h-[94px] flex-shrink-0 bg-muted rounded-lg overflow-hidden">
-                    {rec.media_type.startsWith('video/') ? (
+                    {(rec.media_type === 'video' || rec.media_type.startsWith('video/')) ? (
                       rec.thumbnail_url ? (
                         <img 
                           src={rec.thumbnail_url} 
