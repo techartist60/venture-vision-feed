@@ -172,11 +172,11 @@ export default function IdeaCard({
         </div>
 
         {/* Photo - Full scale */}
-        <div className="relative">
+        <div className="relative aspect-video bg-muted">
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
 
