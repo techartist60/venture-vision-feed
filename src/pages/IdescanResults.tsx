@@ -543,24 +543,24 @@ export default function IdescanResults() {
                         </div>
                         
                         <div className="flex gap-2">
-                          {result.innovation_records.source_url && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
-                              className="gap-2"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              View Article
-                            </Button>
-                          )}
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
                             onClick={() => setSelectedInnovation(result)}
+                            className="gap-2"
                           >
-                            Details
+                            <ExternalLink className="h-4 w-4" />
+                            Unlock More Details
                           </Button>
+                          {result.innovation_records.source_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
+                            >
+                              Source
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -638,66 +638,109 @@ export default function IdescanResults() {
               </div>
 
               {/* Owner/Inventor Information */}
-              {(selectedInnovation.innovation_records.owner || 
-                selectedInnovation.innovation_records.metadata?.inventor || 
-                selectedInnovation.innovation_records.metadata?.ceo) && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    {selectedInnovation.innovation_records.source_type === 'patent' ? 'Inventor' : 'Company'} Information
-                  </h3>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  {selectedInnovation.innovation_records.source_type === 'patent' ? 'Inventor' : 'Innovator'} Information
+                </h3>
+                
+                <div className="space-y-3 pl-7">
+                  {selectedInnovation.innovation_records.metadata?.inventor && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Inventor Name:</span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.metadata.inventor}</p>
+                    </div>
+                  )}
                   
-                  <div className="space-y-2 pl-7">
-                    {selectedInnovation.innovation_records.metadata?.inventor && (
-                      <div>
-                        <span className="text-sm text-muted-foreground">Inventor:</span>
-                        <p className="font-medium">{selectedInnovation.innovation_records.metadata.inventor}</p>
-                      </div>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata?.ceo && (
-                      <div>
-                        <span className="text-sm text-muted-foreground">CEO:</span>
-                        <p className="font-medium">{selectedInnovation.innovation_records.metadata.ceo}</p>
-                      </div>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.owner && (
-                      <div>
-                        <span className="text-sm text-muted-foreground">Organization:</span>
-                        <p className="font-medium">{selectedInnovation.innovation_records.owner}</p>
-                      </div>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.country && (
-                      <div>
-                        <span className="text-sm text-muted-foreground">Country:</span>
-                        <p className="font-medium">{selectedInnovation.innovation_records.country}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Contact Information */}
-              {(selectedInnovation.innovation_records.metadata?.contact_email || 
-                selectedInnovation.innovation_records.metadata?.company_url) && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg">Contact</h3>
-                  <div className="space-y-2">
-                    {selectedInnovation.innovation_records.metadata.contact_email && (
+                  {selectedInnovation.innovation_records.metadata?.ceo && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">CEO:</span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.metadata.ceo}</p>
+                    </div>
+                  )}
+                  
+                  {selectedInnovation.innovation_records.owner && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">
+                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Holder' : 'Organization'}:
+                      </span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.owner}</p>
+                    </div>
+                  )}
+                  
+                  {selectedInnovation.innovation_records.metadata?.email && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Email:</span>
                       <a 
-                        href={`mailto:${selectedInnovation.innovation_records.metadata.contact_email}`}
+                        href={`mailto:${selectedInnovation.innovation_records.metadata.email}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {selectedInnovation.innovation_records.metadata.email}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {selectedInnovation.innovation_records.country && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Location:</span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.country}</p>
+                    </div>
+                  )}
+                  
+                  {selectedInnovation.innovation_records.metadata?.founded_year && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Founded Year:</span>
+                      <p className="font-medium">{selectedInnovation.innovation_records.metadata.founded_year}</p>
+                    </div>
+                  )}
+                  
+                  {selectedInnovation.innovation_records.metadata?.publication_date && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">
+                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Date' : 'Publication Date'}:
+                      </span>
+                      <p className="font-medium">
+                        {new Date(selectedInnovation.innovation_records.metadata.publication_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Professional Links */}
+              {(selectedInnovation.innovation_records.metadata?.linkedin || 
+                selectedInnovation.innovation_records.metadata?.company_linkedin ||
+                selectedInnovation.innovation_records.metadata?.website) && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg">Professional Links</h3>
+                  <div className="space-y-2">
+                    {selectedInnovation.innovation_records.metadata?.linkedin && (
+                      <a 
+                        href={selectedInnovation.innovation_records.metadata.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
                       >
                         <ExternalLink className="h-4 w-4" />
-                        {selectedInnovation.innovation_records.metadata.contact_email}
+                        Personal LinkedIn Profile
                       </a>
                     )}
                     
-                    {selectedInnovation.innovation_records.metadata.company_url && (
+                    {selectedInnovation.innovation_records.metadata?.company_linkedin && (
                       <a 
-                        href={selectedInnovation.innovation_records.metadata.company_url}
+                        href={selectedInnovation.innovation_records.metadata.company_linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Company LinkedIn Page
+                      </a>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata?.website && (
+                      <a 
+                        href={selectedInnovation.innovation_records.metadata.website}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm hover:text-primary transition-colors"

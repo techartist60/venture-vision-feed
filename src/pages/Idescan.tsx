@@ -148,12 +148,22 @@ export default function Idescan() {
         description: "Your innovation scan is being processed...",
       });
 
-      // Trigger processing in background
+      // Trigger processing in background with auth headers
+      const { data: { session } } = await supabase.auth.getSession();
+      
       supabase.functions.invoke('process-idescan', {
-        body: { scanId: scan.id }
+        body: { scanId: scan.id },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
       }).then(({ error }) => {
         if (error) {
           console.error('Processing error:', error);
+          toast({
+            title: "Warning",
+            description: "Scan initiated but processing may be delayed",
+            variant: "destructive",
+          });
         }
       });
 
