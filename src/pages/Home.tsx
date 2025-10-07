@@ -8,16 +8,16 @@ import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from '@/components/NotificationBell';
 import heroImage from '@/assets/hero-innovation.jpg';
-
 export default function Home() {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   // Desktop layout - simplified without duplicate header
   if (!isMobile) {
-    return (
-      <div className="space-y-8">
+    return <div className="space-y-8">
         {/* Idescan Feature Banner */}
         <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 shadow-glow">
           <CardHeader>
@@ -27,9 +27,7 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-xl">Idescan</CardTitle>
-                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                  NEW
-                </span>
+                
               </div>
             </div>
             <CardDescription className="text-base">
@@ -38,17 +36,11 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <Button 
-                onClick={() => navigate('/idescan')}
-                className="gap-2"
-                size="lg"
-              >
+              <Button onClick={() => navigate('/idescan')} className="gap-2" size="lg">
                 <Sparkles className="h-5 w-5" />
                 Try Idescan Now
               </Button>
-              <p className="text-sm text-muted-foreground">
-                Search patents, startups & more from around the world
-              </p>
+              
             </div>
           </CardContent>
         </Card>
@@ -57,14 +49,12 @@ export default function Home() {
         <section>
           <DiscoveryFeed />
         </section>
-      </div>
-    );
+      </div>;
   }
 
   // Mobile layout (existing design)
-  
-  return (
-    <div className="min-h-screen">
+
+  return <div className="min-h-screen">
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 max-w-md mx-auto">
@@ -77,41 +67,29 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <NotificationBell />
-              {!user ? (
-                <Link to="/auth">
+              {!user ? <Link to="/auth">
                   <Button variant="innovation" size="sm">
                     <User className="h-4 w-4 mr-2" />
                     Sign In
                   </Button>
-                </Link>
-              ) : (
-                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium">
+                </Link> : <Link to="/profile" className="flex items-center gap-2 text-sm font-medium">
                   <User className="h-5 w-5" />
                   {user?.user_metadata?.full_name || 'Profile'}
-                </Link>
-              )}
+                </Link>}
             </div>
           </div>
           
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search ideas, people..." 
-              className="pl-10 rounded-full bg-muted/50 border-0 focus:bg-background transition-colors cursor-pointer"
-              readOnly
-              onClick={() => navigate('/search')}
-            />
+            <Input placeholder="Search ideas, people..." className="pl-10 rounded-full bg-muted/50 border-0 focus:bg-background transition-colors cursor-pointer" readOnly onClick={() => navigate('/search')} />
           </div>
         </div>
       </header>
 
       {/* Idescan Banner */}
       <div className="px-4 py-4 max-w-md mx-auto">
-        <Card 
-          className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 cursor-pointer hover:shadow-glow transition-all"
-          onClick={() => navigate('/idescan')}
-        >
+        <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 cursor-pointer hover:shadow-glow transition-all" onClick={() => navigate('/idescan')}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
@@ -138,6 +116,5 @@ export default function Home() {
       <section className="px-4 pb-8 max-w-md mx-auto">
         <DiscoveryFeed />
       </section>
-    </div>
-  );
+    </div>;
 }
