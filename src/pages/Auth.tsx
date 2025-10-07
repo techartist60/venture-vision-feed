@@ -90,7 +90,7 @@ export default function Auth() {
       toast({
         title: "Success",
         description: isSignUp 
-          ? "Account created! Please check your email to verify your account."
+          ? "Account created! Check your email to verify."
           : "Welcome back!",
       });
       if (!isSignUp) {
@@ -126,7 +126,7 @@ export default function Auth() {
           </div>
           <CardTitle>Welcome to Idestrim</CardTitle>
           <CardDescription>
-            Join the community of innovators and discover amazing ideas
+            Join our community and share your ideas
           </CardDescription>
         </CardHeader>
         <CardContent>

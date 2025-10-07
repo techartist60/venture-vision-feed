@@ -5,40 +5,40 @@ import { Info, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-rea
 export function SimilarityExplainer() {
   const tiers = [
     {
-      name: 'Near Duplicate',
+      name: 'Very Similar',
       range: '85-100%',
       color: 'text-red-500',
       bgColor: 'bg-red-500/10',
       borderColor: 'border-red-500/20',
       icon: AlertTriangle,
-      description: 'Very high similarity. Potential IP conflict or prior art.'
+      description: 'Almost identical. May already exist.'
     },
     {
-      name: 'Strong Similarity',
+      name: 'Quite Similar',
       range: '60-85%',
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
       borderColor: 'border-orange-500/20',
       icon: TrendingUp,
-      description: 'Significant overlap. Review carefully for differentiation.'
+      description: 'Lots in common. Check how yours is different.'
     },
     {
-      name: 'Related',
+      name: 'Somewhat Similar',
       range: '30-60%',
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-500/10',
       borderColor: 'border-yellow-500/20',
       icon: Minus,
-      description: 'Moderate similarity. Similar domain or approach.'
+      description: 'Some overlap. Similar field or approach.'
     },
     {
-      name: 'Distant',
+      name: 'A Little Similar',
       range: '0-30%',
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
       borderColor: 'border-blue-500/20',
       icon: TrendingDown,
-      description: 'Low similarity. Different approach or domain.'
+      description: 'Not very similar. Different idea or field.'
     }
   ];
 
@@ -47,27 +47,27 @@ export function SimilarityExplainer() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Info className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Understanding Similarity Scores</CardTitle>
+          <CardTitle className="text-lg">How We Find Matches</CardTitle>
         </div>
         <CardDescription>
-          Our AI-powered matching engine uses weighted scoring across multiple dimensions
+          We compare your idea against others using smart technology
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Scoring Methodology */}
         <div>
-          <h4 className="font-semibold mb-3 text-sm">Weighted Scoring System</h4>
+          <h4 className="font-semibold mb-3 text-sm">How We Calculate Matches</h4>
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between p-2 bg-blue-500/5 rounded">
-              <span className="text-muted-foreground">Text Similarity</span>
+              <span className="text-muted-foreground">Text Match</span>
               <Badge variant="outline">50-60%</Badge>
             </div>
             <div className="flex items-center justify-between p-2 bg-purple-500/5 rounded">
-              <span className="text-muted-foreground">Image Similarity (if provided)</span>
+              <span className="text-muted-foreground">Image Match (if you upload one)</span>
               <Badge variant="outline">40%</Badge>
             </div>
             <div className="flex items-center justify-between p-2 bg-green-500/5 rounded">
-              <span className="text-muted-foreground">Metadata & Tags</span>
+              <span className="text-muted-foreground">Details & Tags</span>
               <Badge variant="outline">10-40%</Badge>
             </div>
           </div>
@@ -75,7 +75,7 @@ export function SimilarityExplainer() {
 
         {/* Similarity Tiers */}
         <div>
-          <h4 className="font-semibold mb-3 text-sm">Similarity Tiers</h4>
+          <h4 className="font-semibold mb-3 text-sm">Match Levels</h4>
           <div className="space-y-3">
             {tiers.map((tier) => {
               const Icon = tier.icon;
@@ -106,23 +106,23 @@ export function SimilarityExplainer() {
 
         {/* What We Analyze */}
         <div>
-          <h4 className="font-semibold mb-3 text-sm">What We Analyze</h4>
+          <h4 className="font-semibold mb-3 text-sm">What We Look At</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span><strong>Semantic Text:</strong> AI embeddings capture meaning beyond keywords</span>
+              <span><strong>Text:</strong> We understand the meaning, not just words</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span><strong>Visual Features:</strong> Image analysis for sketches and diagrams</span>
+              <span><strong>Pictures:</strong> We check images and diagrams you share</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span><strong>Domain Matching:</strong> Industry, technology category, and use case</span>
+              <span><strong>Field:</strong> We compare the industry and type of technology</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span><strong>Tag Overlap:</strong> Keywords and technical classifications</span>
+              <span><strong>Keywords:</strong> We match important words and tags</span>
             </li>
           </ul>
         </div>

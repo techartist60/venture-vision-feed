@@ -315,8 +315,8 @@ export default function Upload() {
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Share Your Idea</h1>
-                <p className="text-sm text-muted-foreground">Turn inspiration into innovation</p>
+              <h1 className="text-xl font-bold">Share Your Idea</h1>
+                <p className="text-sm text-muted-foreground">Show your innovation</p>
               </div>
             </div>
           </div>
@@ -328,8 +328,8 @@ export default function Upload() {
             <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <UploadIcon className="h-10 w-10 text-primary-foreground" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">What would you like to share?</h2>
-            <p className="text-muted-foreground">Choose how you want to showcase your innovative idea</p>
+            <h2 className="text-2xl font-bold mb-2">What do you want to share?</h2>
+            <p className="text-muted-foreground">Choose how to show your idea</p>
           </div>
 
           <div className="space-y-4">
@@ -344,8 +344,8 @@ export default function Upload() {
                   <Image className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-foreground">Photo Carousel</div>
-                  <div className="text-sm text-muted-foreground">Share images of your idea</div>
+                  <div className="font-semibold text-foreground">Photos</div>
+                  <div className="text-sm text-muted-foreground">Share pictures of your idea</div>
                 </div>
               </div>
             </Button>
@@ -361,8 +361,8 @@ export default function Upload() {
                   <Video className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-foreground">Video Demo</div>
-                  <div className="text-sm text-muted-foreground">Show your idea in action (max 3 min)</div>
+                  <div className="font-semibold text-foreground">Video</div>
+                  <div className="text-sm text-muted-foreground">Show your idea in action (3 min max)</div>
                 </div>
               </div>
             </Button>
@@ -374,9 +374,9 @@ export default function Upload() {
                 <Sparkles className="h-4 w-4 text-accent" />
               </div>
               <div>
-                <h3 className="font-medium text-foreground mb-1">Pro Tip</h3>
+                <h3 className="font-medium text-foreground mb-1">Tip</h3>
                 <p className="text-sm text-muted-foreground">
-                  Videos tend to get 3x more engagement than photos. Consider showing your idea in action!
+                  Videos get 3x more views than photos. Try showing your idea in action!
                 </p>
               </div>
             </div>
@@ -477,9 +477,9 @@ export default function Upload() {
                 {mediaType === 'photo' ? 'Add Photos' : 'Add Video'}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {mediaType === 'photo' 
-                  ? 'Tap to select up to 10 photos' 
-                  : 'Tap to select a video (max 3 minutes)'
+                 {mediaType === 'photo' 
+                  ? 'Tap to pick up to 10 photos' 
+                  : 'Tap to pick a video (3 min max)'
                 }
               </p>
               <Button variant="innovation" size="sm">

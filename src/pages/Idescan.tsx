@@ -90,7 +90,7 @@ export default function Idescan() {
     if (!description.trim()) {
       toast({
         title: "Missing information",
-        description: "Please provide a detailed description of your innovation",
+        description: "Please describe your idea",
         variant: "destructive",
       });
       return;
@@ -98,8 +98,8 @@ export default function Idescan() {
 
     if (description.trim().length < 50) {
       toast({
-        title: "Description too short",
-        description: "Please provide at least 50 characters to enable accurate matching",
+        title: "Need more details",
+        description: "Please write at least 50 characters so we can find better matches",
         variant: "destructive",
       });
       return;
@@ -144,8 +144,8 @@ export default function Idescan() {
       if (scanError) throw scanError;
 
       toast({
-        title: "Scan initiated!",
-        description: "Your innovation scan is being processed...",
+        title: "Searching!",
+        description: "We're looking for similar ideas...",
       });
 
       // Trigger processing in background with auth headers
@@ -160,8 +160,8 @@ export default function Idescan() {
         if (error) {
           console.error('Processing error:', error);
           toast({
-            title: "Warning",
-            description: "Scan initiated but processing may be delayed",
+            title: "Note",
+            description: "Search started but may take a bit longer",
             variant: "destructive",
           });
         }
@@ -173,7 +173,7 @@ export default function Idescan() {
       console.error('Error creating scan:', error);
       toast({
         title: "Error",
-        description: "Failed to initiate scan. Please try again.",
+        description: "Couldn't start the search. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -208,42 +208,41 @@ export default function Idescan() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary mb-4">
             <Sparkles className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h2 className="text-3xl font-bold mb-3">Shazam for Innovations</h2>
+          <h2 className="text-3xl font-bold mb-3">Find Similar Ideas</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Discover similar innovations across patents, startups, and innovation databases. 
-            Upload your idea description and optionally an image to find matches.
+            See if your idea already exists. We'll search patents, startups, and innovation databases to find similar ideas.
           </p>
         </div>
 
         {/* Scan Form */}
         <Card className="shadow-glow">
           <CardHeader>
-            <CardTitle>Start Innovation Scan</CardTitle>
+            <CardTitle>Search for Your Idea</CardTitle>
             <CardDescription>
-              Describe your innovation and get instant similarity matches from global databases
+              Tell us about your idea and we'll find similar ones from around the world
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Innovation Description *</Label>
+                <Label htmlFor="description">Describe Your Idea *</Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe your innovation in detail: what problem it solves, how it works, key features, technology used, target market, etc. The more details you provide, the better the similarity matching will be."
+                  placeholder="What's your idea? Tell us what problem it solves, how it works, and who it's for. The more you tell us, the better we can help."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={10}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum 50 characters. Be specific about the problem, solution, technology, and use cases for accurate matching.
+                  Need at least 50 characters. Be specific to get the best results.
                 </p>
               </div>
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <Label htmlFor="image">Image or Sketch (Optional)</Label>
+                <Label htmlFor="image">Add a Picture (Optional)</Label>
                 <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
                   {imagePreview ? (
                     <div className="space-y-4">
@@ -269,10 +268,10 @@ export default function Idescan() {
                       <div className="flex flex-col items-center gap-2">
                         <ImageIcon className="h-12 w-12 text-muted-foreground" />
                         <p className="text-sm font-medium">
-                          Click to upload image or sketch
+                          Click to add a picture
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          PNG, JPG up to 10MB
+                          JPG or PNG, max 10MB
                         </p>
                       </div>
                       <Input
@@ -307,7 +306,7 @@ export default function Idescan() {
                 ) : (
                   <>
                     <Scan className="mr-2 h-5 w-5" />
-                    Start Innovation Scan
+                    Search for Similar Ideas
                   </>
                 )}
               </Button>
@@ -319,33 +318,33 @@ export default function Idescan() {
         <div className="grid md:grid-cols-3 gap-4 mt-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Patent Databases</CardTitle>
+              <CardTitle className="text-sm">Patents</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Search across WIPO, USPTO, Espacenet, and more
+                We search global patent databases
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Startup Directories</CardTitle>
+              <CardTitle className="text-sm">Startups</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Compare with Crunchbase, AngelList innovations
+                We check startup databases worldwide
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Idestrim Database</CardTitle>
+              <CardTitle className="text-sm">Community Ideas</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Match against community innovations
+                We compare with ideas from our community
               </p>
             </CardContent>
           </Card>

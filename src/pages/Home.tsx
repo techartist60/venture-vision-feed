@@ -33,7 +33,7 @@ export default function Home() {
               </div>
             </div>
             <CardDescription className="text-base">
-              Shazam for Innovations - Discover similar patents, startups & innovations instantly
+              Find similar ideas instantly - search patents, startups & innovations
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -47,7 +47,7 @@ export default function Home() {
                 Try Idescan Now
               </Button>
               <p className="text-sm text-muted-foreground">
-                Search across global patent databases, startup directories & more
+                Search patents, startups & more from around the world
               </p>
             </div>
           </CardContent>
@@ -73,7 +73,7 @@ export default function Home() {
               <h1 className="text-2xl font-bold bg-gradient-innovation bg-clip-text text-transparent">
                 Idestrim
               </h1>
-              <p className="text-sm text-muted-foreground">Discover Innovation</p>
+              <p className="text-sm text-muted-foreground">Discover New Ideas</p>
             </div>
             <div className="flex items-center gap-2">
               <NotificationBell />
@@ -97,7 +97,7 @@ export default function Home() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search ideas, creators..." 
+              placeholder="Search ideas, people..." 
               className="pl-10 rounded-full bg-muted/50 border-0 focus:bg-background transition-colors cursor-pointer"
               readOnly
               onClick={() => navigate('/search')}
@@ -125,7 +125,7 @@ export default function Home() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">
-                  Find similar innovations instantly
+                  Find similar ideas instantly
                 </p>
               </div>
               <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />

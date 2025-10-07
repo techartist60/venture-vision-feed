@@ -107,7 +107,7 @@ export default function IdescanResults() {
       console.error('Error fetching scan results:', error);
       toast({
         title: "Error",
-        description: "Failed to load scan results",
+        description: "Couldn't load your results",
         variant: "destructive",
       });
     } finally {
@@ -215,7 +215,7 @@ export default function IdescanResults() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <TrendingUp className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Scan Results</h1>
+            <h1 className="text-xl font-bold">Your Results</h1>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -224,7 +224,7 @@ export default function IdescanResults() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>How Similarity Scoring Works</DialogTitle>
+                  <DialogTitle>How We Score Matches</DialogTitle>
                 </DialogHeader>
                 <SimilarityExplainer />
               </DialogContent>
@@ -257,7 +257,7 @@ export default function IdescanResults() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-2xl mb-2">{scan.title}</CardTitle>
+                    <CardTitle className="text-2xl mb-2">Your Idea</CardTitle>
                     <Badge className={scan.status === 'completed' ? 'bg-green-500/10 text-green-500' : ''}>
                       {scan.status}
                     </Badge>
@@ -292,7 +292,7 @@ export default function IdescanResults() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Found {results.length} Similar Innovations</CardTitle>
+                    <CardTitle>Found {results.length} Similar Ideas</CardTitle>
                     <Button variant="outline" size="sm" onClick={exportToCSV}>
                       <Download className="h-4 w-4 mr-2" />
                       Export CSV
@@ -306,7 +306,7 @@ export default function IdescanResults() {
                       <div className="text-2xl font-bold text-red-500">
                         {results.filter(r => r.similarity_tier === 'near_duplicate').length}
                       </div>
-                      <div className="text-xs text-muted-foreground">Near Duplicate</div>
+                      <div className="text-xs text-muted-foreground">Very Similar</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-orange-500">
@@ -380,9 +380,9 @@ export default function IdescanResults() {
                   <div className="animate-pulse mb-4">
                     <TrendingUp className="h-16 w-16 text-primary mx-auto" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Scan Queued</h3>
+                  <h3 className="text-lg font-semibold mb-2">Waiting to Start</h3>
                   <p className="text-muted-foreground">
-                    Your scan will start processing shortly...
+                    Your search will start in a moment...
                   </p>
                 </CardContent>
               </Card>
@@ -392,10 +392,10 @@ export default function IdescanResults() {
                   <Lightbulb className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Matches Found</h3>
                   <p className="text-muted-foreground mb-6">
-                    No similar innovations found in our databases. Your idea might be truly unique!
+                    We didn't find any similar ideas. Your idea might be unique!
                   </p>
                   <Button onClick={() => navigate('/idescan')}>
-                    Start New Scan
+                    Search Another Idea
                   </Button>
                 </CardContent>
               </Card>
@@ -476,7 +476,7 @@ export default function IdescanResults() {
                       {/* Similarity Breakdown */}
                       <div className="mb-4 p-3 bg-muted/30 rounded-lg">
                         <div className="text-xs font-medium text-muted-foreground mb-2">
-                          Similarity Breakdown
+                          Match Breakdown
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           <div className="flex flex-col">
@@ -511,7 +511,7 @@ export default function IdescanResults() {
                           )}
                           {result.metadata_similarity !== null && (
                             <div className="flex flex-col">
-                              <span className="text-muted-foreground">Metadata</span>
+                              <span className="text-muted-foreground">Details</span>
                               <div className="flex items-center gap-1">
                                 <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
                                   <div 
