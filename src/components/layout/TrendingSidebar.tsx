@@ -47,33 +47,6 @@ export default function TrendingSidebar() {
           </div>
         </Card>
 
-        {/* Quick Stats */}
-        <Card className="p-4">
-          <h3 className="font-semibold mb-4">Community Stats</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Total Views</span>
-              </div>
-              <span className="text-sm font-medium">2.4M</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Heart className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Total Likes</span>
-              </div>
-              <span className="text-sm font-medium">185K</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Active Creators</span>
-              </div>
-              <span className="text-sm font-medium">12.5K</span>
-            </div>
-          </div>
-        </Card>
       </div>
     </aside>
   );
