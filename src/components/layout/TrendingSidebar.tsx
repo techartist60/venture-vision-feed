@@ -47,34 +47,6 @@ export default function TrendingSidebar() {
           </div>
         </Card>
 
-        {/* Featured Creators */}
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Featured Creators</h3>
-          </div>
-          <div className="space-y-3">
-            {featuredCreators.map((creator) => (
-              <div key={creator.name} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-innovation rounded-full"></div>
-                  <div>
-                    <p className="text-sm font-medium">{creator.name}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{creator.followers} followers</span>
-                      <span>•</span>
-                      <span>{creator.ideas} ideas</span>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Follow
-                </Button>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         {/* Quick Stats */}
         <Card className="p-4">
           <h3 className="font-semibold mb-4">Community Stats</h3>
