@@ -905,10 +905,6 @@ function extractTags(title: string, description: string | null): string[] {
   return uniqueWords.slice(0, 10);
 }
 
-function extractTagsFromText(text: string): string[] {
-  return extractTags(text, null);
-}
-
 function parseGoogleNewsRSS(xmlText: string): any[] {
   const articles: any[] = [];
   
