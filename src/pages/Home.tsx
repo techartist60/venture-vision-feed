@@ -17,31 +17,27 @@ export default function Home() {
 
   // Desktop layout - simplified without duplicate header
   if (!isMobile) {
-    return <div className="space-y-8">
+    return <div className="space-y-4">
         {/* Idescan Feature Banner */}
         <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 shadow-glow">
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3 mb-1">
               <div className="p-2 rounded-lg bg-primary/10">
-                <Scan className="h-6 w-6 text-primary" />
+                <Scan className="h-5 w-5 text-primary" />
               </div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-xl">Idescan</CardTitle>
-                
+                <CardTitle className="text-lg">Idescan</CardTitle>
               </div>
             </div>
-            <CardDescription className="text-base">
+            <CardDescription className="text-sm">
               Find similar ideas instantly - search patents, startups & innovations
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Button onClick={() => navigate('/idescan')} className="gap-2" size="lg">
-                <Sparkles className="h-5 w-5" />
-                Try Idescan Now
-              </Button>
-              
-            </div>
+          <CardContent className="pb-4">
+            <Button onClick={() => navigate('/idescan')} className="gap-2" size="default">
+              <Sparkles className="h-4 w-4" />
+              Try Idescan Now
+            </Button>
           </CardContent>
         </Card>
 
