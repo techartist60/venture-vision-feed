@@ -300,17 +300,18 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <Skeleton className="w-12 h-12 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-24" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="space-y-3">
+            <Skeleton className="aspect-video w-full rounded-xl" />
+            <div className="flex items-start gap-3 px-1">
+              <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
             </div>
-            <Skeleton className="h-64 w-full rounded-lg" />
           </div>
         ))}
       </div>
@@ -332,45 +333,48 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
   }
 
   return (
-    <div className="space-y-6">
-      {media.map((item) => (
-        <IdeaCard
-          key={item.id}
-          id={item.id}
-          title={item.title}
-          description={item.description || ''}
-          mediaType={(item.media_type === 'image' || item.media_type === 'video') ? item.media_type : 'image'}
-          mediaUrl={item.media_url}
-          thumbnailUrl={item.thumbnail_url || undefined}
-          user={{
-            name: item.profiles?.full_name || 'Anonymous',
-            username: item.profiles?.username || 'user',
-            avatar: item.profiles?.avatar_url || '',
-            id: item.user_id
-          }}
-          stats={{
-            likes: item.likes_count,
-            comments: item.comments_count,
-            shares: item.saves_count,
-            views: item.views_count
-          }}
-          isLiked={item.is_liked || false}
-          isSaved={item.is_saved || false}
-          isBoosted={item.is_boosted || false}
-          isOwner={user?.id === item.user_id}
-          currentUserId={user?.id}
-          onLike={() => handleLike(item.id, item.is_liked || false)}
-          onComment={() => {
-            if (!user) {
-              setSignupPrompt({ open: true, action: 'comment on this video' });
-              return;
-            }
-            setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title });
-          }}
-          onShare={() => {}}
-          onSave={() => handleSave(item.id, item.is_saved || false)}
-        />
-      ))}
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {media.map((item) => (
+          <IdeaCard
+            key={item.id}
+            id={item.id}
+            title={item.title}
+            description={item.description || ''}
+            mediaType={(item.media_type === 'image' || item.media_type === 'video') ? item.media_type : 'image'}
+            mediaUrl={item.media_url}
+            thumbnailUrl={item.thumbnail_url || undefined}
+            user={{
+              name: item.profiles?.full_name || 'Anonymous',
+              username: item.profiles?.username || 'user',
+              avatar: item.profiles?.avatar_url || '',
+              id: item.user_id
+            }}
+            stats={{
+              likes: item.likes_count,
+              comments: item.comments_count,
+              shares: item.saves_count,
+              views: item.views_count
+            }}
+            isLiked={item.is_liked || false}
+            isSaved={item.is_saved || false}
+            isBoosted={item.is_boosted || false}
+            isOwner={user?.id === item.user_id}
+            currentUserId={user?.id}
+            onLike={() => handleLike(item.id, item.is_liked || false)}
+            onComment={() => {
+              if (!user) {
+                setSignupPrompt({ open: true, action: 'comment on this video' });
+                return;
+              }
+              setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title });
+            }}
+            onShare={() => {}}
+            onSave={() => handleSave(item.id, item.is_saved || false)}
+            gridView={true}
+          />
+        ))}
+      </div>
       
       <CommentDialog
         open={commentDialog.open}
@@ -384,6 +388,6 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: Discovery
         onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
         action={signupPrompt.action}
       />
-    </div>
+    </>
   );
 };

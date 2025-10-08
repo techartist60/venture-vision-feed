@@ -36,6 +36,7 @@ interface IdeaCardProps {
   onComment?: () => void;
   onShare?: () => void;
   onSave?: () => void;
+  gridView?: boolean;
 }
 
 export default function IdeaCard({ 
@@ -56,7 +57,8 @@ export default function IdeaCard({
   onLike,
   onComment,
   onShare,
-  onSave
+  onSave,
+  gridView = false
 }: IdeaCardProps) {
   const navigate = useNavigate();
   const { currentlyPlaying, setCurrentlyPlaying, videoRefs } = useVideo();
@@ -112,7 +114,96 @@ export default function IdeaCard({
       navigate(`/profile/${user.id}`);
     }
   };
-  // YouTube-style photo post layout
+
+  // YouTube grid view (compact card)
+  if (gridView) {
+    return (
+      <div 
+        className="bg-card rounded-xl overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+        onClick={() => navigate(`/video/${id}`)}
+      >
+        {/* Thumbnail */}
+        <div className="relative aspect-video bg-muted">
+          {mediaType === 'video' ? (
+            <>
+              <img 
+                src={thumbnailUrl || mediaUrl} 
+                alt={title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
+                <Eye className="h-3 w-3 inline mr-1" />
+                {stats.views > 1000 ? `${(stats.views / 1000).toFixed(1)}K` : stats.views}
+              </div>
+            </>
+          ) : (
+            <img 
+              src={mediaUrl} 
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+          )}
+          {isBoosted && (
+            <div className="absolute top-2 left-2">
+              <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
+                <Zap className="h-2.5 w-2.5" />
+                Boosted
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-3">
+          <div className="flex gap-3">
+            {/* Avatar */}
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleProfileClick();
+              }}
+            >
+              <Avatar className="h-9 w-9 flex-shrink-0">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback className="bg-gradient-primary text-primary-foreground text-xs">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm text-foreground line-clamp-2 mb-1">
+                {title}
+              </h3>
+              <div 
+                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleProfileClick();
+                }}
+              >
+                {user.name}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                <div className="flex items-center gap-1">
+                  <Heart className="h-3 w-3" />
+                  {stats.likes > 1000 ? `${(stats.likes / 1000).toFixed(1)}K` : stats.likes}
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <MessageCircle className="h-3 w-3" />
+                  {stats.comments}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // YouTube-style photo post layout (list view)
   if (mediaType === 'image') {
     return (
       <div 
