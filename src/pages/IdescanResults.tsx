@@ -638,72 +638,136 @@ export default function IdescanResults() {
               </div>
 
               {/* Owner/Inventor Information */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
-                  {selectedInnovation.innovation_records.source_type === 'patent' ? 'Inventor' : 'Innovator'} Information
+                  Real-World Details
                 </h3>
                 
-                <div className="space-y-3 pl-7">
-                  {selectedInnovation.innovation_records.metadata?.inventor && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Inventor Name:</span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.metadata.inventor}</p>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.metadata?.ceo && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">CEO:</span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.metadata.ceo}</p>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.owner && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">
-                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Holder' : 'Organization'}:
+                <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+                  {/* Primary Contact/Inventor */}
+                  {(selectedInnovation.innovation_records.metadata?.inventor || 
+                    selectedInnovation.innovation_records.metadata?.ceo ||
+                    selectedInnovation.innovation_records.owner) && (
+                    <div className="pb-3 border-b border-border">
+                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Inventor' : 
+                         selectedInnovation.innovation_records.source_type === 'startup' ? 'CEO/Founder' : 
+                         'Key Person'}
                       </span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.owner}</p>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.metadata?.email && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Email:</span>
-                      <a 
-                        href={`mailto:${selectedInnovation.innovation_records.metadata.email}`}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {selectedInnovation.innovation_records.metadata.email}
-                      </a>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.country && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Location:</span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.country}</p>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.metadata?.founded_year && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Founded Year:</span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.metadata.founded_year}</p>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.metadata?.publication_date && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">
-                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Date' : 'Publication Date'}:
-                      </span>
-                      <p className="font-medium">
-                        {new Date(selectedInnovation.innovation_records.metadata.publication_date).toLocaleDateString()}
+                      <p className="text-lg font-semibold mt-1">
+                        {selectedInnovation.innovation_records.metadata?.inventor || 
+                         selectedInnovation.innovation_records.metadata?.ceo ||
+                         selectedInnovation.innovation_records.metadata?.founder ||
+                         'Not disclosed'}
                       </p>
                     </div>
                   )}
+                  
+                  {/* Company/Organization */}
+                  {selectedInnovation.innovation_records.owner && (
+                    <div className="pb-3 border-b border-border">
+                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Holder' : 
+                         selectedInnovation.innovation_records.source_type === 'startup' ? 'Company' : 
+                         'Organization'}
+                      </span>
+                      <p className="text-lg font-semibold mt-1">
+                        {selectedInnovation.innovation_records.owner}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Location Information */}
+                  <div className="pb-3 border-b border-border">
+                    <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      Location
+                    </span>
+                    <div className="mt-1 space-y-1">
+                      {selectedInnovation.innovation_records.metadata?.city && (
+                        <p className="font-medium">
+                          {selectedInnovation.innovation_records.metadata.city}
+                          {selectedInnovation.innovation_records.metadata.state && 
+                            `, ${selectedInnovation.innovation_records.metadata.state}`}
+                        </p>
+                      )}
+                      {selectedInnovation.innovation_records.country && (
+                        <p className="text-lg font-semibold">
+                          {selectedInnovation.innovation_records.country}
+                        </p>
+                      )}
+                      {!selectedInnovation.innovation_records.country && 
+                       !selectedInnovation.innovation_records.metadata?.city && (
+                        <p className="text-muted-foreground italic">Location not disclosed</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Contact Information */}
+                  {(selectedInnovation.innovation_records.metadata?.email || 
+                    selectedInnovation.innovation_records.metadata?.phone) && (
+                    <div className="pb-3 border-b border-border">
+                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        Contact Information
+                      </span>
+                      <div className="mt-2 space-y-2">
+                        {selectedInnovation.innovation_records.metadata?.email && (
+                          <div>
+                            <span className="text-xs text-muted-foreground">Email:</span>
+                            <a 
+                              href={`mailto:${selectedInnovation.innovation_records.metadata.email}`}
+                              className="block font-medium text-primary hover:underline"
+                            >
+                              {selectedInnovation.innovation_records.metadata.email}
+                            </a>
+                          </div>
+                        )}
+                        {selectedInnovation.innovation_records.metadata?.phone && (
+                          <div>
+                            <span className="text-xs text-muted-foreground">Phone:</span>
+                            <p className="font-medium">
+                              {selectedInnovation.innovation_records.metadata.phone}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Additional Details */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedInnovation.innovation_records.metadata?.founded_year && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Founded</span>
+                        <p className="font-semibold">{selectedInnovation.innovation_records.metadata.founded_year}</p>
+                      </div>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata?.publication_date && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">
+                          {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Date' : 'Published'}
+                        </span>
+                        <p className="font-semibold">
+                          {new Date(selectedInnovation.innovation_records.metadata.publication_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata?.employees && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Employees</span>
+                        <p className="font-semibold">{selectedInnovation.innovation_records.metadata.employees}</p>
+                      </div>
+                    )}
+                    
+                    {selectedInnovation.innovation_records.metadata?.funding && (
+                      <div>
+                        <span className="text-xs text-muted-foreground">Funding</span>
+                        <p className="font-semibold">{selectedInnovation.innovation_records.metadata.funding}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
