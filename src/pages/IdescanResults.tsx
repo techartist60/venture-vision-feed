@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -58,6 +58,8 @@ export default function IdescanResults() {
   const [sortBy, setSortBy] = useState<'score' | 'source'>('score');
   const [fullscaleMedia, setFullscaleMedia] = useState<string | null>(null);
   const [selectedInnovation, setSelectedInnovation] = useState<ResultData | null>(null);
+  const [unlockedInnovations, setUnlockedInnovations] = useState<Set<string>>(new Set());
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -69,7 +71,66 @@ export default function IdescanResults() {
       return;
     }
     fetchScanAndResults();
+    fetchUnlockedInnovations();
   }, [user, scanId, navigate]);
+
+  const fetchUnlockedInnovations = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('unlocked_innovations')
+      .select('innovation_id')
+      .eq('user_id', user.id);
+
+    if (!error && data) {
+      setUnlockedInnovations(new Set(data.map(item => item.innovation_id)));
+    }
+  };
+
+  const handleUnlockPayment = async (innovationId: string) => {
+    if (!user) return;
+    
+    setPaymentLoading(innovationId);
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      const email = user.email || '';
+      
+      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
+        body: { 
+          innovationId, 
+          scanId,
+          email 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.authorizationUrl) {
+        // Open Paystack payment page
+        window.open(data.authorizationUrl, '_blank');
+        
+        toast({
+          title: "Payment initiated",
+          description: "Complete payment in the new window. Refresh after payment.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment failed",
+        description: error.message || "Couldn't initialize payment",
+        variant: "destructive",
+      });
+    } finally {
+      setPaymentLoading(null);
+    }
+  };
 
   const fetchScanAndResults = async () => {
     try {

@@ -77,6 +77,12 @@ verify_jwt = false
 [functions.search-innovations]
 verify_jwt = false
 
+[functions.paystack-initialize]
+verify_jwt = true
+
+[functions.paystack-webhook]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 port = 54328
