@@ -200,19 +200,29 @@ async function indexNewsFromRSS(
   try {
     // Try multiple search approaches for better coverage
     const searches = [
-      // Google News RSS - general tech news
-      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}+innovation+technology+startup&hl=en-US&gl=US&ceid=US:en`,
-      // Google News RSS - specific to the search term
-      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}&hl=en-US&gl=US&ceid=US:en`,
+      // Google News RSS - innovation focused
+      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}+innovation+technology&hl=en-US&gl=US&ceid=US:en`,
+      // Google News RSS - startup focused
+      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}+startup+company&hl=en-US&gl=US&ceid=US:en`,
+      // Google News RSS - patent focused
+      `https://news.google.com/rss/search?q=${encodeURIComponent(searchTerm)}+patent+invention&hl=en-US&gl=US&ceid=US:en`,
     ];
 
     for (const rssUrl of searches) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch(rssUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; IdescanBot/1.0)'
-          }
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
           console.log(`RSS fetch failed with status: ${response.status}`);
@@ -220,9 +230,20 @@ async function indexNewsFromRSS(
         }
         
         const xmlText = await response.text();
+        
+        // Check if we got valid XML content
+        if (!xmlText || !xmlText.includes('<rss') && !xmlText.includes('<feed')) {
+          console.log('Invalid RSS/XML response');
+          continue;
+        }
+        
         const articles = parseGoogleNewsRSS(xmlText);
         
         console.log(`Found ${articles.length} articles from RSS feed`);
+        
+        if (articles.length === 0) {
+          console.log('No articles parsed from XML, XML preview:', xmlText.substring(0, 500));
+        }
         
         for (const article of articles.slice(0, 15)) {
           if (seenUrls.has(article.link)) continue;
@@ -245,8 +266,15 @@ async function indexNewsFromRSS(
 
           allInnovations.push(innovation);
         }
-      } catch (feedError) {
-        console.error('Error fetching RSS feed:', feedError);
+        
+        // Add small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (feedError: any) {
+        if (feedError.name === 'AbortError') {
+          console.error('RSS feed request timed out');
+        } else {
+          console.error('Error fetching RSS feed:', feedError.message);
+        }
       }
     }
   } catch (error) {

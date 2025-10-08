@@ -27,6 +27,7 @@ interface ScanData {
 
 interface ResultData {
   id: string;
+  innovation_id: string;
   similarity_score: number;
   similarity_tier: string;
   text_similarity: number | null;
@@ -72,6 +73,19 @@ export default function IdescanResults() {
     }
     fetchScanAndResults();
     fetchUnlockedInnovations();
+    
+    // Check for payment success in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      toast({
+        title: "Payment successful!",
+        description: "You can now view full details of the innovation.",
+      });
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Refresh unlocked innovations
+      fetchUnlockedInnovations();
+    }
   }, [user, scanId, navigate]);
 
   const fetchUnlockedInnovations = async () => {
@@ -93,12 +107,6 @@ export default function IdescanResults() {
     setPaymentLoading(innovationId);
     
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .single();
-      
       const email = user.email || '';
       
       const { data, error } = await supabase.functions.invoke('paystack-initialize', {
@@ -112,13 +120,8 @@ export default function IdescanResults() {
       if (error) throw error;
 
       if (data?.authorizationUrl) {
-        // Open Paystack payment page
-        window.open(data.authorizationUrl, '_blank');
-        
-        toast({
-          title: "Payment initiated",
-          description: "Complete payment in the new window. Refresh after payment.",
-        });
+        // Redirect to Paystack payment page
+        window.location.href = data.authorizationUrl;
       }
     } catch (error: any) {
       console.error('Payment error:', error);
@@ -127,7 +130,6 @@ export default function IdescanResults() {
         description: error.message || "Couldn't initialize payment",
         variant: "destructive",
       });
-    } finally {
       setPaymentLoading(null);
     }
   };
@@ -684,7 +686,90 @@ export default function IdescanResults() {
               )}
             </DialogHeader>
             
-            <div className="space-y-6 py-4">
+            {!unlockedInnovations.has(selectedInnovation.innovation_id) ? (
+              /* Payment Gate */
+              <div className="space-y-6 py-8">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="p-4 bg-primary/10 rounded-full">
+                    <Lock className="h-12 w-12 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Unlock Full Details</h3>
+                    <p className="text-muted-foreground max-w-md">
+                      Get access to complete information including contact details, location, and professional links
+                    </p>
+                  </div>
+                  
+                  {/* Similarity Score Preview */}
+                  <div className="w-full p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold">Similarity Match</h4>
+                        <p className="text-sm text-muted-foreground capitalize">
+                          {selectedInnovation.similarity_tier.replace('_', ' ')} Match
+                        </p>
+                      </div>
+                      <Badge className={`${getSimilarityColor(selectedInnovation.similarity_tier)} text-2xl px-4 py-2`}>
+                        {selectedInnovation.similarity_score.toFixed(0)}%
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* What's Included */}
+                  <div className="w-full text-left space-y-2 bg-muted/30 p-4 rounded-lg">
+                    <h4 className="font-semibold text-center mb-3">What's Included:</h4>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        Contact information (email, phone)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        Location details (city, country)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        Professional LinkedIn profiles
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        Company website and social media
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        Full technical specifications
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="text-center space-y-3">
+                    <div>
+                      <p className="text-3xl font-bold">KSH 5</p>
+                      <p className="text-sm text-muted-foreground">One-time payment via Paystack</p>
+                    </div>
+                    
+                    <Button
+                      size="lg"
+                      onClick={() => handleUnlockPayment(selectedInnovation.innovation_id)}
+                      disabled={paymentLoading === selectedInnovation.innovation_id}
+                      className="w-full"
+                    >
+                      {paymentLoading === selectedInnovation.innovation_id ? (
+                        "Processing..."
+                      ) : (
+                        <>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Unlock for KSH 5
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Full Details - Only shown after payment */
+              <div className="space-y-6 py-4">
               {/* Similarity Score */}
               <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div>
@@ -962,17 +1047,18 @@ export default function IdescanResults() {
                 </div>
               </div>
 
-              {/* View Original Source */}
-              {selectedInnovation.innovation_records.source_url && (
-                <Button
-                  className="w-full"
-                  onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Original Source
-                </Button>
-              )}
-            </div>
+                {/* View Original Source */}
+                {selectedInnovation.innovation_records.source_url && (
+                  <Button
+                    className="w-full"
+                    onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Original Source
+                  </Button>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}

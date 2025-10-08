@@ -50,6 +50,10 @@ serve(async (req) => {
     const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY');
     const reference = `unlock_${innovationId}_${user.id}_${Date.now()}`;
 
+    // Get the frontend URL from the request origin
+    const origin = req.headers.get('origin') || req.headers.get('referer') || '';
+    const callbackUrl = origin ? `${origin}/idescan/results/${scanId}?payment=success` : '';
+    
     const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -65,7 +69,7 @@ serve(async (req) => {
           innovation_id: innovationId,
           scan_id: scanId,
         },
-        callback_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/paystack-webhook`,
+        callback_url: callbackUrl,
       }),
     });
 
