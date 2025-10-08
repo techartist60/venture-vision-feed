@@ -533,6 +533,51 @@ export type Database = {
           },
         ]
       }
+      unlocked_innovations: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          innovation_id: string
+          payment_reference: string
+          scan_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          innovation_id: string
+          payment_reference: string
+          scan_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          innovation_id?: string
+          payment_reference?: string
+          scan_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unlocked_innovations_innovation_id_fkey"
+            columns: ["innovation_id"]
+            isOneToOne: false
+            referencedRelation: "innovation_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unlocked_innovations_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "idescan_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
