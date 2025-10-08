@@ -40,5 +40,5 @@ const featuredCreators = [{
   ideas: '41'
 }];
 export default function TrendingSidebar() {
-  return;
+  return null;
 }
