@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, Plus, Video, User, Search, Settings, Scan } from 'lucide-react';
+import { Home, Grid3X3, Plus, Video, User, Search, Settings, Scan, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,11 @@ const navItems = [
     icon: Home, 
     label: 'Home',
     exact: true
+  },
+  { 
+    to: '/slides', 
+    icon: Play, 
+    label: 'Slides'
   },
   { 
     to: '/idescan', 

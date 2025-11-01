@@ -24,6 +24,7 @@ import Idescan from "./pages/Idescan";
 import IdescanHistory from "./pages/IdescanHistory";
 import IdescanResults from "./pages/IdescanResults";
 import IdescanDataSources from "./pages/IdescanDataSources";
+import Slides from "./pages/Slides";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/categories" element={<Categories />} />
               <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
               <Route path="/inventions" element={<Inventions />} />
+              <Route path="/slides" element={<Slides />} />
               <Route path="/idea/:id" element={<IdeaDetail />} />
               <Route path="/video/:id" element={<VideoDetail />} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

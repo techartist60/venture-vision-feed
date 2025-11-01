@@ -278,7 +278,7 @@ export default function IdeaCard({
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full h-auto object-contain max-h-[600px]"
+            className="w-full h-auto object-cover aspect-[4/3] rounded-lg"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;

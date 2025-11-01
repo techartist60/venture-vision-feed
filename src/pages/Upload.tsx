@@ -33,8 +33,6 @@ export default function Upload() {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [showThumbnailSelection, setShowThumbnailSelection] = useState(false);
-  const [selectedThumbnailUrl, setSelectedThumbnailUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -113,7 +111,6 @@ export default function Upload() {
             return;
           }
           setSelectedFiles([videoFile]);
-          setShowThumbnailSelection(true);
           URL.revokeObjectURL(video.src); // Clean up memory
         };
         video.src = URL.createObjectURL(videoFile);
@@ -239,7 +236,7 @@ export default function Upload() {
               description: formData.description,
               media_type: mediaType === 'photo' ? 'image' : 'video',
               media_url: mediaUrl,
-              thumbnail_url: mediaType === 'video' ? selectedThumbnailUrl : null,
+              thumbnail_url: null,
               mime_type: selectedFiles[0]?.type || null,
               file_size: selectedFiles[0]?.size || null
             });
@@ -264,8 +261,6 @@ export default function Upload() {
         setSelectedFiles([]);
         setFormData({ title: '', description: '', category: '' });
         setMediaType(null);
-        setShowThumbnailSelection(false);
-        setSelectedThumbnailUrl('');
       }
     } catch (error) {
       // Log error securely without exposing system details
@@ -282,27 +277,6 @@ export default function Upload() {
     }
   };
 
-  const handleThumbnailSelected = (thumbnailUrl: string) => {
-    setSelectedThumbnailUrl(thumbnailUrl);
-    setShowThumbnailSelection(false);
-  };
-
-  const handleBackFromThumbnailSelection = () => {
-    setShowThumbnailSelection(false);
-    setSelectedFiles([]);
-  };
-
-  // Show thumbnail selection for video uploads
-  if (showThumbnailSelection && mediaType === 'video' && selectedFiles.length > 0 && user) {
-    return (
-      <ThumbnailSelection
-        videoFile={selectedFiles[0]}
-        userId={user.id}
-        onThumbnailSelected={handleThumbnailSelected}
-        onBack={handleBackFromThumbnailSelection}
-      />
-    );
-  }
 
   if (!mediaType) {
     return (

@@ -37,7 +37,7 @@ interface DiscoveryFeedProps {
   mediaType?: 'image' | 'video';
 }
 
-export const DiscoveryFeed = ({ userOnly = false, userId, mediaType }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
