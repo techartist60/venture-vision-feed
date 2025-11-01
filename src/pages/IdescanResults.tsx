@@ -25,6 +25,7 @@ interface ScanData {
   status: string;
   created_at: string;
   metadata?: {
+    extractedKeywords?: string[];
     categoryScores?: {
       tech: number;
       fashion: number;
@@ -44,6 +45,7 @@ interface ScanData {
     bestLocation?: string;
     marketInsights?: string;
     recommendations?: string[];
+    researchBased?: boolean;
   };
 }
 
@@ -159,6 +161,25 @@ export default function IdescanResults() {
         return <Newspaper className="h-4 w-4" />;
       default:
         return <Lightbulb className="h-4 w-4" />;
+    }
+  };
+
+  const getCleanSourceName = (url: string | null, title: string): string => {
+    if (!url) return 'Unknown Source';
+    
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.replace('www.', '');
+      
+      // Extract domain name
+      const parts = hostname.split('.');
+      const domain = parts.length > 1 ? parts[parts.length - 2] : parts[0];
+      
+      // Capitalize first letter
+      return domain.charAt(0).toUpperCase() + domain.slice(1);
+    } catch {
+      // If URL parsing fails, extract from title or return default
+      return title.split(' ')[0] || 'Source';
     }
   };
 
@@ -313,6 +334,19 @@ export default function IdescanResults() {
               <CardContent>
                 <p className="text-muted-foreground mb-4">{scan.description}</p>
                 
+                {scan.metadata?.extractedKeywords && scan.metadata.extractedKeywords.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold text-muted-foreground mb-2">Key Concepts Analyzed:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {scan.metadata.extractedKeywords.map((keyword, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {scan.status === 'processing' && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -400,10 +434,18 @@ export default function IdescanResults() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    AI Market Performance Simulation
+                    Market Performance Simulation
+                    {scan.metadata?.researchBased && (
+                      <Badge variant="outline" className="ml-2 text-xs bg-green-500/10 text-green-500 border-green-500/20">
+                        Research-Based
+                      </Badge>
+                    )}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Projected performance if launched in current market conditions
+                    {scan.metadata?.researchBased 
+                      ? 'Data-driven projections based on actual similar innovations found in the market'
+                      : 'Projected performance if launched in current market conditions'
+                    }
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -566,7 +608,7 @@ export default function IdescanResults() {
                           <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                             {result.innovation_records.description || 'No description available'}
                           </p>
-                          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                             {result.innovation_records.owner && (
                               <div className="flex items-center gap-1">
                                 <Building2 className="h-3 w-3" />
@@ -577,6 +619,14 @@ export default function IdescanResults() {
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
                                 <span>{result.innovation_records.country}</span>
+                              </div>
+                            )}
+                            {result.innovation_records.source_url && (
+                              <div className="flex items-center gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                <span className="font-medium">
+                                  {getCleanSourceName(result.innovation_records.source_url, result.innovation_records.title)}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -597,7 +647,7 @@ export default function IdescanResults() {
                             onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
                           >
                             <ExternalLink className="h-4 w-4 mr-1" />
-                            Source
+                            View on {getCleanSourceName(result.innovation_records.source_url, result.innovation_records.title)}
                           </Button>
                         )}
                       </div>
@@ -674,13 +724,21 @@ export default function IdescanResults() {
                 </Badge>
               </div>
               {selectedInnovation.innovation_records.source_url && (
-                <Button
-                  className="w-full"
-                  onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Original Source
-                </Button>
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Source</p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="outline">
+                      {getCleanSourceName(selectedInnovation.innovation_records.source_url, selectedInnovation.innovation_records.title)}
+                    </Badge>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Full Article
+                  </Button>
+                </div>
               )}
             </div>
           </DialogContent>

@@ -120,7 +120,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Starting AI-powered category analysis and market simulation...`);
+    console.log(`Starting AI-powered keyword extraction, category analysis and market simulation...`);
     console.log(`User's idea - Title: "${scan.title}", Description length: ${scan.description.length} chars`);
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -128,7 +128,45 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Step 1: Get category similarity scores
+    // Step 1: Extract key concepts and keywords from user's idea
+    console.log('Extracting exact keywords from user input...');
+    const keywordResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a keyword extraction expert. Extract the most important keywords, concepts, and technologies from the user input. Return ONLY a JSON array of keywords.'
+          },
+          {
+            role: 'user',
+            content: `Extract 5-10 key concepts, keywords, and technology terms from this innovation description:
+
+"${scan.description}"
+
+Return JSON array format: ["keyword1", "keyword2", "keyword3", ...]`
+          }
+        ],
+      }),
+    });
+
+    let extractedKeywords: string[] = [];
+    if (keywordResponse.ok) {
+      const keywordData = await keywordResponse.json();
+      const content = keywordData.choices[0].message.content;
+      const jsonMatch = content.match(/\[[\s\S]*?\]/);
+      if (jsonMatch) {
+        extractedKeywords = JSON.parse(jsonMatch[0]);
+        console.log('Extracted keywords:', extractedKeywords.join(', '));
+      }
+    }
+
+    // Step 2: Get category similarity scores
     console.log('Analyzing category similarities...');
     const categoryResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -148,6 +186,7 @@ serve(async (req) => {
             content: `Analyze this innovation and rate its relevance/similarity to each category (0-100):
 
 INNOVATION: ${scan.description}
+KEY CONCEPTS: ${extractedKeywords.join(', ')}
 
 Return JSON format:
 {
@@ -173,17 +212,17 @@ Return JSON format:
     }
     console.log('Category scores:', categoryScores);
 
-    // Step 2: Find market performance insights and similar innovations
+    // Step 3: Find market performance insights and similar innovations with keyword matching
     const results = [];
     const innovationsByCategory: any = { tech: [], fashion: [], health: [], agriculture: [], arts: [] };
 
-    // Use AI to calculate similarity for each innovation
+    // Use AI to calculate similarity for each innovation using extracted keywords
     for (const innovation of innovations) {
       try {
         const scanText = `Title: ${scan.title}\nDescription: ${scan.description}`;
         const innovationText = `Title: ${innovation.title}\nDescription: ${innovation.description || 'No description'}`;
 
-        // Use AI to calculate semantic similarity based on user's text input
+        // Use AI to calculate semantic similarity based on extracted keywords and user's exact input
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -195,14 +234,15 @@ Return JSON format:
             messages: [
               {
                 role: 'system',
-                content: 'You are an expert innovation analyst. Compare two innovations based on their actual similarity in concept, technology, market, and problem-solving approach. Return ONLY a similarity score from 0-100. Scoring guidelines: 90-100 = Nearly identical concept and implementation; 70-89 = Very similar technology solving same problem; 50-69 = Related field with similar approach; 30-49 = Same industry but different approach; 20-29 = Loosely related; 0-19 = Different domains. Be accurate and consider: technical approach, target problem, market application, and innovation type. Return ONLY the numeric score with no explanation.'
+                content: 'You are an expert innovation analyst. Compare two innovations based on keyword overlap, concept similarity, technology match, market alignment, and problem-solving approach. Focus heavily on matching the exact keywords and concepts. Return ONLY a similarity score from 0-100. Scoring: 90-100 = Keywords and concepts match perfectly; 70-89 = Most keywords match with similar technology; 50-69 = Some keyword overlap with related field; 30-49 = Few keywords match, different approach; 20-29 = Loosely related domain; 0-19 = Different domains. Return ONLY the numeric score.'
               },
               {
                 role: 'user',
-                content: `Compare these innovations and rate their similarity:
+                content: `Compare these innovations focusing on keyword and concept matching:
 
 USER'S INNOVATION:
-${scan.description}
+Description: ${scan.description}
+Key Keywords: ${extractedKeywords.join(', ')}
 
 EXISTING INNOVATION:
 Title: ${innovation.title}
@@ -210,7 +250,7 @@ Description: ${innovation.description || innovation.title}
 Type: ${innovation.source_type}
 Owner: ${innovation.owner || 'Unknown'}
 
-Return similarity score (0-100):`
+Calculate similarity score (0-100) based on keyword overlap and concept match:`
               }
             ],
             max_tokens: 10,
@@ -222,12 +262,12 @@ Return similarity score (0-100):`
           const similarityText = data.choices[0].message.content.trim();
           const similarityScore = parseFloat(similarityText.replace(/[^0-9.]/g, ''));
           
-          console.log(`Comparing user idea with "${innovation.title.substring(0, 50)}..." - Score: ${similarityScore}%`);
+          console.log(`Comparing user idea with "${innovation.title.substring(0, 50)}..." - Keyword-based Score: ${similarityScore}%`);
           
           if (!isNaN(similarityScore) && similarityScore >= 20) {
             const tier = calculateTier(similarityScore);
             
-            console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Similarity: ${similarityScore}%`);
+            console.log(`Innovation "${innovation.title.substring(0, 50)}" - AI Keyword Similarity: ${similarityScore}%`);
             
             results.push({
               scan_id: scanId,
@@ -250,8 +290,14 @@ Return similarity score (0-100):`
     results.sort((a, b) => b.similarity_score - a.similarity_score);
     const topResults = results.slice(0, 8);
 
-    // Step 3: Generate market simulation and insights
-    console.log('Generating market simulation and insights...');
+    // Gather real market data from similar innovations
+    const marketResearchContext = topResults.slice(0, 3).map(r => {
+      const innov = r.innovation_data;
+      return `- ${innov.title} (${innov.source_type}): ${innov.description?.substring(0, 150) || 'Patent/startup in this space'}${innov.metadata?.funding ? ` - Funding: ${innov.metadata.funding}` : ''}`;
+    }).join('\n');
+
+    // Step 4: Generate research-based market simulation and insights
+    console.log('Generating research-based market simulation and insights...');
     const simulationResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -263,30 +309,37 @@ Return similarity score (0-100):`
         messages: [
           {
             role: 'system',
-            content: 'You are a market analysis expert. Provide realistic market performance projections and recommendations. Return ONLY valid JSON.'
+            content: 'You are a market research analyst. Provide data-driven market performance projections based on real similar innovations found. Be realistic and grounded in actual market conditions. Return ONLY valid JSON.'
           },
           {
             role: 'user',
-            content: `Analyze this innovation for market potential:
+            content: `Analyze this innovation for market potential based on real market research:
 
-INNOVATION: ${scan.description}
+USER'S INNOVATION: ${scan.description}
+KEY CONCEPTS: ${extractedKeywords.join(', ')}
 
-SIMILAR INNOVATIONS FOUND: ${topResults.length}
+REAL SIMILAR INNOVATIONS IN MARKET:
+${marketResearchContext || 'No direct competitors found'}
+
+SIMILAR INNOVATIONS COUNT: ${topResults.length}
+CATEGORY MATCH: ${Object.entries(categoryScores).sort((a, b) => b[1] - a[1])[0][0]} (${Object.entries(categoryScores).sort((a, b) => b[1] - a[1])[0][1]}% match)
+
+Based on the actual innovations found and market research, provide realistic projections:
 
 Return JSON format:
 {
   "marketSimulation": {
-    "adoptionRate": <0-100>,
-    "marketPenetration": <0-100>,
-    "competitionLevel": <0-100>,
-    "innovationIndex": <0-100>,
-    "projectedGrowth": <0-100>,
-    "sustainabilityScore": <0-100>
+    "adoptionRate": <0-100, based on similar innovations' market traction>,
+    "marketPenetration": <0-100, based on competition level found>,
+    "competitionLevel": <0-100, based on number of similar innovations: ${topResults.length}>,
+    "innovationIndex": <0-100, uniqueness vs similar innovations>,
+    "projectedGrowth": <0-100, based on sector trends>,
+    "sustainabilityScore": <0-100, long-term viability>
   },
-  "bestSector": "<sector name>",
-  "bestLocation": "<geographic location>",
-  "marketInsights": "<brief 2-3 sentence insight>",
-  "recommendations": ["<tip 1>", "<tip 2>", "<tip 3>"]
+  "bestSector": "<specific sector based on category scores and similar innovations>",
+  "bestLocation": "<geographic market based on where similar innovations are successful>",
+  "marketInsights": "<2-3 sentences citing the similar innovations found and market conditions>",
+  "recommendations": ["<actionable tip based on competitor analysis>", "<differentiation strategy based on gaps found>", "<market entry strategy based on research>"]
 }`
           }
         ],
@@ -308,6 +361,7 @@ Return JSON format:
       if (jsonMatch) {
         try {
           marketData = JSON.parse(jsonMatch[0]);
+          console.log('Research-based market data generated successfully');
         } catch (e) {
           console.error('Error parsing market data:', e);
         }
@@ -346,13 +400,15 @@ Return JSON format:
         .from('idescan_scans')
         .update({
           metadata: {
+            extractedKeywords,
             categoryScores,
             marketSimulation: marketData.marketSimulation,
             bestSector: marketData.bestSector,
             bestLocation: marketData.bestLocation,
             marketInsights: marketData.marketInsights,
             recommendations: marketData.recommendations,
-            totalSimilarFound: results.length
+            totalSimilarFound: results.length,
+            researchBased: true
           }
         })
         .eq('id', scanId);
