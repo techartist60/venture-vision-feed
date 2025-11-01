@@ -29,7 +29,11 @@ export default function Upload() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: ''
+    category: '',
+    investmentStatus: 'normal' as 'open' | 'normal',
+    fundingAmount: '',
+    investmentStage: 'concept' as 'concept' | 'prototype' | 'ready',
+    pitchSummary: ''
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -211,6 +215,29 @@ export default function Upload() {
       return;
     }
     
+    // Validate investment fields if status is 'open'
+    if (formData.investmentStatus === 'open') {
+      const pitchValidation = validateTextInput(formData.pitchSummary, 500);
+      
+      if (!formData.fundingAmount || parseFloat(formData.fundingAmount) <= 0) {
+        toast({
+          title: "Funding amount required",
+          description: "Please enter a valid funding amount in KES",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (!pitchValidation.isValid) {
+        toast({
+          title: "Invalid pitch summary",
+          description: pitchValidation.error,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     if (!selectedFiles.length) {
       toast({
         title: "No files selected",
@@ -228,18 +255,28 @@ export default function Upload() {
       if (uploadedUrls.length > 0) {
         // Save media metadata to database
         for (const mediaUrl of uploadedUrls) {
+          const insertData: any = {
+            user_id: user.id,
+            title: formData.title,
+            description: formData.description,
+            media_type: mediaType === 'photo' ? 'image' : 'video',
+            media_url: mediaUrl,
+            thumbnail_url: null,
+            mime_type: selectedFiles[0]?.type || null,
+            file_size: selectedFiles[0]?.size || null,
+            investment_status: formData.investmentStatus
+          };
+          
+          // Add investment fields if status is 'open'
+          if (formData.investmentStatus === 'open') {
+            insertData.funding_amount = parseFloat(formData.fundingAmount);
+            insertData.investment_stage = formData.investmentStage;
+            insertData.pitch_summary = formData.pitchSummary;
+          }
+          
           const { error: dbError } = await supabase
             .from('media_uploads')
-            .insert({
-              user_id: user.id,
-              title: formData.title,
-              description: formData.description,
-              media_type: mediaType === 'photo' ? 'image' : 'video',
-              media_url: mediaUrl,
-              thumbnail_url: null,
-              mime_type: selectedFiles[0]?.type || null,
-              file_size: selectedFiles[0]?.size || null
-            });
+            .insert(insertData);
 
           if (dbError) {
             console.error('Error saving media metadata:', dbError);
@@ -259,7 +296,15 @@ export default function Upload() {
         
         // Reset form
         setSelectedFiles([]);
-        setFormData({ title: '', description: '', category: '' });
+        setFormData({ 
+          title: '', 
+          description: '', 
+          category: '',
+          investmentStatus: 'normal',
+          fundingAmount: '',
+          investmentStage: 'concept',
+          pitchSummary: ''
+        });
         setMediaType(null);
       }
     } catch (error) {
@@ -506,6 +551,109 @@ export default function Upload() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        {/* Investment Settings */}
+        <div className="bg-card rounded-xl p-4 border border-border space-y-4">
+          <h3 className="font-semibold text-foreground mb-3">💰 Investment Settings</h3>
+          
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Investment Status
+            </label>
+            <Select 
+              value={formData.investmentStatus} 
+              onValueChange={(value: 'open' | 'normal') => 
+                setFormData(prev => ({ ...prev, investmentStatus: value }))
+              }
+            >
+              <SelectTrigger className="rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">
+                  <div className="flex items-center gap-2">
+                    <span>⚪</span>
+                    <span>Normal Post</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="open">
+                  <div className="flex items-center gap-2">
+                    <span>🟢</span>
+                    <span>Open for Investment</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.investmentStatus === 'open' 
+                ? 'Your idea will be visible to investors via Idestrim API' 
+                : 'Your idea will be visible to regular users only'}
+            </p>
+          </div>
+
+          {formData.investmentStatus === 'open' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Funding Amount (KES) *
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 500000"
+                  value={formData.fundingAmount}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fundingAmount: e.target.value }))}
+                  className="rounded-xl"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Investment Stage *
+                </label>
+                <Select 
+                  value={formData.investmentStage} 
+                  onValueChange={(value: 'concept' | 'prototype' | 'ready') => 
+                    setFormData(prev => ({ ...prev, investmentStage: value }))
+                  }
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="concept">Concept Stage</SelectItem>
+                    <SelectItem value="prototype">Prototype Stage</SelectItem>
+                    <SelectItem value="ready">Ready for Market</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Pitch Summary *
+                </label>
+                <Textarea
+                  placeholder="A brief pitch for potential investors (max 500 chars)..."
+                  value={formData.pitchSummary}
+                  onChange={(e) => handleInputChange('pitchSummary', e.target.value)}
+                  className="rounded-xl resize-none h-24"
+                  maxLength={500}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.pitchSummary.length}/500 characters
+                </p>
+              </div>
+
+              <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
+                <p className="text-xs text-foreground">
+                  <Badge className="bg-green-500/10 text-green-500 border-green-500/20 mb-2">Investment Ready</Badge>
+                  <br />
+                  Your post will be tagged and shared with registered investors through the Idestrim API.
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Publishing Options */}

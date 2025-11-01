@@ -22,6 +22,10 @@ interface MediaUpload {
   user_id: string;
   is_boosted?: boolean;
   boost_expires_at?: string | null;
+  investment_status?: string;
+  funding_amount?: number | null;
+  investment_stage?: string | null;
+  pitch_summary?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
@@ -361,6 +365,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             isBoosted={item.is_boosted || false}
             isOwner={user?.id === item.user_id}
             currentUserId={user?.id}
+            investmentStatus={item.investment_status as 'open' | 'normal' | undefined}
+            fundingAmount={item.funding_amount || undefined}
+            investmentStage={item.investment_stage as 'concept' | 'prototype' | 'ready' | undefined}
+            pitchSummary={item.pitch_summary || undefined}
             onLike={() => handleLike(item.id, item.is_liked || false)}
             onComment={() => {
               if (!user) {

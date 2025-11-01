@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,7 +30,9 @@ import {
   Copy,
   QrCode,
   Download,
-  BarChart3
+  BarChart3,
+  TrendingUp,
+  DollarSign
 } from 'lucide-react';
 
 interface UserProfile {
@@ -52,6 +55,7 @@ export default function Profile() {
   const [profileUserId, setProfileUserId] = useState<string>('');
   const [isOwnProfile, setIsOwnProfile] = useState(true);
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [investmentReadyCount, setInvestmentReadyCount] = useState(0);
   const { user, signOut } = useAuth();
   const { userId } = useParams();
   const { stats, loading: statsLoading, isFollowing, toggleFollow, refetch } = useProfileData(userId);
@@ -70,8 +74,22 @@ export default function Profile() {
       setProfileUserId(targetUserId);
       setIsOwnProfile(user ? targetUserId === user.id : false);
       fetchProfile(targetUserId);
+      fetchInvestmentReadyCount(targetUserId);
     }
   }, [user, navigate, userId]);
+
+  const fetchInvestmentReadyCount = async (targetUserId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_investment_ready_count', {
+        profile_user_id: targetUserId
+      });
+
+      if (error) throw error;
+      setInvestmentReadyCount(data || 0);
+    } catch (error) {
+      console.error('Error fetching investment ready count:', error);
+    }
+  };
 
   const fetchProfile = async (targetUserId: string) => {
     try {
@@ -306,6 +324,41 @@ export default function Profile() {
               </div>
               <div className="text-xs text-muted-foreground">Following</div>
             </div>
+          </div>
+
+          {/* Investment Readiness Section */}
+          <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-500" />
+                <h3 className="font-semibold text-foreground">Investment Readiness</h3>
+              </div>
+              {investmentReadyCount > 0 && (
+                <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Investment Ready
+                </Badge>
+              )}
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Status:</span>
+                <span className={`font-medium ${investmentReadyCount > 0 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  {investmentReadyCount > 0 ? '🟢 Open for Investment' : '⚪ Not Open'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Investment-Ready Posts:</span>
+                <span className="font-medium text-foreground">{investmentReadyCount}</span>
+              </div>
+            </div>
+            {isOwnProfile && (
+              <p className="text-xs text-muted-foreground mt-3">
+                {investmentReadyCount > 0 
+                  ? 'Your investment-ready posts are visible to investors via the Idestrim API'
+                  : 'Mark your posts as "Open for Investment" when uploading to attract investors'}
+              </p>
+            )}
           </div>
         </section>
 

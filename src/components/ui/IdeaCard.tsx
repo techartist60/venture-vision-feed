@@ -33,6 +33,10 @@ interface IdeaCardProps {
   isBoosted?: boolean;
   isOwner?: boolean;
   currentUserId?: string;
+  investmentStatus?: 'open' | 'normal';
+  fundingAmount?: number;
+  investmentStage?: 'concept' | 'prototype' | 'ready';
+  pitchSummary?: string;
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
@@ -55,6 +59,10 @@ export default function IdeaCard({
   isBoosted = false,
   isOwner = false,
   currentUserId,
+  investmentStatus,
+  fundingAmount,
+  investmentStage,
+  pitchSummary,
   onLike,
   onComment,
   onShare,
@@ -162,6 +170,13 @@ export default function IdeaCard({
               </Badge>
             </div>
           )}
+          {investmentStatus === 'open' && (
+            <div className="absolute top-2 right-2">
+              <Badge className="bg-green-500/90 text-green-50 flex items-center gap-1 text-xs">
+                💰 Investment Ready
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -257,6 +272,11 @@ export default function IdeaCard({
                 <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
                   <Zap className="h-2.5 w-2.5" />
                   Boosted
+                </Badge>
+              )}
+              {investmentStatus === 'open' && (
+                <Badge className="bg-green-500/90 text-green-50 flex items-center gap-1 text-xs">
+                  💰 Investment Ready
                 </Badge>
               )}
             </div>
@@ -410,6 +430,11 @@ export default function IdeaCard({
             <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
               <Zap className="h-3 w-3" />
               Boosted
+            </Badge>
+          )}
+          {investmentStatus === 'open' && (
+            <Badge className="bg-green-500/90 text-green-50 flex items-center gap-1">
+              💰 Investment Ready
             </Badge>
           )}
         </div>
