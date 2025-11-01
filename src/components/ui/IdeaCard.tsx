@@ -293,12 +293,12 @@ export default function IdeaCard({
           </p>
         </div>
 
-        {/* Photo - Full scale YouTube style */}
-        <div className="relative w-full bg-muted overflow-hidden rounded-lg">
+        {/* Photo - Full scale at actual dimensions */}
+        <div className="relative w-full overflow-hidden rounded-lg">
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full h-auto object-cover aspect-[4/3] rounded-lg"
+            className="w-full h-auto rounded-lg"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
