@@ -6,6 +6,7 @@ import { BoostDialog } from '../BoostDialog';
 import { useNavigate } from 'react-router-dom';
 import { useVideo } from '@/contexts/VideoContext';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface IdeaCardProps {
   id: string;
@@ -123,13 +124,18 @@ export default function IdeaCard({
         onClick={() => navigate(`/video/${id}`)}
       >
         {/* Thumbnail */}
-        <div className="relative aspect-video bg-muted">
+        <div className="relative aspect-video bg-muted overflow-hidden">
           {mediaType === 'video' ? (
             <>
               <img 
                 src={thumbnailUrl || mediaUrl} 
                 alt={title}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://placehold.co/1280x720/333/999?text=Video';
+                }}
               />
               <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
                 <Eye className="h-3 w-3 inline mr-1" />
@@ -141,6 +147,11 @@ export default function IdeaCard({
               src={mediaUrl} 
               alt={title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = 'https://placehold.co/1280x720/333/999?text=Image';
+              }}
             />
           )}
           {isBoosted && (
@@ -262,12 +273,17 @@ export default function IdeaCard({
           </p>
         </div>
 
-        {/* Photo - Full scale */}
-        <div className="relative aspect-video bg-muted">
+        {/* Photo - Full scale YouTube style */}
+        <div className="relative w-full bg-muted overflow-hidden rounded-lg">
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full h-full object-cover"
+            className="w-full h-auto object-contain max-h-[600px]"
+            loading="lazy"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = 'https://placehold.co/1280x720/333/999?text=Image';
+            }}
           />
         </div>
 
@@ -360,15 +376,19 @@ export default function IdeaCard({
     <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
       {/* Media - Clicking thumbnail goes to video page */}
       <div 
-        className="relative aspect-video bg-muted cursor-pointer"
+        className="relative aspect-video bg-muted cursor-pointer overflow-hidden"
         onClick={() => navigate(`/video/${id}`)}
       >
         <video 
           ref={videoRef}
           src={mediaUrl} 
           className="w-full h-full object-cover pointer-events-none"
-          poster={thumbnailUrl}
+          poster={thumbnailUrl || undefined}
           preload="metadata"
+          onError={(e) => {
+            const target = e.target as HTMLVideoElement;
+            target.poster = 'https://placehold.co/1280x720/333/999?text=Video';
+          }}
         >
           Your browser does not support the video tag.
         </video>
@@ -512,8 +532,4 @@ export default function IdeaCard({
       </div>
     </div>
   );
-}
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
 }
