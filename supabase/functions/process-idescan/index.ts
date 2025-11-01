@@ -120,22 +120,62 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Starting AI-powered semantic similarity scan of user's idea against ${innovations.length} innovations...`);
+    console.log(`Starting AI-powered category analysis and market simulation...`);
     console.log(`User's idea - Title: "${scan.title}", Description length: ${scan.description.length} chars`);
     
-    // Log source breakdown
-    const sourceBreakdown = innovations.reduce((acc: any, inv: any) => {
-      acc[inv.source_type] = (acc[inv.source_type] || 0) + 1;
-      return acc;
-    }, {});
-    console.log('Comparing against sources:', JSON.stringify(sourceBreakdown));
-
-    const results = [];
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
+
+    // Step 1: Get category similarity scores
+    console.log('Analyzing category similarities...');
+    const categoryResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an innovation categorization expert. Analyze ideas and provide similarity scores for each category. Return ONLY a JSON object with scores 0-100 for each category.'
+          },
+          {
+            role: 'user',
+            content: `Analyze this innovation and rate its relevance/similarity to each category (0-100):
+
+INNOVATION: ${scan.description}
+
+Return JSON format:
+{
+  "tech": <score>,
+  "fashion": <score>,
+  "health": <score>,
+  "agriculture": <score>,
+  "arts": <score>
+}`
+          }
+        ],
+      }),
+    });
+
+    let categoryScores = { tech: 0, fashion: 0, health: 0, agriculture: 0, arts: 0 };
+    if (categoryResponse.ok) {
+      const categoryData = await categoryResponse.json();
+      const content = categoryData.choices[0].message.content;
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        categoryScores = JSON.parse(jsonMatch[0]);
+      }
+    }
+    console.log('Category scores:', categoryScores);
+
+    // Step 2: Find market performance insights and similar innovations
+    const results = [];
+    const innovationsByCategory: any = { tech: [], fashion: [], health: [], agriculture: [], arts: [] };
 
     // Use AI to calculate similarity for each innovation
     for (const innovation of innovations) {
@@ -206,19 +246,82 @@ Return similarity score (0-100):`
       }
     }
 
-    // Sort by similarity score descending and limit to top 10 (increased from 5)
+    // Sort by similarity score descending and limit to top 8
     results.sort((a, b) => b.similarity_score - a.similarity_score);
-    const top10Results = results.slice(0, 10);
+    const topResults = results.slice(0, 8);
 
-    // Perform clustering on top 10 results
-    const clusteredData = performClustering(top10Results);
+    // Step 3: Generate market simulation and insights
+    console.log('Generating market simulation and insights...');
+    const simulationResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a market analysis expert. Provide realistic market performance projections and recommendations. Return ONLY valid JSON.'
+          },
+          {
+            role: 'user',
+            content: `Analyze this innovation for market potential:
+
+INNOVATION: ${scan.description}
+
+SIMILAR INNOVATIONS FOUND: ${topResults.length}
+
+Return JSON format:
+{
+  "marketSimulation": {
+    "adoptionRate": <0-100>,
+    "marketPenetration": <0-100>,
+    "competitionLevel": <0-100>,
+    "innovationIndex": <0-100>,
+    "projectedGrowth": <0-100>,
+    "sustainabilityScore": <0-100>
+  },
+  "bestSector": "<sector name>",
+  "bestLocation": "<geographic location>",
+  "marketInsights": "<brief 2-3 sentence insight>",
+  "recommendations": ["<tip 1>", "<tip 2>", "<tip 3>"]
+}`
+          }
+        ],
+      }),
+    });
+
+    let marketData: any = {
+      marketSimulation: { adoptionRate: 50, marketPenetration: 45, competitionLevel: 60, innovationIndex: 55, projectedGrowth: 50, sustainabilityScore: 50 },
+      bestSector: 'Technology',
+      bestLocation: 'Global Market',
+      marketInsights: 'This innovation shows moderate market potential with opportunities for growth.',
+      recommendations: ['Focus on unique value proposition', 'Research target market thoroughly', 'Consider strategic partnerships']
+    };
+
+    if (simulationResponse.ok) {
+      const simData = await simulationResponse.json();
+      const content = simData.choices[0].message.content;
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          marketData = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+          console.error('Error parsing market data:', e);
+        }
+      }
+    }
+
+    console.log('Market simulation generated:', marketData.bestSector, marketData.bestLocation);
     
-    console.log(`Semantic scan complete: Found ${results.length} similar innovations based on text analysis`);
-    console.log(`Top 10 matches (scores): ${top10Results.map(r => r.similarity_score.toFixed(1) + '%').join(', ')}`);
+    console.log(`Analysis complete: Found ${results.length} similar innovations`);
+    console.log(`Top matches (scores): ${topResults.map(r => r.similarity_score.toFixed(1) + '%').join(', ')}`);
 
-    // Store top 10 results with clean data (remove innovation_data before inserting)
-    if (top10Results.length > 0) {
-      const cleanResults = top10Results.map(r => ({
+    // Store results with clean data (remove innovation_data before inserting)
+    if (topResults.length > 0) {
+      const cleanResults = topResults.map(r => ({
         scan_id: r.scan_id,
         innovation_id: r.innovation_id,
         similarity_score: r.similarity_score,
@@ -238,11 +341,19 @@ Return similarity score (0-100):`
         throw insertError;
       }
 
-      // Store cluster information in scan metadata
+      // Store comprehensive analysis in scan metadata
       await supabaseAdmin
         .from('idescan_scans')
         .update({
-          metadata: clusteredData
+          metadata: {
+            categoryScores,
+            marketSimulation: marketData.marketSimulation,
+            bestSector: marketData.bestSector,
+            bestLocation: marketData.bestLocation,
+            marketInsights: marketData.marketInsights,
+            recommendations: marketData.recommendations,
+            totalSimilarFound: results.length
+          }
         })
         .eq('id', scanId);
     }
@@ -253,12 +364,12 @@ Return similarity score (0-100):`
       .update({ status: 'completed' })
       .eq('id', scanId);
 
-    console.log(`Scan completed successfully: ${top10Results.length} matches stored from ${results.length} similar innovations found`);
+    console.log(`Scan completed successfully: ${topResults.length} matches stored from ${results.length} similar innovations found`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        matchesCount: top10Results.length,
+        matchesCount: topResults.length,
         totalScanned: innovations.length,
         totalSimilar: results.length
       }),
@@ -280,64 +391,7 @@ Return similarity score (0-100):`
   }
 });
 
-// Helper functions for clustering and analysis
-
-function performClustering(results: any[]): any {
-  if (results.length === 0) return { clusters: [], summary: {} };
-
-  const clusters: any[] = [];
-  const used = new Set<number>();
-
-  // Group by similarity score ranges and related themes
-  for (let i = 0; i < results.length; i++) {
-    if (used.has(i)) continue;
-
-    const cluster: any = {
-      id: clusters.length + 1,
-      lead_innovation: {
-        title: results[i].innovation_data.title,
-        source_type: results[i].innovation_data.source_type,
-        similarity_score: results[i].similarity_score
-      },
-      members: [results[i]],
-      avg_similarity: results[i].similarity_score,
-      tier: results[i].similarity_tier,
-      size: 1
-    };
-
-    used.add(i);
-
-    // Find similar innovations to cluster (within 10% score and same tier)
-    for (let j = i + 1; j < results.length; j++) {
-      if (used.has(j)) continue;
-
-      const scoreDiff = Math.abs(results[i].similarity_score - results[j].similarity_score);
-      if (scoreDiff <= 10 && results[i].similarity_tier === results[j].similarity_tier) {
-        cluster.members.push(results[j]);
-        cluster.size++;
-        cluster.avg_similarity = cluster.members.reduce((sum: number, m: any) => 
-          sum + m.similarity_score, 0) / cluster.members.length;
-        used.add(j);
-      }
-    }
-
-    clusters.push(cluster);
-  }
-
-  // Generate summary statistics
-  const summary = {
-    total_matches: results.length,
-    cluster_count: clusters.length,
-    highest_similarity: results[0]?.similarity_score || 0,
-    avg_cluster_size: results.length / clusters.length,
-    tier_distribution: results.reduce((acc: any, r: any) => {
-      acc[r.similarity_tier] = (acc[r.similarity_tier] || 0) + 1;
-      return acc;
-    }, {})
-  };
-
-  return { clusters, summary };
-}
+// Helper function
 
 function calculateTier(score: number): string {
   if (score >= 85) return 'near_duplicate';

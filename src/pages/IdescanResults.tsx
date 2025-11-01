@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal, Lock } from 'lucide-react';
+import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal, Target, MapPin, Zap } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X } from 'lucide-react';
+import { BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Cell } from 'recharts';
 
 interface ScanData {
   id: string;
@@ -23,6 +24,27 @@ interface ScanData {
   image_url: string | null;
   status: string;
   created_at: string;
+  metadata?: {
+    categoryScores?: {
+      tech: number;
+      fashion: number;
+      health: number;
+      agriculture: number;
+      arts: number;
+    };
+    marketSimulation?: {
+      adoptionRate: number;
+      marketPenetration: number;
+      competitionLevel: number;
+      innovationIndex: number;
+      projectedGrowth: number;
+      sustainabilityScore: number;
+    };
+    bestSector?: string;
+    bestLocation?: string;
+    marketInsights?: string;
+    recommendations?: string[];
+  };
 }
 
 interface ResultData {
@@ -59,8 +81,6 @@ export default function IdescanResults() {
   const [sortBy, setSortBy] = useState<'score' | 'source'>('score');
   const [fullscaleMedia, setFullscaleMedia] = useState<string | null>(null);
   const [selectedInnovation, setSelectedInnovation] = useState<ResultData | null>(null);
-  const [unlockedInnovations, setUnlockedInnovations] = useState<Set<string>>(new Set());
-  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -72,71 +92,10 @@ export default function IdescanResults() {
       return;
     }
     fetchScanAndResults();
-    fetchUnlockedInnovations();
-    
-    // Check for payment success in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('payment') === 'success') {
-      toast({
-        title: "Payment successful!",
-        description: "You can now view full details of the innovation.",
-      });
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
-      // Refresh unlocked innovations
-      fetchUnlockedInnovations();
-    }
   }, [user, scanId, navigate]);
-
-  const fetchUnlockedInnovations = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('unlocked_innovations')
-      .select('innovation_id')
-      .eq('user_id', user.id);
-
-    if (!error && data) {
-      setUnlockedInnovations(new Set(data.map(item => item.innovation_id)));
-    }
-  };
-
-  const handleUnlockPayment = async (innovationId: string) => {
-    if (!user) return;
-    
-    setPaymentLoading(innovationId);
-    
-    try {
-      const email = user.email || '';
-      
-      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
-        body: { 
-          innovationId, 
-          scanId,
-          email 
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.authorizationUrl) {
-        // Redirect to Paystack payment page
-        window.location.href = data.authorizationUrl;
-      }
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      toast({
-        title: "Payment failed",
-        description: error.message || "Couldn't initialize payment",
-        variant: "destructive",
-      });
-      setPaymentLoading(null);
-    }
-  };
 
   const fetchScanAndResults = async () => {
     try {
-      // Fetch scan data
       const { data: scanData, error: scanError } = await supabase
         .from('idescan_scans')
         .select('*')
@@ -151,9 +110,8 @@ export default function IdescanResults() {
         return;
       }
       
-      setScan(scanData);
+      setScan(scanData as ScanData);
 
-      // Fetch results
       const { data: resultsData, error: resultsError } = await supabase
         .from('scan_results')
         .select(`
@@ -207,12 +165,10 @@ export default function IdescanResults() {
   const filteredAndSortedResults = useMemo(() => {
     let filtered = results;
 
-    // Filter by tier
     if (tierFilter !== 'all') {
       filtered = filtered.filter(r => r.similarity_tier === tierFilter);
     }
 
-    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(r => 
         r.innovation_records.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -221,7 +177,6 @@ export default function IdescanResults() {
       );
     }
 
-    // Sort
     const sorted = [...filtered];
     if (sortBy === 'score') {
       sorted.sort((a, b) => b.similarity_score - a.similarity_score);
@@ -263,6 +218,26 @@ export default function IdescanResults() {
       description: "Results exported to CSV",
     });
   };
+
+  // Prepare chart data
+  const categoryData = scan?.metadata?.categoryScores ? [
+    { category: 'Tech', score: scan.metadata.categoryScores.tech },
+    { category: 'Fashion', score: scan.metadata.categoryScores.fashion },
+    { category: 'Health', score: scan.metadata.categoryScores.health },
+    { category: 'Agriculture', score: scan.metadata.categoryScores.agriculture },
+    { category: 'Arts', score: scan.metadata.categoryScores.arts },
+  ] : [];
+
+  const marketSimData = scan?.metadata?.marketSimulation ? [
+    { metric: 'Adoption', value: scan.metadata.marketSimulation.adoptionRate },
+    { metric: 'Penetration', value: scan.metadata.marketSimulation.marketPenetration },
+    { metric: 'Competition', value: scan.metadata.marketSimulation.competitionLevel },
+    { metric: 'Innovation', value: scan.metadata.marketSimulation.innovationIndex },
+    { metric: 'Growth', value: scan.metadata.marketSimulation.projectedGrowth },
+    { metric: 'Sustainability', value: scan.metadata.marketSimulation.sustainabilityScore },
+  ] : [];
+
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#f97316', '#eab308', '#22c55e'];
 
   return (
     <div className="min-h-screen bg-gradient-discovery pb-20">
@@ -350,12 +325,110 @@ export default function IdescanResults() {
               </CardContent>
             </Card>
 
-            {/* Filters and Controls */}
+            {/* Category Scores & Market Insights */}
+            {scan.status === 'completed' && scan.metadata?.categoryScores && (
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Category Similarity Scores */}
+                <Card className="shadow-glow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      Category Similarity Scores
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadarChart data={categoryData}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis dataKey="category" tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <Radar name="Score" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Best Sector & Location */}
+                <Card className="shadow-glow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      Market Recommendations
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Best Sector</p>
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 text-primary" />
+                        <p className="font-semibold text-lg">{scan.metadata.bestSector}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Best Location</p>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <p className="font-semibold text-lg">{scan.metadata.bestLocation}</p>
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-border">
+                      <p className="text-sm text-muted-foreground mb-2">Market Insights</p>
+                      <p className="text-sm">{scan.metadata.marketInsights}</p>
+                    </div>
+                    {scan.metadata.recommendations && scan.metadata.recommendations.length > 0 && (
+                      <div className="pt-4 border-t border-border">
+                        <p className="text-sm text-muted-foreground mb-2">Recommendations</p>
+                        <ul className="space-y-1">
+                          {scan.metadata.recommendations.map((rec, idx) => (
+                            <li key={idx} className="text-sm flex items-start gap-2">
+                              <Zap className="h-3 w-3 mt-1 text-primary flex-shrink-0" />
+                              <span>{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Market Simulation */}
+            {scan.status === 'completed' && scan.metadata?.marketSimulation && (
+              <Card className="shadow-glow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    AI Market Performance Simulation
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Projected performance if launched in current market conditions
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={marketSimData}>
+                      <XAxis dataKey="metric" stroke="hsl(var(--foreground))" />
+                      <YAxis domain={[0, 100]} stroke="hsl(var(--foreground))" />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                        {marketSimData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Similar Ideas Section */}
             {results.length > 0 && (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Found {results.length} Similar Ideas</CardTitle>
+                    <CardTitle>Similar Ideas Found ({results.length})</CardTitle>
                     <Button variant="outline" size="sm" onClick={exportToCSV}>
                       <Download className="h-4 w-4 mr-2" />
                       Export CSV
@@ -428,7 +501,6 @@ export default function IdescanResults() {
                     </TabsList>
                   </Tabs>
 
-                  {/* Results Count */}
                   <div className="text-sm text-muted-foreground text-center">
                     Showing {filteredAndSortedResults.length} of {results.length} results
                   </div>
@@ -467,164 +539,67 @@ export default function IdescanResults() {
                 <CardContent>
                   <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Results Match Filters</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Try adjusting your filters or search query
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or filters
                   </p>
-                  <Button variant="outline" onClick={() => {
-                    setSearchQuery('');
-                    setTierFilter('all');
-                  }}>
-                    Clear Filters
-                  </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
                 {filteredAndSortedResults.map((result) => (
-                  <Card key={result.id} className="hover:shadow-glow transition-all">
-                     <CardHeader>
-                       <div className="flex items-start justify-between gap-4">
-                         <div className="flex-1">
-                           <div className="flex items-center gap-2 mb-2">
-                             {getSourceIcon(result.innovation_records.source_type)}
-                             <Badge variant="outline" className="text-xs">
-                               {result.innovation_records.source_type}
-                             </Badge>
-                             {result.innovation_records.country && (
-                               <Badge variant="outline" className="text-xs">
-                                 {result.innovation_records.country}
-                               </Badge>
-                             )}
-                           </div>
-                           <CardTitle className="text-lg">
-                             {result.innovation_records.title}
-                           </CardTitle>
-                           {result.innovation_records.owner && (
-                             <p className="text-sm text-muted-foreground mt-1">
-                               By {result.innovation_records.owner}
-                             </p>
-                           )}
-                         </div>
-                         
-                         {/* Display media thumbnail if available */}
-                         {result.innovation_records.metadata?.thumbnail_url && (
-                           <img
-                             src={result.innovation_records.metadata.thumbnail_url}
-                             alt={result.innovation_records.title}
-                             className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                             onClick={() => setFullscaleMedia(
-                               result.innovation_records.metadata.media_url || 
-                               result.innovation_records.metadata.thumbnail_url
-                             )}
-                           />
-                         )}
-                         
-                         <div className="text-right">
-                           <Badge className={`${getSimilarityColor(result.similarity_tier)} text-lg px-3 py-1`}>
-                             {result.similarity_score.toFixed(0)}%
-                           </Badge>
-                           <p className="text-xs text-muted-foreground mt-1 capitalize">
-                             {result.similarity_tier.replace('_', ' ')}
-                           </p>
-                         </div>
-                       </div>
-                     </CardHeader>
-                    <CardContent>
-                      {result.innovation_records.description && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                          {result.innovation_records.description}
-                        </p>
-                      )}
-                      
-                      {/* Similarity Breakdown */}
-                      <div className="mb-4 p-3 bg-muted/30 rounded-lg">
-                        <div className="text-xs font-medium text-muted-foreground mb-2">
-                          Match Breakdown
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-xs">
-                          <div className="flex flex-col">
-                            <span className="text-muted-foreground">Text</span>
-                            <div className="flex items-center gap-1">
-                              <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-blue-500" 
-                                  style={{ width: `${result.text_similarity || 0}%` }}
-                                />
-                              </div>
-                              <span className="font-medium w-10 text-right">
-                                {result.text_similarity?.toFixed(0) || 0}%
-                              </span>
-                            </div>
+                  <Card key={result.id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {getSourceIcon(result.innovation_records.source_type)}
+                            <Badge variant="outline" className="text-xs">
+                              {result.innovation_records.source_type}
+                            </Badge>
+                            <Badge className={getSimilarityColor(result.similarity_tier)}>
+                              {result.similarity_score.toFixed(1)}% match
+                            </Badge>
                           </div>
-                          {result.image_similarity !== null && (
-                            <div className="flex flex-col">
-                              <span className="text-muted-foreground">Image</span>
+                          <h3 className="text-lg font-semibold mb-2">
+                            {result.innovation_records.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {result.innovation_records.description || 'No description available'}
+                          </p>
+                          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                            {result.innovation_records.owner && (
                               <div className="flex items-center gap-1">
-                                <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-purple-500" 
-                                    style={{ width: `${result.image_similarity || 0}%` }}
-                                  />
-                                </div>
-                                <span className="font-medium w-10 text-right">
-                                  {result.image_similarity?.toFixed(0) || 0}%
-                                </span>
+                                <Building2 className="h-3 w-3" />
+                                <span>{result.innovation_records.owner}</span>
                               </div>
-                            </div>
-                          )}
-                          {result.metadata_similarity !== null && (
-                            <div className="flex flex-col">
-                              <span className="text-muted-foreground">Details</span>
+                            )}
+                            {result.innovation_records.country && (
                               <div className="flex items-center gap-1">
-                                <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-green-500" 
-                                    style={{ width: `${result.metadata_similarity || 0}%` }}
-                                  />
-                                </div>
-                                <span className="font-medium w-10 text-right">
-                                  {result.metadata_similarity?.toFixed(0) || 0}%
-                                </span>
+                                <MapPin className="h-3 w-3" />
+                                <span>{result.innovation_records.country}</span>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
-                      
-                       <div className="flex items-center justify-between">
-                        <div className="flex gap-4 text-xs">
-                          {result.innovation_records.patent_number && (
-                            <Badge variant="outline" className="text-xs">
-                              {result.innovation_records.patent_number}
-                            </Badge>
-                          )}
-                          {result.innovation_records.legal_status && (
-                            <Badge variant="outline" className="text-xs">
-                              {result.innovation_records.legal_status}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="flex gap-2">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedInnovation(result)}
+                        >
+                          View Details
+                        </Button>
+                        {result.innovation_records.source_url && (
                           <Button
-                            variant="default"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => setSelectedInnovation(result)}
-                            className="gap-2"
+                            onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
                           >
-                            <ExternalLink className="h-4 w-4" />
-                            Unlock More Details
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Source
                           </Button>
-                          {result.innovation_records.source_url && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
-                            >
-                              Source
-                            </Button>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -635,430 +610,79 @@ export default function IdescanResults() {
         )}
       </div>
 
-      {/* Fullscale Media Viewer Dialog */}
+      {/* Fullscreen Media Dialog */}
       {fullscaleMedia && (
         <Dialog open={!!fullscaleMedia} onOpenChange={() => setFullscaleMedia(null)}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
-            <div className="relative w-full h-full flex items-center justify-center bg-black/95">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
-                onClick={() => setFullscaleMedia(null)}
-              >
-                <X className="h-6 w-6" />
-              </Button>
-              {fullscaleMedia.includes('.mp4') || fullscaleMedia.includes('video') ? (
-                <video
-                  src={fullscaleMedia}
-                  controls
-                  autoPlay
-                  className="max-w-full max-h-[90vh] object-contain"
-                />
-              ) : (
-                <img
-                  src={fullscaleMedia}
-                  alt="Fullscale view"
-                  className="max-w-full max-h-[90vh] object-contain"
-                />
-              )}
-            </div>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 z-10"
+              onClick={() => setFullscaleMedia(null)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <img
+              src={fullscaleMedia}
+              alt="Full size"
+              className="w-full h-auto max-h-[90vh] object-contain"
+            />
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Innovation Details Modal */}
+      {/* Innovation Details Dialog */}
       {selectedInnovation && (
         <Dialog open={!!selectedInnovation} onOpenChange={() => setSelectedInnovation(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl pr-8">{selectedInnovation.innovation_records.title}</DialogTitle>
-              {selectedInnovation.innovation_records.source_url && (
-                <a
-                  href={selectedInnovation.innovation_records.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-2"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  {selectedInnovation.innovation_records.owner || 'View Source'}
-                </a>
-              )}
+              <DialogTitle>{selectedInnovation.innovation_records.title}</DialogTitle>
             </DialogHeader>
-            
-            {!unlockedInnovations.has(selectedInnovation.innovation_id) ? (
-              /* Payment Gate */
-              <div className="space-y-6 py-8">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="p-4 bg-primary/10 rounded-full">
-                    <Lock className="h-12 w-12 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">Unlock Full Details</h3>
-                    <p className="text-muted-foreground max-w-md">
-                      Get access to complete information including contact details, location, and professional links
-                    </p>
-                  </div>
-                  
-                  {/* Similarity Score Preview */}
-                  <div className="w-full p-4 bg-muted/50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold">Similarity Match</h4>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {selectedInnovation.similarity_tier.replace('_', ' ')} Match
-                        </p>
-                      </div>
-                      <Badge className={`${getSimilarityColor(selectedInnovation.similarity_tier)} text-2xl px-4 py-2`}>
-                        {selectedInnovation.similarity_score.toFixed(0)}%
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* What's Included */}
-                  <div className="w-full text-left space-y-2 bg-muted/30 p-4 rounded-lg">
-                    <h4 className="font-semibold text-center mb-3">What's Included:</h4>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        Contact information (email, phone)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        Location details (city, country)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        Professional LinkedIn profiles
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        Company website and social media
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        Full technical specifications
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="text-center space-y-3">
-                    <div>
-                      <p className="text-3xl font-bold">KSH 5</p>
-                      <p className="text-sm text-muted-foreground">One-time payment via Paystack</p>
-                    </div>
-                    
-                    <Button
-                      size="lg"
-                      onClick={() => handleUnlockPayment(selectedInnovation.innovation_id)}
-                      disabled={paymentLoading === selectedInnovation.innovation_id}
-                      className="w-full"
-                    >
-                      {paymentLoading === selectedInnovation.innovation_id ? (
-                        "Processing..."
-                      ) : (
-                        <>
-                          <Lock className="h-4 w-4 mr-2" />
-                          Unlock for KSH 5
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground mb-1">Description</p>
+                <p className="text-sm">{selectedInnovation.innovation_records.description || 'No description available'}</p>
               </div>
-            ) : (
-              /* Full Details - Only shown after payment */
-              <div className="space-y-6 py-4">
-              {/* Similarity Score */}
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              {selectedInnovation.innovation_records.owner && (
                 <div>
-                  <h3 className="font-semibold">Similarity Match</h3>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {selectedInnovation.similarity_tier.replace('_', ' ')} Match
-                  </p>
+                  <p className="text-sm font-semibold text-muted-foreground mb-1">Owner</p>
+                  <p className="text-sm">{selectedInnovation.innovation_records.owner}</p>
                 </div>
-                <Badge className={`${getSimilarityColor(selectedInnovation.similarity_tier)} text-2xl px-4 py-2`}>
-                  {selectedInnovation.similarity_score.toFixed(0)}%
+              )}
+              {selectedInnovation.innovation_records.country && (
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-1">Country</p>
+                  <p className="text-sm">{selectedInnovation.innovation_records.country}</p>
+                </div>
+              )}
+              {selectedInnovation.innovation_records.patent_number && (
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-1">Patent Number</p>
+                  <p className="text-sm">{selectedInnovation.innovation_records.patent_number}</p>
+                </div>
+              )}
+              {selectedInnovation.innovation_records.legal_status && (
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-1">Legal Status</p>
+                  <p className="text-sm">{selectedInnovation.innovation_records.legal_status}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground mb-1">Similarity Score</p>
+                <Badge className={getSimilarityColor(selectedInnovation.similarity_tier)}>
+                  {selectedInnovation.similarity_score.toFixed(1)}% match
                 </Badge>
               </div>
-
-              {/* Owner/Inventor Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Real-World Details
-                </h3>
-                
-                <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
-                  {/* Primary Contact/Inventor */}
-                  {(selectedInnovation.innovation_records.metadata?.inventor || 
-                    selectedInnovation.innovation_records.metadata?.ceo ||
-                    selectedInnovation.innovation_records.owner) && (
-                    <div className="pb-3 border-b border-border">
-                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Inventor' : 
-                         selectedInnovation.innovation_records.source_type === 'startup' ? 'CEO/Founder' : 
-                         'Key Person'}
-                      </span>
-                      <p className="text-lg font-semibold mt-1">
-                        {selectedInnovation.innovation_records.metadata?.inventor || 
-                         selectedInnovation.innovation_records.metadata?.ceo ||
-                         selectedInnovation.innovation_records.metadata?.founder ||
-                         'Not disclosed'}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Company/Organization */}
-                  {selectedInnovation.innovation_records.owner && (
-                    <div className="pb-3 border-b border-border">
-                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Holder' : 
-                         selectedInnovation.innovation_records.source_type === 'startup' ? 'Company' : 
-                         'Organization'}
-                      </span>
-                      <p className="text-lg font-semibold mt-1">
-                        {selectedInnovation.innovation_records.owner}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Location Information */}
-                  <div className="pb-3 border-b border-border">
-                    <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      Location
-                    </span>
-                    <div className="mt-1 space-y-1">
-                      {selectedInnovation.innovation_records.metadata?.city && (
-                        <p className="font-medium">
-                          {selectedInnovation.innovation_records.metadata.city}
-                          {selectedInnovation.innovation_records.metadata.state && 
-                            `, ${selectedInnovation.innovation_records.metadata.state}`}
-                        </p>
-                      )}
-                      {selectedInnovation.innovation_records.country && (
-                        <p className="text-lg font-semibold">
-                          {selectedInnovation.innovation_records.country}
-                        </p>
-                      )}
-                      {!selectedInnovation.innovation_records.country && 
-                       !selectedInnovation.innovation_records.metadata?.city && (
-                        <p className="text-muted-foreground italic">Location not disclosed</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Contact Information */}
-                  {(selectedInnovation.innovation_records.metadata?.email || 
-                    selectedInnovation.innovation_records.metadata?.phone) && (
-                    <div className="pb-3 border-b border-border">
-                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        Contact Information
-                      </span>
-                      <div className="mt-2 space-y-2">
-                        {selectedInnovation.innovation_records.metadata?.email && (
-                          <div>
-                            <span className="text-xs text-muted-foreground">Email:</span>
-                            <a 
-                              href={`mailto:${selectedInnovation.innovation_records.metadata.email}`}
-                              className="block font-medium text-primary hover:underline"
-                            >
-                              {selectedInnovation.innovation_records.metadata.email}
-                            </a>
-                          </div>
-                        )}
-                        {selectedInnovation.innovation_records.metadata?.phone && (
-                          <div>
-                            <span className="text-xs text-muted-foreground">Phone:</span>
-                            <p className="font-medium">
-                              {selectedInnovation.innovation_records.metadata.phone}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Additional Details */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedInnovation.innovation_records.metadata?.founded_year && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Founded</span>
-                        <p className="font-semibold">{selectedInnovation.innovation_records.metadata.founded_year}</p>
-                      </div>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata?.publication_date && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">
-                          {selectedInnovation.innovation_records.source_type === 'patent' ? 'Patent Date' : 'Published'}
-                        </span>
-                        <p className="font-semibold">
-                          {new Date(selectedInnovation.innovation_records.metadata.publication_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata?.employees && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Employees</span>
-                        <p className="font-semibold">{selectedInnovation.innovation_records.metadata.employees}</p>
-                      </div>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata?.funding && (
-                      <div>
-                        <span className="text-xs text-muted-foreground">Funding</span>
-                        <p className="font-semibold">{selectedInnovation.innovation_records.metadata.funding}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Professional Links */}
-              {(selectedInnovation.innovation_records.metadata?.linkedin || 
-                selectedInnovation.innovation_records.metadata?.company_linkedin ||
-                selectedInnovation.innovation_records.metadata?.website) && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg">Professional Links</h3>
-                  <div className="space-y-2">
-                    {selectedInnovation.innovation_records.metadata?.linkedin && (
-                      <a 
-                        href={selectedInnovation.innovation_records.metadata.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Personal LinkedIn Profile
-                      </a>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata?.company_linkedin && (
-                      <a 
-                        href={selectedInnovation.innovation_records.metadata.company_linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Company LinkedIn Page
-                      </a>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata?.website && (
-                      <a 
-                        href={selectedInnovation.innovation_records.metadata.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Company Website
-                      </a>
-                    )}
-                  </div>
-                </div>
+              {selectedInnovation.innovation_records.source_url && (
+                <Button
+                  className="w-full"
+                  onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Original Source
+                </Button>
               )}
-
-              {/* Social Media Links */}
-              {(selectedInnovation.innovation_records.metadata?.linkedin || 
-                selectedInnovation.innovation_records.metadata?.twitter || 
-                selectedInnovation.innovation_records.metadata?.company_linkedin) && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg">Social Media & Professional Networks</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {selectedInnovation.innovation_records.metadata.linkedin && (
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => window.open(selectedInnovation.innovation_records.metadata.linkedin, '_blank')}
-                      >
-                        <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                        Personal LinkedIn
-                      </Button>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata.company_linkedin && (
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => window.open(selectedInnovation.innovation_records.metadata.company_linkedin, '_blank')}
-                      >
-                        <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                        Company LinkedIn
-                      </Button>
-                    )}
-                    
-                    {selectedInnovation.innovation_records.metadata.twitter && (
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => window.open(selectedInnovation.innovation_records.metadata.twitter, '_blank')}
-                      >
-                        <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                        </svg>
-                        Twitter/X
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              {selectedInnovation.innovation_records.description && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg">Description</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {selectedInnovation.innovation_records.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Technical Details */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Technical Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Source Type:</span>
-                    <p className="font-medium capitalize">{selectedInnovation.innovation_records.source_type}</p>
-                  </div>
-                  
-                  {selectedInnovation.innovation_records.patent_number && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Patent Number:</span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.patent_number}</p>
-                    </div>
-                  )}
-                  
-                  {selectedInnovation.innovation_records.legal_status && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Legal Status:</span>
-                      <p className="font-medium">{selectedInnovation.innovation_records.legal_status}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-                {/* View Original Source */}
-                {selectedInnovation.innovation_records.source_url && (
-                  <Button
-                    className="w-full"
-                    onClick={() => window.open(selectedInnovation.innovation_records.source_url!, '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Original Source
-                  </Button>
-                )}
-              </div>
-            )}
+            </div>
           </DialogContent>
         </Dialog>
       )}
