@@ -32,8 +32,10 @@ import {
   Download,
   BarChart3,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  MessageCircle
 } from 'lucide-react';
+import { MessageDialog } from '@/components/MessageDialog';
 
 interface UserProfile {
   full_name?: string;
@@ -56,6 +58,7 @@ export default function Profile() {
   const [isOwnProfile, setIsOwnProfile] = useState(true);
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
   const [investmentReadyCount, setInvestmentReadyCount] = useState(0);
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { userId } = useParams();
   const { stats, loading: statsLoading, isFollowing, toggleFollow, refetch } = useProfileData(userId);
@@ -267,13 +270,26 @@ export default function Profile() {
                 Edit Profile
               </Button>
             ) : (
-              <Button 
-                variant="innovation" 
-                size="sm" 
-                onClick={handleFollowToggle}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  variant="innovation" 
+                  size="sm" 
+                  onClick={handleFollowToggle}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
+                {user && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2"
+                    onClick={() => setMessageDialogOpen(true)}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Message
+                  </Button>
+                )}
+              </div>
             )}
           </div>
 
@@ -505,6 +521,17 @@ export default function Profile() {
           onOpenChange={setEditDialogOpen}
           profile={profile}
           onProfileUpdate={() => fetchProfile(profileUserId)}
+        />
+      )}
+
+      {/* Message Dialog - Only show for other profiles */}
+      {!isOwnProfile && user && (
+        <MessageDialog
+          open={messageDialogOpen}
+          onOpenChange={setMessageDialogOpen}
+          recipientId={profileUserId}
+          recipientName={profile.full_name || 'User'}
+          recipientAvatar={profile.avatar_url}
         />
       )}
       

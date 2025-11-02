@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause, Mail } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -41,6 +41,7 @@ interface IdeaCardProps {
   onComment?: () => void;
   onShare?: () => void;
   onSave?: () => void;
+  onMessage?: () => void;
   gridView?: boolean;
 }
 
@@ -67,6 +68,7 @@ export default function IdeaCard({
   onComment,
   onShare,
   onSave,
+  onMessage,
   gridView = false
 }: IdeaCardProps) {
   const navigate = useNavigate();
@@ -293,12 +295,12 @@ export default function IdeaCard({
           </p>
         </div>
 
-        {/* Photo - Full scale at actual dimensions */}
-        <div className="relative w-full overflow-hidden rounded-lg">
+        {/* Photo - YouTube community post style */}
+        <div className="relative w-full flex items-center justify-center bg-muted/30">
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full h-auto rounded-lg"
+            className="w-full h-auto max-h-[600px] object-contain"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -309,6 +311,43 @@ export default function IdeaCard({
 
         {/* Actions */}
         <div className="p-4">
+          {/* Investment Ready CTA */}
+          {investmentStatus === 'open' && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                    💰 Investment Opportunity
+                  </h4>
+                  {fundingAmount && (
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Seeking ${fundingAmount.toLocaleString()} • {investmentStage}
+                    </p>
+                  )}
+                  {pitchSummary && (
+                    <p className="text-xs text-foreground line-clamp-2">
+                      {pitchSummary}
+                    </p>
+                  )}
+                </div>
+                {!isOwner && onMessage && (
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="gap-2 bg-green-600 hover:bg-green-700 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMessage();
+                    }}
+                  >
+                    <Mail className="h-3 w-3" />
+                    Contact
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <Button 
@@ -478,6 +517,43 @@ export default function IdeaCard({
 
         {/* Actions */}
         <div className="flex items-center justify-between">
+          {/* Investment Ready CTA */}
+          {investmentStatus === 'open' && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                    💰 Investment Opportunity
+                  </h4>
+                  {fundingAmount && (
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Seeking ${fundingAmount.toLocaleString()} • {investmentStage}
+                    </p>
+                  )}
+                  {pitchSummary && (
+                    <p className="text-xs text-foreground line-clamp-2">
+                      {pitchSummary}
+                    </p>
+                  )}
+                </div>
+                {!isOwner && onMessage && (
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="gap-2 bg-green-600 hover:bg-green-700 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMessage();
+                    }}
+                  >
+                    <Mail className="h-3 w-3" />
+                    Contact
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 

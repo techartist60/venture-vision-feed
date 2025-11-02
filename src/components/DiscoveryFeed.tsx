@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import IdeaCard from '@/components/ui/IdeaCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CommentDialog } from '@/components/CommentDialog';
+import { MessageDialog } from '@/components/MessageDialog';
 import { useToast } from '@/hooks/use-toast';
 import SignupPrompt from './SignupPrompt';
 
@@ -52,6 +53,20 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
     mediaTitle: ''
   });
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [messageDialog, setMessageDialog] = useState<{
+    open: boolean;
+    recipientId: string;
+    recipientName: string;
+    recipientAvatar?: string;
+    mediaId: string;
+    mediaTitle: string;
+  }>({
+    open: false,
+    recipientId: '',
+    recipientName: '',
+    mediaId: '',
+    mediaTitle: ''
+  });
 
   useEffect(() => {
     fetchMedia();
@@ -302,6 +317,22 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
     }
   };
 
+  const handleMessage = (item: MediaUpload) => {
+    if (!user) {
+      setSignupPrompt({ open: true, action: 'send messages' });
+      return;
+    }
+    
+    setMessageDialog({
+      open: true,
+      recipientId: item.user_id,
+      recipientName: item.profiles.full_name || 'User',
+      recipientAvatar: item.profiles.avatar_url || undefined,
+      mediaId: item.id,
+      mediaTitle: item.title
+    });
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -379,6 +410,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             }}
             onShare={() => {}}
             onSave={() => handleSave(item.id, item.is_saved || false)}
+            onMessage={() => handleMessage(item)}
             gridView={true}
           />
         ))}
@@ -389,6 +421,16 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
         onOpenChange={(open) => setCommentDialog(prev => ({ ...prev, open }))}
         mediaId={commentDialog.mediaId}
         mediaTitle={commentDialog.mediaTitle}
+      />
+
+      <MessageDialog
+        open={messageDialog.open}
+        onOpenChange={(open) => setMessageDialog(prev => ({ ...prev, open }))}
+        recipientId={messageDialog.recipientId}
+        recipientName={messageDialog.recipientName}
+        recipientAvatar={messageDialog.recipientAvatar}
+        mediaId={messageDialog.mediaId}
+        mediaTitle={messageDialog.mediaTitle}
       />
       
       <SignupPrompt
