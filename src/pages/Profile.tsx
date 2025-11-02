@@ -75,7 +75,8 @@ export default function Profile() {
       }
     } else {
       setProfileUserId(targetUserId);
-      setIsOwnProfile(user ? targetUserId === user.id : false);
+      const isOwn = user ? targetUserId === user.id : false;
+      setIsOwnProfile(isOwn);
       fetchProfile(targetUserId);
       fetchInvestmentReadyCount(targetUserId);
     }
@@ -278,7 +279,7 @@ export default function Profile() {
                 >
                   {isFollowing ? "Following" : "Follow"}
                 </Button>
-                {user && (
+                {user && profileUserId && (
                   <Button 
                     variant="outline" 
                     size="sm" 

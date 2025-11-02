@@ -234,10 +234,7 @@ export default function IdeaCard({
   // YouTube-style photo post layout (list view)
   if (mediaType === 'image') {
     return (
-      <div 
-        className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden cursor-pointer"
-        onClick={() => navigate(`/video/${id}`)}
-      >
+      <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
         {/* User Info at top */}
         <div className="p-4 pb-3">
           <div 
@@ -295,12 +292,12 @@ export default function IdeaCard({
           </p>
         </div>
 
-        {/* Photo - YouTube community post style */}
-        <div className="relative w-full flex items-center justify-center bg-muted/30">
+        {/* Photo - Full scale display without max-height */}
+        <div className="relative w-full flex items-center justify-center bg-background">
           <img 
             src={mediaUrl} 
             alt={title}
-            className="w-full h-auto max-h-[600px] object-contain"
+            className="w-full h-auto object-contain"
             loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;

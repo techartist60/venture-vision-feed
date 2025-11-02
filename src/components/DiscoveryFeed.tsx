@@ -369,7 +369,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="flex flex-col gap-6 max-w-2xl mx-auto">
         {media.map((item) => (
           <IdeaCard
             key={item.id}
@@ -411,7 +411,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             onShare={() => {}}
             onSave={() => handleSave(item.id, item.is_saved || false)}
             onMessage={() => handleMessage(item)}
-            gridView={true}
+            gridView={false}
           />
         ))}
       </div>
