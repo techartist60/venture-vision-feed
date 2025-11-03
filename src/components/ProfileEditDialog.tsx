@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Lock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,7 @@ interface ProfileEditDialogProps {
     bio?: string;
     website_url?: string;
     avatar_url?: string;
+    following_private?: boolean;
   };
   onProfileUpdate: () => void;
 }
@@ -33,7 +35,8 @@ export const ProfileEditDialog = ({ open, onOpenChange, profile, onProfileUpdate
     full_name: profile.full_name || '',
     bio: profile.bio || '',
     website_url: profile.website_url || '',
-    avatar_url: profile.avatar_url || ''
+    avatar_url: profile.avatar_url || '',
+    following_private: profile.following_private || false
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -108,6 +111,7 @@ export const ProfileEditDialog = ({ open, onOpenChange, profile, onProfileUpdate
           bio: formData.bio.trim() || null,
           website_url: formData.website_url.trim() || null,
           avatar_url: formData.avatar_url || null,
+          following_private: formData.following_private,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
@@ -199,6 +203,25 @@ export const ProfileEditDialog = ({ open, onOpenChange, profile, onProfileUpdate
                 onChange={(e) => handleInputChange('website_url', e.target.value)}
                 placeholder="https://your-website.com"
                 maxLength={200}
+              />
+            </div>
+
+            <div className="flex items-center justify-between space-x-2 p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="following_private" className="cursor-pointer">
+                    Private Following List
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Only you will be able to see who you follow
+                </p>
+              </div>
+              <Switch
+                id="following_private"
+                checked={formData.following_private}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, following_private: checked }))}
               />
             </div>
           </div>

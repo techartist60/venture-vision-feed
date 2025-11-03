@@ -525,6 +525,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          following_private: boolean | null
           full_name: string | null
           id: string
           social_links: Json | null
@@ -537,6 +538,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          following_private?: boolean | null
           full_name?: string | null
           id?: string
           social_links?: Json | null
@@ -549,6 +551,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          following_private?: boolean | null
           full_name?: string | null
           id?: string
           social_links?: Json | null

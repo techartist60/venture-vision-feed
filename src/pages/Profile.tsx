@@ -43,6 +43,7 @@ interface UserProfile {
   website_url?: string;
   avatar_url?: string;
   username?: string;
+  following_private?: boolean;
 }
 
 export default function Profile() {
@@ -334,10 +335,20 @@ export default function Profile() {
             </div>
             <div 
               className="p-3 rounded-xl bg-card border border-border cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => setFollowingDialogOpen(true)}
+              onClick={() => {
+                // Only allow viewing if it's own profile or following is not private
+                if (isOwnProfile || !profile.following_private) {
+                  setFollowingDialogOpen(true);
+                } else {
+                  toast({
+                    title: "Private",
+                    description: "This user's following list is private",
+                  });
+                }
+              }}
             >
               <div className="text-xl font-bold text-foreground">
-                {statsLoading ? '...' : stats.following}
+                {statsLoading ? '...' : (isOwnProfile || !profile.following_private ? stats.following : '—')}
               </div>
               <div className="text-xs text-muted-foreground">Following</div>
             </div>
@@ -506,11 +517,17 @@ export default function Profile() {
             <DialogTitle className="text-center">Following</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto">
-            <FollowingList 
-              userId={profileUserId} 
-              onClose={() => setFollowingDialogOpen(false)} 
-              refresh={refreshTrigger}
-            />
+            {(isOwnProfile || !profile.following_private) ? (
+              <FollowingList 
+                userId={profileUserId} 
+                onClose={() => setFollowingDialogOpen(false)} 
+                refresh={refreshTrigger}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">This user's following list is private</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
