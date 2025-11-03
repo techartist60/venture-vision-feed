@@ -78,14 +78,21 @@ export const useProfileData = (userId?: string) => {
 
       // Check if current user is following this profile (if different users)
       if (user?.id && userId && user.id !== userId) {
-        const { data: followData } = await supabase
+        const { data: followData, error: followError } = await supabase
           .from('followers')
           .select('id')
           .eq('follower_id', user.id)
           .eq('following_id', userId)
           .maybeSingle();
         
+        if (followError) {
+          console.error('Error checking follow status:', followError);
+        }
+        
         setIsFollowing(!!followData);
+      } else {
+        // Reset isFollowing when viewing own profile
+        setIsFollowing(false);
       }
     } catch (error) {
       console.error('Error fetching profile stats:', error);
@@ -103,12 +110,12 @@ export const useProfileData = (userId?: string) => {
     fetchStats();
   }, [fetchStats]);
 
-  // Real-time followers updates
+  // Real-time followers updates - also listen for changes affecting current user
   useEffect(() => {
     if (!targetUserId) return;
 
     const channel = supabase
-      .channel('followers-changes')
+      .channel(`followers-changes-${targetUserId}`)
       .on(
         'postgres_changes',
         {
@@ -134,13 +141,31 @@ export const useProfileData = (userId?: string) => {
           // Refetch stats when following count changes
           fetchStats();
         }
-      )
-      .subscribe();
+      );
+
+    // If viewing another user's profile, also listen for changes to current user's follows
+    if (user?.id && userId && user.id !== userId) {
+      channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'followers',
+          filter: `follower_id=eq.${user.id}`,
+        },
+        () => {
+          // Refetch to update isFollowing state
+          fetchStats();
+        }
+      );
+    }
+
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [targetUserId, fetchStats]);
+  }, [targetUserId, user?.id, userId, fetchStats]);
 
   const toggleFollow = async () => {
     if (!user?.id || !userId || user.id === userId) return;
