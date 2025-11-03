@@ -75,9 +75,10 @@ export default function Inventions() {
         `)
         .order('created_at', { ascending: false });
 
+      // Apply category filter if selected
       if (selectedCategory !== 'All') {
-        // For now, we'll show all uploads since we don't have category field in media_uploads
-        // This can be enhanced by adding a category field to media_uploads table
+        const categoryName = categoryLabels[selectedCategory as keyof typeof categoryLabels];
+        query = query.eq('category', categoryName);
       }
 
       const { data, error } = await query;

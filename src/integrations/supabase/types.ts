@@ -351,6 +351,7 @@ export type Database = {
       media_uploads: {
         Row: {
           boost_expires_at: string | null
+          category: string | null
           comments_count: number
           created_at: string
           description: string | null
@@ -374,6 +375,7 @@ export type Database = {
         }
         Insert: {
           boost_expires_at?: string | null
+          category?: string | null
           comments_count?: number
           created_at?: string
           description?: string | null
@@ -397,6 +399,7 @@ export type Database = {
         }
         Update: {
           boost_expires_at?: string | null
+          category?: string | null
           comments_count?: number
           created_at?: string
           description?: string | null

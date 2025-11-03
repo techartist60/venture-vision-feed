@@ -264,7 +264,8 @@ export default function Upload() {
             thumbnail_url: null,
             mime_type: selectedFiles[0]?.type || null,
             file_size: selectedFiles[0]?.size || null,
-            investment_status: formData.investmentStatus
+            investment_status: formData.investmentStatus,
+            category: formData.category || null
           };
           
           // Add investment fields if status is 'open'

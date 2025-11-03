@@ -143,7 +143,19 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
     } else if (notification.type === 'message') {
       navigate('/messages');
     } else if (notification.media_id) {
-      navigate(`/idea/${notification.media_id}`);
+      // Fetch media type to navigate to correct page
+      const { data: mediaData } = await supabase
+        .from('media_uploads')
+        .select('media_type')
+        .eq('id', notification.media_id)
+        .single();
+      
+      if (mediaData) {
+        const isVideo = mediaData.media_type === 'video' || mediaData.media_type.startsWith('video/');
+        navigate(isVideo ? `/video/${notification.media_id}` : `/idea/${notification.media_id}`);
+      } else {
+        navigate(`/idea/${notification.media_id}`);
+      }
     }
   };
 
