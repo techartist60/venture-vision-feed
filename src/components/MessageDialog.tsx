@@ -186,15 +186,32 @@ export function MessageDialog({
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Insert the message
+      const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
           content: newMessage.trim()
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (messageError) throw messageError;
+
+      // Create notification for the recipient
+      const { error: notificationError } = await supabase.rpc('create_notification', {
+        recipient_id: recipientId,
+        actor_id: user.id,
+        notification_type: 'message',
+        media_id: mediaId || null,
+        comment_content: newMessage.trim().substring(0, 100) // First 100 chars
+      });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Don't throw - message was sent successfully
+      }
 
       setNewMessage('');
     } catch (error) {

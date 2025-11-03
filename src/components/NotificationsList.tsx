@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow';
+  type: 'like' | 'comment' | 'follow' | 'message';
   media_id?: string;
   content?: string;
   read: boolean;
@@ -88,7 +88,7 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
         
         return {
           ...notification,
-          type: notification.type as 'like' | 'comment' | 'follow',
+          type: notification.type as 'like' | 'comment' | 'follow' | 'message',
           actor: {
             id: actor?.user_id || notification.actor_id,
             full_name: actor?.full_name,
@@ -104,6 +104,28 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
     };
 
     fetchNotifications();
+
+    // Subscribe to real-time notification updates
+    const channel = supabase
+      .channel('notifications-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          // Refetch notifications when a new one arrives
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleNotificationClick = async (notification: Notification) => {
@@ -118,6 +140,8 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
     // Navigate based on notification type
     if (notification.type === 'follow') {
       navigate(`/profile/${notification.actor.id}`);
+    } else if (notification.type === 'message') {
+      navigate('/messages');
     } else if (notification.media_id) {
       navigate(`/idea/${notification.media_id}`);
     }
@@ -131,6 +155,8 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
         return <MessageCircle className="h-4 w-4 text-blue-500" />;
       case 'follow':
         return <UserPlus className="h-4 w-4 text-green-500" />;
+      case 'message':
+        return <MessageCircle className="h-4 w-4 text-purple-500" fill="currentColor" />;
       default:
         return null;
     }
@@ -146,6 +172,8 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
         return `${actorName} commented on your ${notification.media?.title || 'post'}`;
       case 'follow':
         return `${actorName} started following you`;
+      case 'message':
+        return `${actorName} sent you a message`;
       default:
         return 'New notification';
     }
@@ -209,7 +237,7 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ onMarkAllA
                     <p className="text-sm font-medium text-foreground leading-snug">
                       {getNotificationText(notification)}
                     </p>
-                    {notification.type === 'comment' && notification.content && (
+                    {(notification.type === 'comment' || notification.type === 'message') && notification.content && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         "{notification.content}"
                       </p>
