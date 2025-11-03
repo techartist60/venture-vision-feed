@@ -73,13 +73,20 @@ export function MessageDialog({
     if (!user) return;
 
     try {
-      // Find or create conversation
-      const { data: existingConv, error: fetchError } = await supabase
+      // Build query to find existing conversation
+      let query = supabase
         .from('conversations')
         .select('*')
-        .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${recipientId}),and(participant_1_id.eq.${recipientId},participant_2_id.eq.${user.id})`)
-        .eq('media_id', mediaId || null)
-        .maybeSingle();
+        .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${recipientId}),and(participant_1_id.eq.${recipientId},participant_2_id.eq.${user.id})`);
+
+      // Add media_id filter if provided
+      if (mediaId) {
+        query = query.eq('media_id', mediaId);
+      } else {
+        query = query.is('media_id', null);
+      }
+
+      const { data: existingConv, error: fetchError } = await query.maybeSingle();
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
@@ -87,13 +94,19 @@ export function MessageDialog({
         setConversationId(existingConv.id);
       } else {
         // Create new conversation
+        const insertData: any = {
+          participant_1_id: user.id,
+          participant_2_id: recipientId
+        };
+
+        // Only add media_id if it exists
+        if (mediaId) {
+          insertData.media_id = mediaId;
+        }
+
         const { data: newConv, error: createError } = await supabase
           .from('conversations')
-          .insert({
-            participant_1_id: user.id,
-            participant_2_id: recipientId,
-            media_id: mediaId || null
-          })
+          .insert(insertData)
           .select()
           .single();
 
