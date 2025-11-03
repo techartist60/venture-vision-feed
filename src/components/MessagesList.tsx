@@ -41,6 +41,26 @@ export function MessagesList() {
   useEffect(() => {
     if (user) {
       loadConversations();
+      
+      // Subscribe to new messages to update conversation list
+      const channel = supabase
+        .channel('messages-list')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages'
+          },
+          () => {
+            loadConversations();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -189,7 +209,12 @@ export function MessagesList() {
       {selectedConversation && (
         <MessageDialog
           open={!!selectedConversation}
-          onOpenChange={(open) => !open && setSelectedConversation(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedConversation(null);
+              loadConversations(); // Refresh list when dialog closes
+            }
+          }}
           recipientId={selectedConversation.recipientId}
           recipientName={selectedConversation.recipientName}
           recipientAvatar={selectedConversation.recipientAvatar}

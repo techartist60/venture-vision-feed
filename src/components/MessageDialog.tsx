@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -46,11 +46,18 @@ export function MessageDialog({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open && user) {
+    if (open && user && recipientId) {
       initConversation();
-      subscribeToMessages();
     }
   }, [open, user, recipientId, mediaId]);
+
+  useEffect(() => {
+    if (conversationId) {
+      loadMessages(conversationId);
+      const cleanup = subscribeToMessages();
+      return cleanup;
+    }
+  }, [conversationId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -78,7 +85,6 @@ export function MessageDialog({
 
       if (existingConv) {
         setConversationId(existingConv.id);
-        await loadMessages(existingConv.id);
       } else {
         // Create new conversation
         const { data: newConv, error: createError } = await supabase
@@ -127,8 +133,6 @@ export function MessageDialog({
   };
 
   const subscribeToMessages = () => {
-    if (!conversationId) return;
-
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -140,7 +144,21 @@ export function MessageDialog({
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+          const newMsg = payload.new as Message;
+          setMessages(prev => {
+            // Prevent duplicates
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+          
+          // Mark as read if not from current user
+          if (newMsg.sender_id !== user?.id) {
+            supabase
+              .from('messages')
+              .update({ read: true })
+              .eq('id', newMsg.id)
+              .then(() => {});
+          }
         }
       )
       .subscribe();
@@ -166,10 +184,6 @@ export function MessageDialog({
       if (error) throw error;
 
       setNewMessage('');
-      toast({
-        title: "Message sent",
-        description: "Your message has been delivered"
-      });
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -191,8 +205,8 @@ export function MessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[600px] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl h-[80vh] max-h-[700px] flex flex-col p-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={recipientAvatar} />
@@ -211,11 +225,17 @@ export function MessageDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-          <div className="space-y-4 py-4">
-            {messages.length === 0 ? (
+        <ScrollArea className="flex-1 px-6" ref={scrollRef}>
+          <div className="space-y-4 py-6">
+            {!conversationId ? (
               <div className="text-center text-muted-foreground py-8">
-                No messages yet. Start the conversation!
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                Loading conversation...
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-sm">No messages yet</p>
+                <p className="text-xs mt-2">Send a message to start the conversation!</p>
               </div>
             ) : (
               messages.map((message) => (
@@ -224,17 +244,17 @@ export function MessageDialog({
                   className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       message.sender_id === user?.id
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     }`}
                   >
-                    <p className="text-sm break-words">{message.content}</p>
+                    <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
                     <p
-                      className={`text-xs mt-1 ${
+                      className={`text-xs mt-1.5 ${
                         message.sender_id === user?.id
-                          ? 'text-primary-foreground/70'
+                          ? 'text-primary-foreground/60'
                           : 'text-muted-foreground'
                       }`}
                     >
@@ -247,17 +267,33 @@ export function MessageDialog({
           </div>
         </ScrollArea>
 
-        <div className="flex gap-2 pt-4 border-t">
-          <Input
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={loading}
-          />
-          <Button onClick={sendMessage} disabled={loading || !newMessage.trim()}>
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="px-6 py-4 border-t bg-background">
+          <div className="flex gap-2 items-end">
+            <Textarea
+              placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              disabled={loading || !conversationId}
+              className="min-h-[60px] max-h-[120px] resize-none"
+              rows={2}
+            />
+            <Button 
+              onClick={sendMessage} 
+              disabled={loading || !newMessage.trim() || !conversationId}
+              size="lg"
+              className="h-[60px] px-6"
+            >
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Press Enter to send • Shift + Enter for new line
+          </p>
         </div>
       </DialogContent>
     </Dialog>
