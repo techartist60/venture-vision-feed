@@ -37,6 +37,7 @@ export default function Slides() {
   const [videos, setVideos] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [feedType, setFeedType] = useState<'foryou' | 'following'>('foryou');
   const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string }>({
     open: false,
     mediaId: '',
@@ -48,7 +49,7 @@ export default function Slides() {
 
   useEffect(() => {
     fetchVideos();
-  }, [user]);
+  }, [user, feedType]);
 
   useEffect(() => {
     // Play current video and pause others
@@ -65,21 +66,64 @@ export default function Slides() {
 
   const fetchVideos = async () => {
     try {
-      let query = supabase
-        .from('media_uploads')
-        .select(`
-          *,
-          profiles!media_uploads_user_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
-        .eq('media_type', 'video')
-        .order('created_at', { ascending: false })
-        .limit(50);
+      setLoading(true);
+      let data;
+      let error;
 
-      const { data, error } = await query;
+      if (feedType === 'following' && user) {
+        // Get users that the current user follows
+        const { data: followingData, error: followingError } = await supabase
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        if (followingError) throw followingError;
+
+        const followingIds = followingData.map(f => f.following_id);
+
+        if (followingIds.length === 0) {
+          setVideos([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch videos from followed users
+        const response = await supabase
+          .from('media_uploads')
+          .select(`
+            *,
+            profiles!media_uploads_user_id_fkey (
+              full_name,
+              username,
+              avatar_url
+            )
+          `)
+          .eq('media_type', 'video')
+          .in('user_id', followingIds)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        data = response.data;
+        error = response.error;
+      } else {
+        // For You feed - all videos
+        const response = await supabase
+          .from('media_uploads')
+          .select(`
+            *,
+            profiles!media_uploads_user_id_fkey (
+              full_name,
+              username,
+              avatar_url
+            )
+          `)
+          .eq('media_type', 'video')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        data = response.data;
+        error = response.error;
+      }
 
       if (error) throw error;
 
@@ -308,17 +352,54 @@ export default function Slides() {
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background"
-      onScroll={handleScroll}
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-    >
-      <style>{`
-        div::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+    <>
+      {/* Feed Type Selector */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center justify-center h-12">
+          <button
+            onClick={() => setFeedType('foryou')}
+            className={cn(
+              "px-6 py-2 text-sm font-semibold transition-colors relative",
+              feedType === 'foryou' ? "text-white" : "text-white/60"
+            )}
+          >
+            For You
+            {feedType === 'foryou' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
+            )}
+          </button>
+          <button
+            onClick={() => {
+              if (!user) {
+                setSignupPrompt({ open: true, action: 'view videos from people you follow' });
+                return;
+              }
+              setFeedType('following');
+            }}
+            className={cn(
+              "px-6 py-2 text-sm font-semibold transition-colors relative",
+              feedType === 'following' ? "text-white" : "text-white/60"
+            )}
+          >
+            Following
+            {feedType === 'following' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div 
+        ref={containerRef}
+        className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background pt-12"
+        onScroll={handleScroll}
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        <style>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       
       {videos.map((video, index) => (
         <div 
@@ -446,6 +527,7 @@ export default function Slides() {
         onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
         action={signupPrompt.action}
       />
-    </div>
+      </div>
+    </>
   );
 }
