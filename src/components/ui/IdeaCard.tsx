@@ -130,31 +130,19 @@ export default function IdeaCard({
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     const shareUrl = `${window.location.origin}/${mediaType === 'video' ? 'video' : 'idea'}/${id}`;
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: title,
-          text: description,
-          url: shareUrl,
-        });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Error sharing:', error);
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied to clipboard!');
-      } catch (error) {
-        console.error('Error copying to clipboard:', error);
-        toast.error('Failed to copy link');
-      }
+    // Always copy to clipboard first
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Link copied to clipboard!');
+      onShare?.();
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast.error('Failed to copy link');
     }
-    onShare?.();
   };
 
   const handleDelete = async () => {
@@ -439,10 +427,7 @@ export default function IdeaCard({
                 variant="ghost" 
                 size="sm" 
                 className="gap-2 p-0 h-auto" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleShare();
-                }}
+                onClick={handleShare}
               >
                 <Share className="h-5 w-5" />
                 <span className="text-sm">Share</span>
@@ -657,10 +642,7 @@ export default function IdeaCard({
               variant="ghost" 
               size="sm" 
               className="gap-2" 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShare();
-              }}
+              onClick={handleShare}
             >
               <Share className="h-4 w-4" />
               <span className="text-xs">Share</span>

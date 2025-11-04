@@ -314,26 +314,13 @@ export default function VideoDetail() {
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/video/${id}`;
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: media?.title,
-          text: media?.description,
-          url: shareUrl,
-        });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Error sharing:', error);
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        sonnerToast.success('Link copied to clipboard!');
-      } catch (error) {
-        console.error('Error copying to clipboard:', error);
-        sonnerToast.error('Failed to copy link');
-      }
+    // Always copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      sonnerToast.success('Link copied to clipboard!');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      sonnerToast.error('Failed to copy link');
     }
   };
 

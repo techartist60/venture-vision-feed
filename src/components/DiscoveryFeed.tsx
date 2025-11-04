@@ -411,6 +411,9 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             onShare={() => {}}
             onSave={() => handleSave(item.id, item.is_saved || false)}
             onMessage={() => handleMessage(item)}
+            onDelete={() => {
+              setMedia(prev => prev.filter(m => m.id !== item.id));
+            }}
             gridView={false}
           />
         ))}
