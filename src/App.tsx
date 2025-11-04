@@ -26,6 +26,8 @@ import IdescanHistory from "./pages/IdescanHistory";
 import IdescanResults from "./pages/IdescanResults";
 import IdescanDataSources from "./pages/IdescanDataSources";
 import Slides from "./pages/Slides";
+import Groups from "./pages/Groups";
+import GroupChat from "./pages/GroupChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +54,8 @@ const App = () => (
               <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+              <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
+              <Route path="/groups/:groupId" element={<ProtectedRoute><GroupChat /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/idescan" element={<Idescan />} />
               <Route path="/idescan/history" element={<ProtectedRoute><IdescanHistory /></ProtectedRoute>} />

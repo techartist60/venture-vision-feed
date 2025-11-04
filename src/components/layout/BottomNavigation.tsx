@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, Plus, Video, User, Play } from 'lucide-react';
+import { Home, Grid3X3, Plus, Video, User, Play, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -22,9 +22,9 @@ const navItems = [
     isUpload: true
   },
   { 
-    to: '/inventions', 
-    icon: Video, 
-    label: 'Inventions' 
+    to: '/groups', 
+    icon: Users, 
+    label: 'Groups' 
   },
   { 
     to: '/profile', 

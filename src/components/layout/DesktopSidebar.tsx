@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, Plus, Video, User, Search, Settings, Scan, Play } from 'lucide-react';
+import { Home, Grid3X3, Plus, Video, User, Search, Settings, Scan, Play, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -30,6 +30,11 @@ const navItems = [
     to: '/inventions', 
     icon: Video, 
     label: 'Inventions' 
+  },
+  { 
+    to: '/groups', 
+    icon: Users, 
+    label: 'Groups' 
   },
   { 
     to: '/search', 
