@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause, Mail } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause, Mail, Trash2 } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { useVideo } from '@/contexts/VideoContext';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface IdeaCardProps {
   id: string;
@@ -42,6 +44,7 @@ interface IdeaCardProps {
   onShare?: () => void;
   onSave?: () => void;
   onMessage?: () => void;
+  onDelete?: () => void;
   gridView?: boolean;
 }
 
@@ -69,6 +72,7 @@ export default function IdeaCard({
   onShare,
   onSave,
   onMessage,
+  onDelete,
   gridView = false
 }: IdeaCardProps) {
   const navigate = useNavigate();
@@ -123,6 +127,61 @@ export default function IdeaCard({
   const handleProfileClick = () => {
     if (user.id) {
       navigate(`/profile/${user.id}`);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/${mediaType === 'video' ? 'video' : 'idea'}/${id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: description,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard!');
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        toast.error('Failed to copy link');
+      }
+    }
+    onShare?.();
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // Delete from storage
+      const fileName = mediaUrl.split('/').pop();
+      if (fileName) {
+        await supabase.storage.from('media').remove([fileName]);
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('media_uploads')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Post deleted successfully');
+      onDelete?.();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error('Failed to delete post');
     }
   };
 
@@ -382,28 +441,41 @@ export default function IdeaCard({
                 className="gap-2 p-0 h-auto" 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onShare?.();
+                  handleShare();
                 }}
               >
                 <Share className="h-5 w-5" />
-                <span className="text-sm">{stats.shares}</span>
+                <span className="text-sm">Share</span>
               </Button>
             </div>
 
             <div className="flex items-center gap-2">
               {isOwner && (
-                <div onClick={(e) => e.stopPropagation()}>
-                  <BoostDialog mediaId={id} isOwner={isOwner}>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                    >
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                      <span className="text-xs">Boost</span>
-                    </Button>
-                  </BoostDialog>
-                </div>
+                <>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <BoostDialog mediaId={id} isOwner={isOwner}>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
+                      >
+                        <Zap className="h-4 w-4 text-yellow-500" />
+                        <span className="text-xs">Boost</span>
+                      </Button>
+                    </BoostDialog>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-destructive transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
               )}
               
               <Button 
@@ -587,28 +659,41 @@ export default function IdeaCard({
               className="gap-2" 
               onClick={(e) => {
                 e.stopPropagation();
-                onShare?.();
+                handleShare();
               }}
             >
               <Share className="h-4 w-4" />
-              <span className="text-xs">{stats.shares}</span>
+              <span className="text-xs">Share</span>
             </Button>
           </div>
 
           <div className="flex items-center gap-2">
             {isOwner && (
-              <div onClick={(e) => e.stopPropagation()}>
-                <BoostDialog mediaId={id} isOwner={isOwner}>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                  >
-                    <Zap className="h-4 w-4 text-yellow-500" />
-                    <span className="text-xs">Boost</span>
-                  </Button>
-                </BoostDialog>
-              </div>
+              <>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <BoostDialog mediaId={id} isOwner={isOwner}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
+                    >
+                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <span className="text-xs">Boost</span>
+                    </Button>
+                  </BoostDialog>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="hover:text-destructive transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
             )}
             
             <Button 

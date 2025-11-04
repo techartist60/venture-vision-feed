@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Play } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Play, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
 import { cn } from '@/lib/utils';
+import { toast as sonnerToast } from 'sonner';
 
 interface MediaUpload {
   id: string;
@@ -310,6 +311,62 @@ export default function VideoDetail() {
     navigate(`/profile/${userId}`);
   };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/video/${id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: media?.title,
+          text: media?.description,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        sonnerToast.success('Link copied to clipboard!');
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        sonnerToast.error('Failed to copy link');
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!media) return;
+    
+    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // Delete from storage
+      const fileName = media.media_url.split('/').pop();
+      if (fileName) {
+        await supabase.storage.from('media').remove([fileName]);
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('media_uploads')
+        .delete()
+        .eq('id', media.id);
+
+      if (error) throw error;
+
+      sonnerToast.success('Video deleted successfully');
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      sonnerToast.error('Failed to delete video');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -433,7 +490,12 @@ export default function VideoDetail() {
                   <span>{media.comments_count}</span>
                 </Button>
                 
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={handleShare}
+                >
                   <Share className="h-5 w-5" />
                   <span>Share</span>
                 </Button>
@@ -450,6 +512,18 @@ export default function VideoDetail() {
                   <Bookmark className={cn("h-5 w-5", media.is_saved && "fill-current")} />
                   <span>{media.saves_count}</span>
                 </Button>
+
+                {user?.id === media.user_id && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="gap-2 hover:text-destructive transition-colors"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    <span>Delete</span>
+                  </Button>
+                )}
                 </div>
               </div>
 

@@ -61,7 +61,7 @@ export default function Categories() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleCategoryClick = (categoryId: string) => {
-    navigate(`/inventions?category=${categoryId}`);
+    navigate(`/?category=${categoryId}`);
   };
 
   const handleExploreMore = () => {

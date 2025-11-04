@@ -27,11 +27,6 @@ const navItems = [
     label: 'Categories' 
   },
   { 
-    to: '/inventions', 
-    icon: Video, 
-    label: 'Inventions' 
-  },
-  { 
     to: '/groups', 
     icon: Users, 
     label: 'Groups' 

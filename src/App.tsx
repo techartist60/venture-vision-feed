@@ -10,7 +10,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Categories from "./pages/Categories";
 import Upload from "./pages/Upload";
-import Inventions from "./pages/Inventions";
 import IdeaDetail from "./pages/IdeaDetail";
 import VideoDetail from "./pages/VideoDetail";
 import Profile from "./pages/Profile";
@@ -46,7 +45,6 @@ const App = () => (
               <Route path="/search" element={<Search />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-              <Route path="/inventions" element={<Inventions />} />
               <Route path="/slides" element={<Slides />} />
               <Route path="/idea/:id" element={<IdeaDetail />} />
               <Route path="/video/:id" element={<VideoDetail />} />
