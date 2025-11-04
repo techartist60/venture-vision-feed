@@ -809,10 +809,6 @@ export type Database = {
     }
     Functions: {
       calculate_similarity_tier: { Args: { score: number }; Returns: string }
-      can_manage_group: {
-        Args: { _group_id: string; _user_id: string }
-        Returns: boolean
-      }
       create_notification: {
         Args: {
           actor_id: string
@@ -857,6 +853,10 @@ export type Database = {
       increment_view_count: {
         Args: { media_id: string; viewer_ip?: string; viewer_user_id?: string }
         Returns: undefined
+      }
+      is_group_creator: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
