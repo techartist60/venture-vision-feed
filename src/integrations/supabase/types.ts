@@ -854,7 +854,15 @@ export type Database = {
         Args: { media_id: string; viewer_ip?: string; viewer_user_id?: string }
         Returns: undefined
       }
+      is_group_admin: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_group_creator: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
