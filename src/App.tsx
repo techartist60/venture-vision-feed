@@ -27,6 +27,8 @@ import IdescanDataSources from "./pages/IdescanDataSources";
 import Slides from "./pages/Slides";
 import Groups from "./pages/Groups";
 import GroupChat from "./pages/GroupChat";
+import IdemarkVerify from "./pages/IdemarkVerify";
+import IdemarkRecords from "./pages/IdemarkRecords";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +64,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/idemark/verify/:idemarkId" element={<IdemarkVerify />} />
+              <Route path="/idemark/records" element={<ProtectedRoute><IdemarkRecords /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

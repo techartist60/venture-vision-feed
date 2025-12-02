@@ -18,6 +18,13 @@ import {
   MAX_VIDEO_DURATION 
 } from '@/utils/fileValidation';
 import { uploadRateLimiter, logSecurityEvent } from '@/utils/security';
+import IdemarkToggle from '@/components/idemark/IdemarkToggle';
+import IdemarkSuccessDialog from '@/components/idemark/IdemarkSuccessDialog';
+import { 
+  generateIdemarkId, 
+  generateFingerprintHash, 
+  IdemarkData 
+} from '@/utils/idemark';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
@@ -37,6 +44,10 @@ export default function Upload() {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [idemarkEnabled, setIdemarkEnabled] = useState(false);
+  const [idemarkTitlePublic, setIdemarkTitlePublic] = useState(true);
+  const [showIdemarkSuccess, setShowIdemarkSuccess] = useState(false);
+  const [idemarkData, setIdemarkData] = useState<IdemarkData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -253,6 +264,8 @@ export default function Upload() {
       const uploadedUrls = await uploadFiles();
       
       if (uploadedUrls.length > 0) {
+        let mediaId: string | null = null;
+        
         // Save media metadata to database
         for (const mediaUrl of uploadedUrls) {
           const insertData: any = {
@@ -275,9 +288,11 @@ export default function Upload() {
             insertData.pitch_summary = formData.pitchSummary;
           }
           
-          const { error: dbError } = await supabase
+          const { data: mediaData, error: dbError } = await supabase
             .from('media_uploads')
-            .insert(insertData);
+            .insert(insertData)
+            .select('id')
+            .single();
 
           if (dbError) {
             console.error('Error saving media metadata:', dbError);
@@ -288,12 +303,62 @@ export default function Upload() {
             });
             return;
           }
+          
+          mediaId = mediaData?.id || null;
         }
 
-        toast({
-          title: "Success!",
-          description: `Successfully uploaded ${uploadedUrls.length} file(s).`,
-        });
+        // Create Idemark record if enabled
+        if (idemarkEnabled && mediaId) {
+          const timestamp = new Date().toISOString();
+          const idemarkId = generateIdemarkId();
+          const fingerprintHash = generateFingerprintHash({
+            title: formData.title,
+            description: formData.description,
+            category: formData.category,
+            timestamp,
+            userId: user.id,
+          });
+
+          const { error: idemarkError } = await supabase
+            .from('idemark_records')
+            .insert({
+              user_id: user.id,
+              media_id: mediaId,
+              idemark_id: idemarkId,
+              title: formData.title,
+              description: formData.description,
+              category: formData.category || null,
+              fingerprint_hash: fingerprintHash,
+              marked_at: timestamp,
+              is_title_public: idemarkTitlePublic,
+              status: 'active',
+            });
+
+          if (idemarkError) {
+            console.error('Error creating Idemark:', idemarkError);
+            toast({
+              title: "Idemark creation failed",
+              description: "Your idea was uploaded but Idemark could not be created.",
+              variant: "destructive"
+            });
+          } else {
+            // Show success dialog with Idemark details
+            setIdemarkData({
+              idemarkId,
+              fingerprintHash,
+              timestamp,
+              title: formData.title,
+              description: formData.description,
+              category: formData.category,
+            });
+            setShowIdemarkSuccess(true);
+          }
+        } else {
+          toast({
+            title: "Success!",
+            description: `Successfully uploaded ${uploadedUrls.length} file(s).`,
+          });
+        }
         
         // Reset form
         setSelectedFiles([]);
@@ -306,6 +371,8 @@ export default function Upload() {
           investmentStage: 'concept',
           pitchSummary: ''
         });
+        setIdemarkEnabled(false);
+        setIdemarkTitlePublic(true);
         setMediaType(null);
       }
     } catch (error) {
@@ -657,6 +724,14 @@ export default function Upload() {
           )}
         </div>
 
+        {/* Idemark Section */}
+        <IdemarkToggle
+          enabled={idemarkEnabled}
+          onToggle={setIdemarkEnabled}
+          isTitlePublic={idemarkTitlePublic}
+          onTitlePublicToggle={setIdemarkTitlePublic}
+        />
+
         {/* Publishing Options */}
         <div className="bg-card rounded-xl p-4 border border-border">
           <h3 className="font-semibold text-foreground mb-3">Publishing Options</h3>
@@ -694,6 +769,13 @@ export default function Upload() {
           </Button>
         </div>
       </div>
+
+      {/* Idemark Success Dialog */}
+      <IdemarkSuccessDialog
+        open={showIdemarkSuccess}
+        onClose={() => setShowIdemarkSuccess(false)}
+        idemarkData={idemarkData}
+      />
     </div>
   );
 }

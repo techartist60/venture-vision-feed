@@ -296,6 +296,62 @@ export type Database = {
         }
         Relationships: []
       }
+      idemark_records: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          fingerprint_hash: string
+          id: string
+          idemark_id: string
+          is_title_public: boolean
+          marked_at: string
+          media_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          fingerprint_hash: string
+          id?: string
+          idemark_id: string
+          is_title_public?: boolean
+          marked_at?: string
+          media_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          fingerprint_hash?: string
+          id?: string
+          idemark_id?: string
+          is_title_public?: boolean
+          marked_at?: string
+          media_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idemark_records_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idescan_scans: {
         Row: {
           created_at: string | null
