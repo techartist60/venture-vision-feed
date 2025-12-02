@@ -36,15 +36,28 @@ export function CreateGroupDialog({
       return;
     }
 
+    if (!user?.id) {
+      toast.error("You must be logged in to create a group");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Create the group
+      // Get authenticated user to ensure we use the correct ID
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !authUser) {
+        toast.error("Authentication error. Please log in again.");
+        return;
+      }
+
+      // Create the group with the authenticated user's ID
       const { data: group, error: groupError } = await supabase
         .from("groups")
         .insert({
           name: name.trim(),
           description: description.trim() || null,
-          created_by: user?.id,
+          created_by: authUser.id,
         })
         .select()
         .single();
@@ -56,7 +69,7 @@ export function CreateGroupDialog({
         .from("group_members")
         .insert({
           group_id: group.id,
-          user_id: user?.id,
+          user_id: authUser.id,
           role: "admin",
         });
 
