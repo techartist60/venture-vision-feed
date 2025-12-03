@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X } from 'lucide-react';
+import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X, FileText } from 'lucide-react';
 import ThumbnailSelection from '@/components/ThumbnailSelection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ const categories = [
 ];
 
 export default function Upload() {
-  const [mediaType, setMediaType] = useState<'photo' | 'video' | null>(null);
+  const [mediaType, setMediaType] = useState<'photo' | 'video' | 'text' | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -249,7 +249,8 @@ export default function Upload() {
       }
     }
     
-    if (!selectedFiles.length) {
+    // Only require files for non-text uploads
+    if (mediaType !== 'text' && !selectedFiles.length) {
       toast({
         title: "No files selected",
         description: "Please select files to upload.",
@@ -261,7 +262,14 @@ export default function Upload() {
     setIsUploading(true);
     
     try {
-      const uploadedUrls = await uploadFiles();
+      let uploadedUrls: string[] = [];
+      
+      // For text-only posts, use a placeholder URL
+      if (mediaType === 'text') {
+        uploadedUrls = ['text-only'];
+      } else {
+        uploadedUrls = await uploadFiles();
+      }
       
       if (uploadedUrls.length > 0) {
         let mediaId: string | null = null;
@@ -272,11 +280,11 @@ export default function Upload() {
             user_id: user.id,
             title: formData.title,
             description: formData.description,
-            media_type: mediaType === 'photo' ? 'image' : 'video',
+            media_type: mediaType === 'photo' ? 'image' : mediaType === 'text' ? 'text' : 'video',
             media_url: mediaUrl,
             thumbnail_url: null,
-            mime_type: selectedFiles[0]?.type || null,
-            file_size: selectedFiles[0]?.size || null,
+            mime_type: mediaType === 'text' ? 'text/plain' : (selectedFiles[0]?.type || null),
+            file_size: mediaType === 'text' ? null : (selectedFiles[0]?.size || null),
             investment_status: formData.investmentStatus,
             category: formData.category || null
           };
@@ -421,6 +429,23 @@ export default function Upload() {
 
           <div className="space-y-4">
             <Button
+              onClick={() => setMediaType('text')}
+              variant="discovery"
+              size="lg"
+              className="w-full h-20 flex-col gap-2 text-left justify-center bg-card hover:shadow-card border-2 border-border hover:border-primary transition-all"
+            >
+              <div className="flex items-center gap-4 w-full">
+                <div className="p-3 rounded-full bg-gradient-to-br from-accent to-primary">
+                  <FileText className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Text Idea</div>
+                  <div className="text-sm text-muted-foreground">Share your idea in words</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button
               onClick={() => setMediaType('photo')}
               variant="discovery"
               size="lg"
@@ -487,8 +512,8 @@ export default function Upload() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold">
-                {mediaType === 'photo' ? 'Photo Upload' : 'Video Upload'}
+            <h1 className="text-xl font-bold">
+                {mediaType === 'photo' ? 'Photo Upload' : mediaType === 'video' ? 'Video Upload' : 'Text Idea'}
               </h1>
               <p className="text-sm text-muted-foreground">Step 2 of 2</p>
             </div>
@@ -497,7 +522,8 @@ export default function Upload() {
       </header>
 
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
-        {/* Media Upload Area */}
+        {/* Media Upload Area - Only show for photo/video */}
+        {mediaType !== 'text' && (
         <div className="relative">
           <input
             ref={fileInputRef}
@@ -575,6 +601,7 @@ export default function Upload() {
             </div>
           )}
         </div>
+        )}
 
         {/* Form Fields */}
         <div className="space-y-4">
@@ -757,7 +784,7 @@ export default function Upload() {
             variant="innovation" 
             size="lg" 
             className="w-full"
-            disabled={!formData.title || !formData.description || !formData.category || selectedFiles.length === 0 || isUploading}
+            disabled={!formData.title || !formData.description || !formData.category || (mediaType !== 'text' && selectedFiles.length === 0) || isUploading}
             onClick={handlePublish}
           >
             <Sparkles className="h-5 w-5 mr-2" />

@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause, Mail, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause, Mail, Trash2, Shield, FileText } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -15,7 +15,7 @@ interface IdeaCardProps {
   title: string;
   description: string;
   category?: string;
-  mediaType: 'image' | 'video';
+  mediaType: 'image' | 'video' | 'text';
   mediaUrl: string;
   thumbnailUrl?: string;
   user: {
@@ -33,6 +33,7 @@ interface IdeaCardProps {
   isLiked?: boolean;
   isSaved?: boolean;
   isBoosted?: boolean;
+  isIdemarked?: boolean;
   isOwner?: boolean;
   currentUserId?: string;
   investmentStatus?: 'open' | 'normal';
@@ -61,6 +62,7 @@ export default function IdeaCard({
   isLiked = false,
   isSaved = false,
   isBoosted = false,
+  isIdemarked = false,
   isOwner = false,
   currentUserId,
   investmentStatus,
@@ -211,14 +213,20 @@ export default function IdeaCard({
               }}
             />
           )}
-          {isBoosted && (
-            <div className="absolute top-2 left-2">
+          <div className="absolute top-2 left-2 flex gap-1">
+            {isBoosted && (
               <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
                 <Zap className="h-2.5 w-2.5" />
                 Boosted
               </Badge>
-            </div>
-          )}
+            )}
+            {isIdemarked && (
+              <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
+                <Shield className="h-2.5 w-2.5" />
+                Idemarked
+              </Badge>
+            )}
+          </div>
           {investmentStatus === 'open' && (
             <div className="absolute top-2 right-2">
               <Badge className="bg-green-500/90 text-green-50 flex items-center gap-1 text-xs">
@@ -277,6 +285,213 @@ export default function IdeaCard({
       </div>
     );
   }
+
+  // Text-only idea layout
+  if (mediaType === 'text') {
+    return (
+      <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
+        {/* User Info at top */}
+        <div className="p-4 pb-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleProfileClick();
+            }}
+          >
+            <Avatar className="h-10 w-10 hover:ring-2 hover:ring-primary/20 transition-all">
+              <AvatarImage src={user.avatar} />
+              <AvatarFallback className="bg-gradient-primary text-primary-foreground">
+                {user.name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 hover:opacity-80 transition-opacity">
+              <p className="font-semibold text-sm text-foreground">{user.name}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>@{user.username}</span>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  <span>{stats.views.toLocaleString()} views</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {category && (
+                <Badge className="bg-background/90 text-foreground text-xs">
+                  {category}
+                </Badge>
+              )}
+              {isIdemarked && (
+                <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
+                  <Shield className="h-2.5 w-2.5" />
+                  Idemarked
+                </Badge>
+              )}
+              {isBoosted && (
+                <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
+                  <Zap className="h-2.5 w-2.5" />
+                  Boosted
+                </Badge>
+              )}
+              {investmentStatus === 'open' && (
+                <Badge className="bg-green-500/90 text-green-50 flex items-center gap-1 text-xs">
+                  💰 Investment Ready
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Text content with icon */}
+        <div className="px-4 pb-4">
+          <div className="bg-gradient-discovery rounded-xl p-6 border border-border">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-primary/10 flex-shrink-0">
+                <FileText className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg text-foreground mb-2">
+                  {title}
+                </h3>
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                  {description}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="p-4 pt-0">
+          {/* Investment Ready CTA */}
+          {investmentStatus === 'open' && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                    💰 Investment Opportunity
+                  </h4>
+                  {fundingAmount && (
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Seeking ${fundingAmount.toLocaleString()} • {investmentStage}
+                    </p>
+                  )}
+                  {pitchSummary && (
+                    <p className="text-xs text-foreground line-clamp-2">
+                      {pitchSummary}
+                    </p>
+                  )}
+                </div>
+                {!isOwner && onMessage && (
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="gap-2 bg-green-600 hover:bg-green-700 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMessage();
+                    }}
+                  >
+                    <Mail className="h-3 w-3" />
+                    Contact
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn(
+                  "gap-2 hover:text-red-500 transition-colors p-0 h-auto",
+                  isLiked && "text-red-500"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLike?.();
+                }}
+              >
+                <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
+                <span className="text-sm">{stats.likes}</span>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 p-0 h-auto" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onComment?.();
+                }}
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="text-sm">{stats.comments}</span>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 p-0 h-auto" 
+                onClick={handleShare}
+              >
+                <Share className="h-5 w-5" />
+                <span className="text-sm">Share</span>
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isOwner && (
+                <>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <BoostDialog mediaId={id} isOwner={isOwner}>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
+                      >
+                        <Zap className="h-4 w-4 text-yellow-500" />
+                        <span className="text-xs">Boost</span>
+                      </Button>
+                    </BoostDialog>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-destructive transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className={cn(
+                  "hover:text-accent transition-colors",
+                  isSaved && "text-accent"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSave?.();
+                }}
+              >
+                <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   // YouTube-style photo post layout (list view)
   if (mediaType === 'image') {
@@ -312,6 +527,12 @@ export default function IdeaCard({
               {category && (
                 <Badge className="bg-background/90 text-foreground text-xs">
                   {category}
+                </Badge>
+              )}
+              {isIdemarked && (
+                <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
+                  <Shield className="h-2.5 w-2.5" />
+                  Idemarked
                 </Badge>
               )}
               {isBoosted && (
