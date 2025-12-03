@@ -27,6 +27,7 @@ interface MediaUpload {
   funding_amount?: number | null;
   investment_stage?: string | null;
   pitch_summary?: string | null;
+  category?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
@@ -34,15 +35,16 @@ interface MediaUpload {
   };
   is_liked?: boolean;
   is_saved?: boolean;
+  is_idemarked?: boolean;
 }
 
 interface DiscoveryFeedProps {
   userOnly?: boolean;
   userId?: string;
-  mediaType?: 'image' | 'video';
+  mediaType?: 'image' | 'video' | 'text' | 'all';
 }
 
-export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
@@ -109,8 +111,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
         query = query.eq('user_id', targetUserId);
       }
 
-      // If mediaType is specified, filter by media type
-      if (mediaType) {
+      // If mediaType is specified (not 'all'), filter by media type
+      if (mediaType && mediaType !== 'all') {
         query = query.eq('media_type', mediaType);
       }
 
@@ -128,10 +130,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
       if (error) throw error;
 
       if (user) {
-        // Check if user has liked and saved each media
+        // Check if user has liked and saved each media, and fetch idemark status
         const mediaIds = (data || []).map(item => item.id);
         
-        const [likesResponse, savesResponse] = await Promise.all([
+        const [likesResponse, savesResponse, idemarkResponse] = await Promise.all([
           supabase
             .from('media_likes')
             .select('media_id')
@@ -141,25 +143,42 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             .from('media_saves')
             .select('media_id')
             .eq('user_id', user.id)
+            .in('media_id', mediaIds),
+          supabase
+            .from('idemark_records')
+            .select('media_id')
             .in('media_id', mediaIds)
+            .eq('status', 'active')
         ]);
 
         const likedMediaIds = new Set(likesResponse.data?.map(like => like.media_id) || []);
         const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
+        const idemarkedMediaIds = new Set(idemarkResponse.data?.map(record => record.media_id) || []);
         
         const mediaWithInteractions = (data || []).map(item => ({
           ...item,
           is_liked: likedMediaIds.has(item.id),
-          is_saved: savedMediaIds.has(item.id)
+          is_saved: savedMediaIds.has(item.id),
+          is_idemarked: idemarkedMediaIds.has(item.id)
         }));
 
         setMedia(mediaWithInteractions);
       } else {
-        // For unauthenticated users, just set the media without interaction states
+        // For unauthenticated users, fetch idemark status only
+        const mediaIds = (data || []).map(item => item.id);
+        const { data: idemarkData } = await supabase
+          .from('idemark_records')
+          .select('media_id')
+          .in('media_id', mediaIds)
+          .eq('status', 'active');
+        
+        const idemarkedMediaIds = new Set(idemarkData?.map(record => record.media_id) || []);
+        
         setMedia((data || []).map(item => ({
           ...item,
           is_liked: false,
-          is_saved: false
+          is_saved: false,
+          is_idemarked: idemarkedMediaIds.has(item.id)
         })));
       }
     } catch (error) {
@@ -376,7 +395,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             id={item.id}
             title={item.title}
             description={item.description || ''}
-            mediaType={(item.media_type === 'image' || item.media_type === 'video') ? item.media_type : 'image'}
+            category={item.category || undefined}
+            mediaType={(item.media_type === 'image' || item.media_type === 'video' || item.media_type === 'text') ? item.media_type : 'image'}
             mediaUrl={item.media_url}
             thumbnailUrl={item.thumbnail_url || undefined}
             user={{
@@ -394,6 +414,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'image' }:
             isLiked={item.is_liked || false}
             isSaved={item.is_saved || false}
             isBoosted={item.is_boosted || false}
+            isIdemarked={item.is_idemarked || false}
             isOwner={user?.id === item.user_id}
             currentUserId={user?.id}
             investmentStatus={item.investment_status as 'open' | 'normal' | undefined}
