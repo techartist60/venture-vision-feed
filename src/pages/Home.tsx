@@ -94,9 +94,6 @@ export default function Home() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-sm">Idescan</h3>
-                  <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-                    NEW
-                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">
                   Find similar ideas instantly
