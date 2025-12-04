@@ -249,6 +249,12 @@ async function indexNewsFromRSS(
           if (seenUrls.has(article.link)) continue;
           seenUrls.add(article.link);
 
+          // Try to fetch image for the article
+          let imageUrl = article.imageUrl;
+          if (!imageUrl) {
+            imageUrl = await fetchArticleImage(article.link, article.title);
+          }
+
           const innovation = {
             title: article.title,
             description: article.description,
@@ -260,7 +266,8 @@ async function indexNewsFromRSS(
             tags: extractKeywords(article.description),
             metadata: {
               search_query: searchTerm,
-              source_feed: 'Google News RSS'
+              source_feed: 'Google News RSS',
+              image_url: imageUrl
             }
           };
 
@@ -282,6 +289,75 @@ async function indexNewsFromRSS(
   }
 }
 
+// Fetch article image from various sources
+async function fetchArticleImage(articleUrl: string, title: string): Promise<string | null> {
+  try {
+    // Try to fetch the article page to extract og:image
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(articleUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      return generatePlaceholderImage(title);
+    }
+    
+    const html = await response.text();
+    
+    // Try to extract og:image
+    const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i) ||
+                         html.match(/<meta[^>]*content="([^"]+)"[^>]*property="og:image"/i);
+    
+    if (ogImageMatch && ogImageMatch[1]) {
+      const imageUrl = ogImageMatch[1];
+      // Validate it's a proper URL
+      if (imageUrl.startsWith('http')) {
+        console.log(`Found og:image for article: ${imageUrl.substring(0, 80)}...`);
+        return imageUrl;
+      }
+    }
+    
+    // Try to extract twitter:image
+    const twitterImageMatch = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]+)"/i) ||
+                              html.match(/<meta[^>]*content="([^"]+)"[^>]*name="twitter:image"/i);
+    
+    if (twitterImageMatch && twitterImageMatch[1]) {
+      const imageUrl = twitterImageMatch[1];
+      if (imageUrl.startsWith('http')) {
+        console.log(`Found twitter:image for article: ${imageUrl.substring(0, 80)}...`);
+        return imageUrl;
+      }
+    }
+    
+    // Try to find first meaningful image in the article
+    const imgMatch = html.match(/<img[^>]*src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i);
+    if (imgMatch && imgMatch[1]) {
+      console.log(`Found article image: ${imgMatch[1].substring(0, 80)}...`);
+      return imgMatch[1];
+    }
+    
+    return generatePlaceholderImage(title);
+  } catch (error) {
+    console.log('Could not fetch article image, using placeholder');
+    return generatePlaceholderImage(title);
+  }
+}
+
+// Generate a placeholder image URL based on the title
+function generatePlaceholderImage(title: string): string {
+  // Use a placeholder service with the title
+  const encodedTitle = encodeURIComponent(title.substring(0, 30));
+  return `https://placehold.co/600x400/1a1a2e/eee?text=${encodedTitle}`;
+}
+
 function parseGoogleNewsRSS(xmlText: string): any[] {
   const articles: any[] = [];
   
@@ -296,12 +372,15 @@ function parseGoogleNewsRSS(xmlText: string): any[] {
     const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || 
                       item.match(/<description>(.*?)<\/description>/);
     
+    // Try to extract image from media:content or enclosure tags
+    const mediaMatch = item.match(/<media:content[^>]*url="([^"]+)"/i) ||
+                       item.match(/<enclosure[^>]*url="([^"]+)"/i) ||
+                       item.match(/<media:thumbnail[^>]*url="([^"]+)"/i);
+    
     if (titleMatch && linkMatch) {
       let link = linkMatch[1];
       
       // Try to extract actual URL from Google News redirect
-      // Google News often wraps URLs like: https://news.google.com/rss/articles/...
-      // We want to extract the actual article URL if possible
       const urlMatch = link.match(/url=(https?:\/\/[^&]+)/);
       if (urlMatch) {
         link = decodeURIComponent(urlMatch[1]);
@@ -318,7 +397,8 @@ function parseGoogleNewsRSS(xmlText: string): any[] {
         link: link,
         pubDate: pubDateMatch ? new Date(pubDateMatch[1]).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         source: sourceMatch ? sourceMatch[1] : extractSourceFromUrl(link),
-        description: description
+        description: description,
+        imageUrl: mediaMatch ? mediaMatch[1] : null
       });
     }
   }
