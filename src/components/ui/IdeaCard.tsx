@@ -1,8 +1,7 @@
-import { Heart, MessageCircle, Share, Bookmark, Zap, Eye, Play, Pause, Mail, Trash2, Shield, FileText } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
-import { BoostDialog } from '../BoostDialog';
 import { useNavigate } from 'react-router-dom';
 import { useVideo } from '@/contexts/VideoContext';
 import { useEffect, useRef, useState } from 'react';
@@ -32,7 +31,6 @@ interface IdeaCardProps {
   };
   isLiked?: boolean;
   isSaved?: boolean;
-  isBoosted?: boolean;
   isIdemarked?: boolean;
   isOwner?: boolean;
   currentUserId?: string;
@@ -61,7 +59,6 @@ export default function IdeaCard({
   stats,
   isLiked = false,
   isSaved = false,
-  isBoosted = false,
   isIdemarked = false,
   isOwner = false,
   currentUserId,
@@ -136,7 +133,6 @@ export default function IdeaCard({
     e.stopPropagation();
     const shareUrl = `${window.location.origin}/${mediaType === 'video' ? 'video' : 'idea'}/${id}`;
     
-    // Always copy to clipboard first
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success('Link copied to clipboard!');
@@ -153,13 +149,11 @@ export default function IdeaCard({
     }
 
     try {
-      // Delete from storage
       const fileName = mediaUrl.split('/').pop();
-      if (fileName) {
+      if (fileName && mediaUrl !== 'text-only') {
         await supabase.storage.from('media').remove([fileName]);
       }
 
-      // Delete from database
       const { error } = await supabase
         .from('media_uploads')
         .delete()
@@ -214,12 +208,6 @@ export default function IdeaCard({
             />
           )}
           <div className="absolute top-2 left-2 flex gap-1">
-            {isBoosted && (
-              <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
-                <Zap className="h-2.5 w-2.5" />
-                Boosted
-              </Badge>
-            )}
             {isIdemarked && (
               <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
                 <Shield className="h-2.5 w-2.5" />
@@ -326,12 +314,6 @@ export default function IdeaCard({
                 <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
                   <Shield className="h-2.5 w-2.5" />
                   Idemarked
-                </Badge>
-              )}
-              {isBoosted && (
-                <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
-                  <Zap className="h-2.5 w-2.5" />
-                  Boosted
                 </Badge>
               )}
               {investmentStatus === 'open' && (
@@ -445,31 +427,17 @@ export default function IdeaCard({
 
             <div className="flex items-center gap-2">
               {isOwner && (
-                <>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <BoostDialog mediaId={id} isOwner={isOwner}>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                      >
-                        <Zap className="h-4 w-4 text-yellow-500" />
-                        <span className="text-xs">Boost</span>
-                      </Button>
-                    </BoostDialog>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-destructive transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="hover:text-destructive transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               )}
               
               <Button 
@@ -533,12 +501,6 @@ export default function IdeaCard({
                 <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
                   <Shield className="h-2.5 w-2.5" />
                   Idemarked
-                </Badge>
-              )}
-              {isBoosted && (
-                <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1 text-xs">
-                  <Zap className="h-2.5 w-2.5" />
-                  Boosted
                 </Badge>
               )}
               {investmentStatus === 'open' && (
@@ -657,31 +619,17 @@ export default function IdeaCard({
 
             <div className="flex items-center gap-2">
               {isOwner && (
-                <>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <BoostDialog mediaId={id} isOwner={isOwner}>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                      >
-                        <Zap className="h-4 w-4 text-yellow-500" />
-                        <span className="text-xs">Boost</span>
-                      </Button>
-                    </BoostDialog>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-destructive transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="hover:text-destructive transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               )}
               
               <Button 
@@ -740,10 +688,10 @@ export default function IdeaCard({
               {category}
             </Badge>
           )}
-          {isBoosted && (
-            <Badge className="bg-yellow-500/90 text-yellow-50 flex items-center gap-1">
-              <Zap className="h-3 w-3" />
-              Boosted
+          {isIdemarked && (
+            <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Idemarked
             </Badge>
           )}
           {investmentStatus === 'open' && (
@@ -872,31 +820,17 @@ export default function IdeaCard({
 
           <div className="flex items-center gap-2">
             {isOwner && (
-              <>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <BoostDialog mediaId={id} isOwner={isOwner}>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="gap-2 hover:bg-yellow-50 hover:border-yellow-300 dark:hover:bg-yellow-950/20"
-                    >
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                      <span className="text-xs">Boost</span>
-                    </Button>
-                  </BoostDialog>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="hover:text-destructive transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete();
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="hover:text-destructive transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
             
             <Button 

@@ -21,8 +21,6 @@ interface MediaUpload {
   views_count: number;
   created_at: string;
   user_id: string;
-  is_boosted?: boolean;
-  boost_expires_at?: string | null;
   investment_status?: string;
   funding_amount?: number | null;
   investment_stage?: string | null;
@@ -413,7 +411,6 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
             }}
             isLiked={item.is_liked || false}
             isSaved={item.is_saved || false}
-            isBoosted={item.is_boosted || false}
             isIdemarked={item.is_idemarked || false}
             isOwner={user?.id === item.user_id}
             currentUserId={user?.id}
