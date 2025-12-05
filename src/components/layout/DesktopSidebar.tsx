@@ -1,8 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, Plus, Video, User, Search, Settings, Scan, Play, Users } from 'lucide-react';
+import { Home, Grid3X3, Plus, User, Search, Settings, Scan, Play, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import idestrimLogo from '@/assets/idestrim-logo.png';
 
 const navItems = [
   { 
@@ -64,15 +64,9 @@ export default function DesktopSidebar() {
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-md border-r border-border z-40 flex flex-col">
       {/* Logo Section */}
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-innovation rounded-lg"></div>
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-innovation bg-clip-text text-transparent">
-              Idestrim
-            </h1>
-            <p className="text-xs text-muted-foreground">Discover Innovation</p>
-          </div>
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-center">
+          <img src={idestrimLogo} alt="Idestrim" className="h-14 w-14 object-contain" />
         </div>
       </div>
 

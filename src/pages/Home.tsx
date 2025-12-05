@@ -1,5 +1,5 @@
-import { Search, User, Scan, Sparkles } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Search, Scan, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from '@/components/NotificationBell';
-import heroImage from '@/assets/hero-innovation.jpg';
+import idestrimLogo from '@/assets/idestrim-logo.png';
 export default function Home() {
   const {
     user
@@ -55,23 +55,11 @@ export default function Home() {
       <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 max-w-md mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-innovation bg-clip-text text-transparent">
-                Idestrim
-              </h1>
-              <p className="text-sm text-muted-foreground">Discover New Ideas</p>
+            <div className="flex items-center gap-2">
+              <img src={idestrimLogo} alt="Idestrim" className="h-10 w-10 object-contain" />
             </div>
             <div className="flex items-center gap-2">
               <NotificationBell />
-              {!user ? <Link to="/auth">
-                  <Button variant="innovation" size="sm">
-                    <User className="h-4 w-4 mr-2" />
-                    Sign In
-                  </Button>
-                </Link> : <Link to="/profile" className="flex items-center gap-2 text-sm font-medium">
-                  <User className="h-5 w-5" />
-                  {user?.user_metadata?.full_name || 'Profile'}
-                </Link>}
             </div>
           </div>
           

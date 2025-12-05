@@ -1,13 +1,10 @@
-import { Search, User } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { NotificationBell } from '@/components/NotificationBell';
 
 export default function DesktopHeader() {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -30,21 +27,6 @@ export default function DesktopHeader() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <NotificationBell />
-          
-          {!user ? (
-            <Link to="/auth">
-              <Button variant="innovation" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Sign In
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/profile">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
     </header>
