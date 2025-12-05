@@ -35,7 +35,8 @@ export default function Groups() {
 
   const fetchGroups = async () => {
     try {
-      const { data: groupMembers, error } = await supabase
+      // Fetch groups where user is a member
+      const { data: memberGroups, error: memberError } = await supabase
         .from("group_members")
         .select(`
           group_id,
@@ -44,17 +45,35 @@ export default function Groups() {
             name,
             description,
             avatar_url,
-            created_at
+            created_at,
+            created_by
           )
         `)
         .eq("user_id", user?.id);
 
-      if (error) throw error;
+      if (memberError) throw memberError;
+
+      // Fetch groups where user is the creator (but may not be a member yet)
+      const { data: createdGroups, error: createdError } = await supabase
+        .from("groups")
+        .select("id, name, description, avatar_url, created_at, created_by")
+        .eq("created_by", user?.id);
+
+      if (createdError) throw createdError;
+
+      // Combine and deduplicate groups
+      const memberGroupsData = memberGroups?.map((gm: any) => gm.groups) || [];
+      const allGroups = [...memberGroupsData];
+      
+      // Add created groups that aren't already in the list
+      createdGroups?.forEach((createdGroup: any) => {
+        if (!allGroups.find((g: any) => g.id === createdGroup.id)) {
+          allGroups.push(createdGroup);
+        }
+      });
 
       const groupsWithCounts = await Promise.all(
-        groupMembers?.map(async (gm: any) => {
-          const group = gm.groups;
-          
+        allGroups.map(async (group: any) => {
           // Get member count
           const { count: memberCount } = await supabase
             .from("group_members")
@@ -64,9 +83,9 @@ export default function Groups() {
           return {
             ...group,
             memberCount: memberCount || 0,
-            unreadCount: 0, // You can implement read status tracking later
+            unreadCount: 0,
           };
-        }) || []
+        })
       );
 
       setGroups(groupsWithCounts);

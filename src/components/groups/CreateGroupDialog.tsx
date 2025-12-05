@@ -51,31 +51,18 @@ export function CreateGroupDialog({
         return;
       }
 
-      // Create the group with the authenticated user's ID
-      const { data: group, error: groupError } = await supabase
+      // Create the group - creator is automatically the owner
+      const { error: groupError } = await supabase
         .from("groups")
         .insert({
           name: name.trim(),
           description: description.trim() || null,
           created_by: authUser.id,
-        })
-        .select()
-        .single();
+        });
 
       if (groupError) throw groupError;
 
-      // Add creator as admin
-      const { error: memberError } = await supabase
-        .from("group_members")
-        .insert({
-          group_id: group.id,
-          user_id: authUser.id,
-          role: "admin",
-        });
-
-      if (memberError) throw memberError;
-
-      toast.success("Group created successfully!");
+      toast.success("Group created! You can now add members from group settings.");
       setName("");
       setDescription("");
       onGroupCreated();
