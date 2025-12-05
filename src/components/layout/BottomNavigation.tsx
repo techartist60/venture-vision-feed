@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, Plus, Video, User, Play, Users } from 'lucide-react';
+import { Home, Plus, Play, Users, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const navItems = [
   { 
@@ -35,6 +36,10 @@ const navItems = [
 
 export default function BottomNavigation() {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const userAvatarUrl = user?.user_metadata?.avatar_url;
+  const userInitial = user?.user_metadata?.full_name?.[0] || user?.email?.[0] || 'U';
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50">
@@ -43,6 +48,8 @@ export default function BottomNavigation() {
           const isActive = item.exact 
             ? location.pathname === item.to 
             : location.pathname.startsWith(item.to);
+          
+          const isProfile = item.to === '/profile';
           
           return (
             <NavLink
@@ -60,6 +67,11 @@ export default function BottomNavigation() {
                 <div className="bg-gradient-innovation p-3 rounded-full shadow-glow">
                   <item.icon className="h-6 w-6 text-primary-foreground" />
                 </div>
+              ) : isProfile && user ? (
+                <Avatar className={cn("h-6 w-6 transition-all duration-300", isActive && "ring-2 ring-primary")}>
+                  <AvatarImage src={userAvatarUrl} alt="Profile" />
+                  <AvatarFallback className="text-xs">{userInitial}</AvatarFallback>
+                </Avatar>
               ) : (
                 <item.icon 
                   className={cn(
