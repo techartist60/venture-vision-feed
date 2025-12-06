@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Settings, Users } from "lucide-react";
+import { ArrowLeft, Send, Settings, Users, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { GroupSettingsDialog } from "@/components/groups/GroupSettingsDialog";
 import { GroupMembersDialog } from "@/components/groups/GroupMembersDialog";
+import { SendMemberRequestDialog } from "@/components/groups/SendMemberRequestDialog";
 
 interface Message {
   id: string;
@@ -37,8 +38,10 @@ export default function GroupChat() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showAddMembers, setShowAddMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,8 +70,11 @@ export default function GroupChat() {
 
       if (groupError) throw groupError;
       setGroup(groupData);
+      
+      // Check if user is creator
+      setIsCreator(groupData.created_by === user?.id);
 
-      // Check if user is admin
+      // Check if user is admin (member)
       const { data: memberData } = await supabase
         .from("group_members")
         .select("role")
@@ -76,7 +82,7 @@ export default function GroupChat() {
         .eq("user_id", user?.id)
         .single();
 
-      setIsAdmin(memberData?.role === "admin");
+      setIsAdmin(memberData?.role === "admin" || groupData.created_by === user?.id);
     } catch (error: any) {
       toast.error("Failed to load group");
       console.error(error);
@@ -195,6 +201,16 @@ export default function GroupChat() {
           </div>
         </div>
         <div className="flex gap-2">
+          {(isAdmin || isCreator) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowAddMembers(true)}
+              title="Add Members"
+            >
+              <UserPlus className="h-5 w-5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -284,7 +300,17 @@ export default function GroupChat() {
           open={showMembers}
           onOpenChange={setShowMembers}
           groupId={group.id}
-          isAdmin={isAdmin}
+          isAdmin={isAdmin || isCreator}
+        />
+      )}
+
+      {group && (
+        <SendMemberRequestDialog
+          open={showAddMembers}
+          onOpenChange={setShowAddMembers}
+          groupId={group.id}
+          groupName={group.name}
+          onMemberAdded={fetchGroupData}
         />
       )}
     </div>

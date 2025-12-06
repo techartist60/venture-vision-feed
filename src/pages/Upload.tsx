@@ -276,17 +276,17 @@ export default function Upload() {
         
         // Save media metadata to database
         for (const mediaUrl of uploadedUrls) {
-          const insertData: any = {
+          const insertData: Record<string, unknown> = {
             user_id: user.id,
             title: formData.title,
-            description: formData.description,
+            description: formData.description || null,
             media_type: mediaType === 'photo' ? 'image' : mediaType === 'text' ? 'text' : 'video',
             media_url: mediaUrl,
             thumbnail_url: null,
             mime_type: mediaType === 'text' ? 'text/plain' : (selectedFiles[0]?.type || null),
             file_size: mediaType === 'text' ? null : (selectedFiles[0]?.size || null),
             investment_status: formData.investmentStatus,
-            category: formData.category || null
+            category: formData.category || null,
           };
           
           // Add investment fields if status is 'open'
@@ -298,7 +298,7 @@ export default function Upload() {
           
           const { data: mediaData, error: dbError } = await supabase
             .from('media_uploads')
-            .insert(insertData)
+            .insert(insertData as any)
             .select('id')
             .single();
 
