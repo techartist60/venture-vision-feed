@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from '@/components/NotificationBell';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import idestrimLogo from '@/assets/idestrim-logo.png';
 export default function Home() {
   const {
@@ -55,11 +56,15 @@ export default function Home() {
       <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 max-w-md mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <img src={idestrimLogo} alt="Idestrim" className="h-10 w-10 object-contain" />
+              <span className="text-sm font-medium text-muted-foreground">
+                Share Your Innovation
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <NotificationBell />
+              {user && <NotificationBell />}
+              <ThemeToggle />
             </div>
           </div>
           

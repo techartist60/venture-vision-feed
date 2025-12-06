@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,8 @@ import {
   Download,
   Trash2,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  BellRing
 } from 'lucide-react';
 
 export default function Settings() {
@@ -31,13 +32,64 @@ export default function Settings() {
     likes: true,
     comments: true,
     follows: true,
-    push: true
+    push: false
   });
   
   const [privacy, setPrivacy] = useState({
     publicProfile: true,
     showActivity: true
   });
+
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+
+  useEffect(() => {
+    // Check current notification permission
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      toast({
+        title: "Not Supported",
+        description: "Your browser doesn't support notifications",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === 'granted') {
+        setNotifications(prev => ({ ...prev, push: true }));
+        toast({
+          title: "Notifications Enabled",
+          description: "You'll now receive push notifications",
+        });
+        // Show a test notification
+        new Notification('Idestrim', {
+          body: 'Notifications are now enabled!',
+          icon: '/favicon.ico'
+        });
+      } else if (permission === 'denied') {
+        toast({
+          title: "Permission Denied",
+          description: "Please enable notifications in your browser settings",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Notification permission error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to request notification permission",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -71,6 +123,11 @@ export default function Settings() {
   };
 
   const toggleNotification = (type: keyof typeof notifications) => {
+    if (type === 'push' && notificationPermission !== 'granted') {
+      requestNotificationPermission();
+      return;
+    }
+    
     setNotifications(prev => ({ ...prev, [type]: !prev[type] }));
     toast({
       title: "Settings Updated",
@@ -178,14 +235,35 @@ export default function Settings() {
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4" />
-                <span className="text-sm font-medium">Push Notifications</span>
+                <BellRing className="h-4 w-4" />
+                <div>
+                  <span className="text-sm font-medium">Push Notifications</span>
+                  <p className="text-xs text-muted-foreground">
+                    {notificationPermission === 'granted' 
+                      ? 'Enabled' 
+                      : notificationPermission === 'denied'
+                        ? 'Blocked - enable in browser settings'
+                        : 'Click to enable'}
+                  </p>
+                </div>
               </div>
               <Switch 
-                checked={notifications.push}
+                checked={notifications.push && notificationPermission === 'granted'}
                 onCheckedChange={() => toggleNotification('push')}
               />
             </div>
+
+            {notificationPermission !== 'granted' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={requestNotificationPermission}
+              >
+                <Bell className="h-4 w-4" />
+                Enable Browser Notifications
+              </Button>
+            )}
           </CardContent>
         </Card>
 

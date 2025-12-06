@@ -15,12 +15,12 @@ import { FollowersList } from '@/components/FollowersList';
 import { FollowingList } from '@/components/FollowingList';
 import { supabase } from '@/integrations/supabase/client';
 import SignupPrompt from '@/components/SignupPrompt';
+import { IdemarksTab } from '@/components/IdemarksTab';
 import QRCode from 'qrcode';
 import { 
   Share, 
   Settings, 
   LogOut, 
-  Globe, 
   Calendar,
   Edit,
   Grid,
@@ -33,7 +33,8 @@ import {
   BarChart3,
   TrendingUp,
   DollarSign,
-  MessageCircle
+  MessageCircle,
+  Shield
 } from 'lucide-react';
 import { MessageDialog } from '@/components/MessageDialog';
 
@@ -393,16 +394,20 @@ export default function Profile() {
         {/* Tabs */}
         <section className="px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 rounded-xl bg-muted/50">
-              <TabsTrigger value="ideas" className="gap-2 rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 rounded-xl bg-muted/50">
+              <TabsTrigger value="ideas" className="gap-1 rounded-lg text-xs px-2">
                 <Grid className="h-4 w-4" />
                 Ideas
               </TabsTrigger>
-              <TabsTrigger value="videos" className="gap-2 rounded-lg">
+              <TabsTrigger value="videos" className="gap-1 rounded-lg text-xs px-2">
                 <Video className="h-4 w-4" />
                 Videos
               </TabsTrigger>
-              <TabsTrigger value="saved" className="gap-2 rounded-lg">
+              <TabsTrigger value="idemarks" className="gap-1 rounded-lg text-xs px-2">
+                <Shield className="h-4 w-4" />
+                Idemarks
+              </TabsTrigger>
+              <TabsTrigger value="saved" className="gap-1 rounded-lg text-xs px-2">
                 <Bookmark className="h-4 w-4" />
                 Saved
               </TabsTrigger>
@@ -414,6 +419,10 @@ export default function Profile() {
 
             <TabsContent value="videos" className="mt-6">
               <DiscoveryFeed userOnly={true} userId={profileUserId} mediaType="video" />
+            </TabsContent>
+
+            <TabsContent value="idemarks" className="mt-6">
+              <IdemarksTab userId={profileUserId} isOwnProfile={isOwnProfile} />
             </TabsContent>
 
             <TabsContent value="saved" className="mt-6">
