@@ -206,7 +206,6 @@ export default function Upload() {
 
     // Validate form data
     const titleValidation = validateTextInput(formData.title, 100);
-    const descriptionValidation = validateTextInput(formData.description, 1000);
     
     if (!titleValidation.isValid) {
       toast({
@@ -217,13 +216,29 @@ export default function Upload() {
       return;
     }
     
-    if (!descriptionValidation.isValid) {
-      toast({
-        title: "Invalid description", 
-        description: descriptionValidation.error,
-        variant: "destructive"
-      });
-      return;
+    // For text ideas, description is required as it's the main content
+    if (mediaType === 'text') {
+      if (!formData.description || formData.description.trim().length === 0) {
+        toast({
+          title: "Description required",
+          description: "Please enter your idea description.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    // Validate description if provided (optional for non-text uploads)
+    if (formData.description && formData.description.trim().length > 0) {
+      const descriptionValidation = validateTextInput(formData.description, 1000);
+      if (!descriptionValidation.isValid) {
+        toast({
+          title: "Invalid description", 
+          description: descriptionValidation.error,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
     // Validate investment fields if status is 'open'
