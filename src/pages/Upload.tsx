@@ -305,8 +305,10 @@ export default function Upload() {
           if (dbError) {
             console.error('Error saving media metadata:', dbError);
             toast({
-              title: "Upload incomplete",
-              description: "Files uploaded but metadata save failed. Please try again.",
+              title: "Upload failed",
+              description: mediaType === 'text' 
+                ? "Failed to publish your idea. Please try again." 
+                : "Files uploaded but metadata save failed. Please try again.",
               variant: "destructive"
             });
             return;
@@ -364,7 +366,9 @@ export default function Upload() {
         } else {
           toast({
             title: "Success!",
-            description: `Successfully uploaded ${uploadedUrls.length} file(s).`,
+            description: mediaType === 'text' 
+              ? "Your idea has been published successfully!" 
+              : `Successfully uploaded ${uploadedUrls.length} file(s).`,
           });
         }
         
