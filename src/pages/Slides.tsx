@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
 import { cn } from '@/lib/utils';
+import { linkifyText } from '@/utils/linkDetection';
 
 interface MediaUpload {
   id: string;
@@ -441,7 +442,12 @@ export default function Slides() {
             
             <h3 className="font-bold text-base mb-1 drop-shadow-lg">{video.title}</h3>
             {video.description && (
-              <p className="text-sm opacity-90 line-clamp-2 drop-shadow-lg">{video.description}</p>
+              <p className="text-sm opacity-90 line-clamp-2 drop-shadow-lg">
+                {linkifyText(video.description, { 
+                  className: 'text-primary-foreground hover:underline break-all',
+                  truncateLength: 40 
+                })}
+              </p>
             )}
             
             <div className="flex items-center gap-2 mt-2 text-xs opacity-90">

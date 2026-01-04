@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
+import { LinkifiedText } from '@/utils/linkDetection';
 
 interface MediaUpload {
   id: string;
@@ -372,7 +373,12 @@ export default function IdeaDetail() {
         <div className="mb-6">
           <h2 className="text-xl font-bold text-foreground mb-3">{idea.title}</h2>
           {idea.description && (
-            <p className="text-muted-foreground leading-relaxed mb-3">{idea.description}</p>
+            <p className="text-muted-foreground leading-relaxed mb-3">
+              <LinkifiedText 
+                text={idea.description} 
+                linkClassName="text-primary hover:underline break-all"
+              />
+            </p>
           )}
           
           {/* View Count */}

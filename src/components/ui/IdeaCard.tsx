@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { LinkifiedText } from '@/utils/linkDetection';
 
 interface IdeaCardProps {
   id: string;
@@ -337,7 +338,10 @@ export default function IdeaCard({
                   {title}
                 </h3>
                 <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-                  {description}
+                  <LinkifiedText 
+                    text={description} 
+                    linkClassName="text-primary hover:underline break-all"
+                  />
                 </p>
               </div>
             </div>
@@ -518,7 +522,10 @@ export default function IdeaCard({
             {title}
           </h3>
           <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-            {description}
+            <LinkifiedText 
+              text={description} 
+              linkClassName="text-primary hover:underline break-all"
+            />
           </p>
         </div>
 

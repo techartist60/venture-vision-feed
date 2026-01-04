@@ -10,6 +10,7 @@ import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
 import { cn } from '@/lib/utils';
 import { toast as sonnerToast } from 'sonner';
+import { LinkifiedText } from '@/utils/linkDetection';
 
 interface MediaUpload {
   id: string;
@@ -524,7 +525,12 @@ export default function VideoDetail() {
                   <span>{new Date(media.created_at).toLocaleDateString()}</span>
                 </div>
                 {media.description && (
-                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{media.description}</p>
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                    <LinkifiedText 
+                      text={media.description} 
+                      linkClassName="text-primary hover:underline break-all"
+                    />
+                  </p>
                 )}
               </div>
 
