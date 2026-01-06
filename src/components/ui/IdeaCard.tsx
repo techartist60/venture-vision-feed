@@ -328,7 +328,7 @@ export default function IdeaCard({
 
         {/* Text content with icon */}
         <div className="px-4 pb-4">
-          <div className="bg-gradient-discovery rounded-xl p-6 border border-border">
+          <div className="bg-muted rounded-xl p-6">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-full bg-primary/10 flex-shrink-0">
                 <FileText className="h-6 w-6 text-primary" />
@@ -337,7 +337,7 @@ export default function IdeaCard({
                 <h3 className="font-bold text-lg text-foreground mb-2">
                   {title}
                 </h3>
-                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                <p className="text-foreground text-sm whitespace-pre-wrap">
                   <LinkifiedText 
                     text={description} 
                     linkClassName="text-primary hover:underline break-all"
