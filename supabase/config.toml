@@ -86,6 +86,9 @@ verify_jwt = false
 [functions.investor-api]
 verify_jwt = false
 
+[functions.webscan-analyze]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 port = 54328
