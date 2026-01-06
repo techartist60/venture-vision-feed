@@ -297,8 +297,6 @@ export default function IdeaCard({
             <div className="flex-1 hover:opacity-80 transition-opacity">
               <p className="font-semibold text-sm text-foreground">{user.name}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>@{user.username}</span>
-                <span>•</span>
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
                   <span>{stats.views.toLocaleString()} views</span>
@@ -487,8 +485,6 @@ export default function IdeaCard({
             <div className="flex-1 hover:opacity-80 transition-opacity">
               <p className="font-semibold text-sm text-foreground">{user.name}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>@{user.username}</span>
-                <span>•</span>
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
                   <span>{stats.views.toLocaleString()} views</span>
@@ -727,7 +723,6 @@ export default function IdeaCard({
           </Avatar>
           <div className="hover:opacity-80 transition-opacity">
             <p className="font-semibold text-sm text-foreground">{user.name}</p>
-            <p className="text-xs text-muted-foreground">@{user.username}</p>
           </div>
         </div>
 
