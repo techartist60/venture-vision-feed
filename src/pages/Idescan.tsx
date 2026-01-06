@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Scan, Upload, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Scan, Upload, Sparkles, Image as ImageIcon, Globe, ArrowRight } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 
 export default function Idescan() {
@@ -213,6 +213,32 @@ export default function Idescan() {
             See if your idea already exists. We'll search patents, startups, and innovation databases to find similar ideas.
           </p>
         </div>
+
+        {/* WebScan Banner */}
+        <Card 
+          className="mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 cursor-pointer hover:shadow-glow transition-all"
+          onClick={() => navigate('/idescan/webscan')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Globe className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    WebScan
+                    <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">New</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Scan any website URL to find similar ideas and competitors
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Scan Form */}
         <Card className="shadow-glow">
