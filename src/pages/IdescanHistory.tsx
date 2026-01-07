@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Database, Plus } from 'lucide-react';
+import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface ScanMetadata {
+  scan_type?: 'webscan' | 'idescan';
+  scanned_url?: string;
+  overall_similarity_score?: number;
+  uniqueness_score?: number;
+}
+
 interface ScanRecord {
   id: string;
   title: string;
@@ -27,6 +34,7 @@ interface ScanRecord {
   image_url: string | null;
   status: string;
   created_at: string;
+  metadata: ScanMetadata | null;
 }
 
 export default function IdescanHistory() {
@@ -50,11 +58,14 @@ export default function IdescanHistory() {
     try {
       const { data, error } = await supabase
         .from('idescan_scans')
-        .select('*')
+        .select('id, title, description, image_url, status, created_at, metadata')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setScans(data || []);
+      setScans((data || []).map(scan => ({
+        ...scan,
+        metadata: scan.metadata as ScanMetadata | null
+      })));
     } catch (error) {
       console.error('Error fetching scans:', error);
       toast({
@@ -173,12 +184,26 @@ export default function IdescanHistory() {
               <Card
                 key={scan.id}
                 className="hover:shadow-glow transition-all cursor-pointer"
-                onClick={() => navigate(`/idescan/results/${scan.id}`)}
+                onClick={() => {
+                  const isWebScan = scan.metadata?.scan_type === 'webscan';
+                  if (isWebScan) {
+                    navigate(`/idescan/webscan/results/${scan.id}`);
+                  } else {
+                    navigate(`/idescan/results/${scan.id}`);
+                  }
+                }}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg mb-2">{scan.title}</CardTitle>
+                      <div className="flex items-center gap-2 mb-2">
+                        {scan.metadata?.scan_type === 'webscan' ? (
+                          <Globe className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Scan className="h-4 w-4 text-primary" />
+                        )}
+                        <CardTitle className="text-lg">{scan.title}</CardTitle>
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
                         {format(new Date(scan.created_at), 'PPp')}
@@ -218,15 +243,31 @@ export default function IdescanHistory() {
                         {scan.description}
                       </p>
                       <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          Text scan
-                        </div>
-                        {scan.image_url && (
-                          <div className="flex items-center gap-1">
-                            <ImageIcon className="h-3 w-3" />
-                            Image scan
-                          </div>
+                        {scan.metadata?.scan_type === 'webscan' ? (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <Globe className="h-3 w-3" />
+                              WebScan
+                            </div>
+                            {scan.metadata?.scanned_url && (
+                              <span className="truncate max-w-[200px]">
+                                {scan.metadata.scanned_url}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              Text scan
+                            </div>
+                            {scan.image_url && (
+                              <div className="flex items-center gap-1">
+                                <ImageIcon className="h-3 w-3" />
+                                Image scan
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>

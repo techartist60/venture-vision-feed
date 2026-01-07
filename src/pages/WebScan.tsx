@@ -126,12 +126,37 @@ export default function WebScan() {
       }
 
       setProgress(100);
+      setProgressMessage('Saving results...');
+      
+      // Save to scan history
+      const scanData = data.data as ScanResult;
+      const { error: saveError } = await supabase
+        .from('idescan_scans')
+        .insert([{
+          user_id: user.id,
+          title: scanData.websiteTitle || url.trim(),
+          description: scanData.analysis.summary || scanData.analysis.mainConcept,
+          status: 'completed',
+          metadata: JSON.parse(JSON.stringify({
+            scan_type: 'webscan',
+            scanned_url: scanData.scannedUrl,
+            analysis: scanData.analysis,
+            similar_websites: scanData.similarWebsites,
+            overall_similarity_score: scanData.overallSimilarityScore,
+            uniqueness_score: scanData.uniquenessScore,
+          }))
+        }]);
+
+      if (saveError) {
+        console.error('Failed to save scan:', saveError);
+      }
+
       setProgressMessage('Analysis complete!');
-      setResult(data.data);
+      setResult(scanData);
 
       toast({
         title: "Scan Complete!",
-        description: `Found ${data.data.similarWebsites.length} similar websites`,
+        description: `Found ${scanData.similarWebsites.length} similar websites`,
       });
 
     } catch (error) {
