@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import { format } from 'date-fns';
 
 interface WebsiteAnalysis {
@@ -295,9 +296,24 @@ export default function WebScanResults() {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-wrap gap-4 justify-center">
           <Button variant="outline" onClick={() => navigate('/idescan/webscan')}>
             New WebScan
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => exportWebScanToPdf({
+              websiteTitle: scanData.title,
+              scannedUrl: metadata.scanned_url,
+              analysis: metadata.analysis,
+              similarWebsites: metadata.similar_websites,
+              overallSimilarityScore: metadata.overall_similarity_score,
+              uniquenessScore: metadata.uniqueness_score,
+              scanDate: scanData.created_at,
+            })}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
           </Button>
           <Button onClick={() => navigate('/idescan/history')}>
             Back to History
