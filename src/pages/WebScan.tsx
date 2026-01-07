@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 import { Progress } from '@/components/ui/progress';
+import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 
 interface WebsiteAnalysis {
   problem: string;
@@ -447,9 +448,23 @@ export default function WebScan() {
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center">
               <Button variant="outline" onClick={() => setResult(null)}>
                 Scan Another Website
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => exportWebScanToPdf({
+                  websiteTitle: result.websiteTitle,
+                  scannedUrl: result.scannedUrl,
+                  analysis: result.analysis,
+                  similarWebsites: result.similarWebsites,
+                  overallSimilarityScore: result.overallSimilarityScore,
+                  uniquenessScore: result.uniquenessScore,
+                })}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
               </Button>
               <Button onClick={() => navigate('/idescan')}>
                 Try Text-Based Scan
