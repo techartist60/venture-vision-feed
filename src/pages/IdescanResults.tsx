@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal, Target, MapPin, Zap } from 'lucide-react';
+import { ArrowLeft, ExternalLink, TrendingUp, Building2, FileText, Newspaper, Lightbulb, AlertCircle, HelpCircle, Download, Search, SlidersHorizontal, Target, MapPin, Zap, FileDown } from 'lucide-react';
+import { exportIdescanToPdf } from '@/utils/idescanPdfExport';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -316,7 +317,26 @@ export default function IdescanResults() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-2xl mb-2">Your Idea</CardTitle>
+                    <div className="flex items-center justify-between mb-2">
+                      <CardTitle className="text-2xl">Your Idea</CardTitle>
+                      {scan.status === 'completed' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => exportIdescanToPdf({
+                            title: scan.title,
+                            description: scan.description,
+                            imageUrl: scan.image_url,
+                            scanDate: scan.created_at,
+                            metadata: scan.metadata,
+                            results: results,
+                          })}
+                        >
+                          <FileDown className="h-4 w-4 mr-2" />
+                          Export PDF
+                        </Button>
+                      )}
+                    </div>
                     <Badge className={scan.status === 'completed' ? 'bg-green-500/10 text-green-500' : ''}>
                       {scan.status}
                     </Badge>
@@ -470,11 +490,28 @@ export default function IdescanResults() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Similar Ideas Found ({results.length})</CardTitle>
-                    <Button variant="outline" size="sm" onClick={exportToCSV}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Export CSV
-                    </Button>
+                <CardTitle>Similar Ideas Found ({results.length})</CardTitle>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={exportToCSV}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export CSV
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => scan && exportIdescanToPdf({
+                          title: scan.title,
+                          description: scan.description,
+                          imageUrl: scan.image_url,
+                          scanDate: scan.created_at,
+                          metadata: scan.metadata,
+                          results: results,
+                        })}
+                      >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Export PDF
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -622,11 +659,23 @@ export default function IdescanResults() {
                               </div>
                             )}
                             {result.innovation_records.source_url && (
-                              <div className="flex items-center gap-1">
+                              <a 
+                                href={result.innovation_records.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <ExternalLink className="h-3 w-3" />
                                 <span className="font-medium">
                                   {getCleanSourceName(result.innovation_records.source_url, result.innovation_records.title)}
                                 </span>
+                              </a>
+                            )}
+                            {result.innovation_records.patent_number && (
+                              <div className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                <span className="font-medium">Patent: {result.innovation_records.patent_number}</span>
                               </div>
                             )}
                           </div>
@@ -642,12 +691,12 @@ export default function IdescanResults() {
                         </Button>
                         {result.innovation_records.source_url && (
                           <Button
-                            variant="ghost"
+                            variant="default"
                             size="sm"
                             onClick={() => window.open(result.innovation_records.source_url!, '_blank')}
                           >
                             <ExternalLink className="h-4 w-4 mr-1" />
-                            View on {getCleanSourceName(result.innovation_records.source_url, result.innovation_records.title)}
+                            View {result.innovation_records.source_type === 'patent' ? 'Patent' : 'Source'}
                           </Button>
                         )}
                       </div>

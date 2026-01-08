@@ -215,7 +215,16 @@ export function exportWebScanToPdf(data: WebScanData) {
         2: { cellWidth: 20, halign: 'center' },
         3: { cellWidth: 75 }
       },
-      margin: { left: 14, right: 14 }
+      margin: { left: 14, right: 14 },
+      didDrawCell: (data: any) => {
+        // Make URLs clickable
+        if (data.column.index === 1 && data.cell.section === 'body') {
+          const url = tableData[data.row.index]?.[1];
+          if (url) {
+            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url });
+          }
+        }
+      }
     });
   }
 
