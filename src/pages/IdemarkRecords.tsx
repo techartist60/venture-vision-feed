@@ -8,7 +8,9 @@ import {
   Trash2, 
   Clock,
   FileText,
-  Search
+  Search,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +57,19 @@ export default function IdemarkRecords() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+
+  const toggleIdVisibility = (recordId: string) => {
+    setVisibleIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(recordId)) {
+        newSet.delete(recordId);
+      } else {
+        newSet.add(recordId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     if (user) {
@@ -233,9 +248,25 @@ export default function IdemarkRecords() {
                         {record.title}
                       </h3>
                     </div>
-                    <p className="text-xs font-mono text-muted-foreground">
-                      {record.idemark_id}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-mono text-muted-foreground">
+                        {visibleIds.has(record.id) 
+                          ? record.idemark_id 
+                          : '••••••••-••••-••••-••••-••••••••••••'}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => toggleIdVisibility(record.id)}
+                      >
+                        {visibleIds.has(record.id) ? (
+                          <EyeOff className="h-3 w-3 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <Badge 
                     className={record.status === 'active' 

@@ -284,7 +284,15 @@ export function exportIdescanToPdf(data: IdescanData) {
     );
   }
 
-  // Save the PDF
+  // Download the PDF immediately using blob for faster performance
   const fileName = `idescan-${data.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`;
-  doc.save(fileName);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
