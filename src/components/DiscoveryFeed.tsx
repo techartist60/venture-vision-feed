@@ -195,61 +195,46 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
       return;
     }
 
+    // Optimistic update - update UI immediately for instant feedback
+    const previousState = media.find(item => item.id === mediaId);
+    setMedia(prev => prev.map(item => 
+      item.id === mediaId 
+        ? { 
+            ...item, 
+            is_liked: !isLiked,
+            likes_count: isLiked ? Math.max(0, item.likes_count - 1) : item.likes_count + 1
+          }
+        : item
+    ));
+
     try {
       if (isLiked) {
-        // Unlike
-        await supabase
-          .from('media_likes')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('media_id', mediaId);
-
-        // Update likes count directly with SQL
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('likes_count')
-          .eq('id', mediaId)
-          .single();
-
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ likes_count: Math.max(0, currentMedia.likes_count - 1) })
-            .eq('id', mediaId);
-        }
+        // Unlike - use parallel operations for speed
+        await Promise.all([
+          supabase
+            .from('media_likes')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('media_id', mediaId),
+          supabase.rpc('decrement_likes_count', { media_id: mediaId })
+        ]);
       } else {
-        // Like
-        await supabase
-          .from('media_likes')
-          .insert({ user_id: user.id, media_id: mediaId });
-
-        // Update likes count directly with SQL
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('likes_count')
-          .eq('id', mediaId)
-          .single();
-
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ likes_count: currentMedia.likes_count + 1 })
-            .eq('id', mediaId);
-        }
+        // Like - use parallel operations for speed
+        await Promise.all([
+          supabase
+            .from('media_likes')
+            .insert({ user_id: user.id, media_id: mediaId }),
+          supabase.rpc('increment_likes_count', { media_id: mediaId })
+        ]);
       }
-
-      // Update local state
-      setMedia(prev => prev.map(item => 
-        item.id === mediaId 
-          ? { 
-              ...item, 
-              is_liked: !isLiked,
-              likes_count: isLiked ? Math.max(0, item.likes_count - 1) : item.likes_count + 1
-            }
-          : item
-      ));
     } catch (error) {
       console.error('Error toggling like:', error);
+      // Revert optimistic update on error
+      if (previousState) {
+        setMedia(prev => prev.map(item => 
+          item.id === mediaId ? previousState : item
+        ));
+      }
       toast({
         title: "Error",
         description: "Failed to update like status",
