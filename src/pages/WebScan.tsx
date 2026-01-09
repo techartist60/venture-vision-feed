@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download } from 'lucide-react';
+import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Crown } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 import { Progress } from '@/components/ui/progress';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
@@ -48,6 +49,21 @@ export default function WebScan() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const [watchedCount, setWatchedCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchWatchedCount();
+    }
+  }, [user]);
+
+  const fetchWatchedCount = async () => {
+    const { count } = await supabase
+      .from('watched_websites')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_pinned', true);
+    setWatchedCount(count || 0);
+  };
 
   const isValidUrl = (urlString: string): boolean => {
     try {
@@ -91,7 +107,6 @@ export default function WebScan() {
     setProgressMessage('Connecting to website...');
 
     try {
-      // Simulate progress updates
       const progressInterval = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) {
@@ -129,9 +144,8 @@ export default function WebScan() {
       setProgress(100);
       setProgressMessage('Saving results...');
       
-      // Save to scan history
       const scanData = data.data as ScanResult;
-      const { error: saveError } = await supabase
+      const { data: scanRecord, error: saveError } = await supabase
         .from('idescan_scans')
         .insert([{
           user_id: user.id,
@@ -146,10 +160,37 @@ export default function WebScan() {
             overall_similarity_score: scanData.overallSimilarityScore,
             uniqueness_score: scanData.uniquenessScore,
           }))
-        }]);
+        }])
+        .select()
+        .single();
 
       if (saveError) {
         console.error('Failed to save scan:', saveError);
+      }
+
+      // Auto-pin top 10 similar websites to watched_websites
+      if (scanRecord && scanData.similarWebsites.length > 0) {
+        setProgressMessage('Adding websites to monitoring...');
+        
+        const watchedWebsites = scanData.similarWebsites.slice(0, 10).map(website => ({
+          user_id: user.id,
+          scan_id: scanRecord.id,
+          url: website.url,
+          name: website.name,
+          description: website.description,
+          similarity_score: website.similarityScore,
+          is_pinned: true,
+        }));
+
+        const { error: watchError } = await supabase
+          .from('watched_websites')
+          .insert(watchedWebsites);
+
+        if (watchError) {
+          console.error('Failed to add watched websites:', watchError);
+        } else {
+          setWatchedCount(prev => prev + watchedWebsites.length);
+        }
       }
 
       setProgressMessage('Analysis complete!');
@@ -157,7 +198,7 @@ export default function WebScan() {
 
       toast({
         title: "Scan Complete!",
-        description: `Found ${scanData.similarWebsites.length} similar websites`,
+        description: `Found ${scanData.similarWebsites.length} similar websites. Top 10 added to monitoring.`,
       });
 
     } catch (error) {
@@ -205,13 +246,26 @@ export default function WebScan() {
               <Globe className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-bold">WebScan</h1>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/idescan/history')}
-            >
-              Scan History
-            </Button>
+            <div className="flex items-center gap-2">
+              {watchedCount > 0 && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate('/idescan/webscan/dashboard')}
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Watched ({watchedCount})
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/idescan/history')}
+              >
+                History
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -224,9 +278,28 @@ export default function WebScan() {
           </div>
           <h2 className="text-3xl font-bold mb-3">URL Idea Scanner</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Submit any public website URL and we'll analyze its concept, then find similar websites and ideas from around the web.
+            Submit any public website URL and we'll analyze its concept, find similar websites, and automatically monitor the top 10 for changes.
           </p>
         </div>
+
+        {/* Premium Banner */}
+        {user && (
+          <Card className="mb-6 border-amber-500/30 bg-amber-500/5">
+            <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <Crown className="h-5 w-5 text-amber-500" />
+                <div>
+                  <p className="font-medium">WebScan Pro</p>
+                  <p className="text-sm text-muted-foreground">Get daily scans & monitor up to 50 websites</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="gap-2 border-amber-500/50">
+                <Crown className="h-4 w-4" />
+                Upgrade
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Scan Form */}
         <Card className="shadow-glow mb-8">
@@ -292,6 +365,22 @@ export default function WebScan() {
         {/* Results Section */}
         {result && (
           <div className="space-y-6">
+            {/* Success Banner */}
+            <Card className="border-green-500/30 bg-green-500/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Eye className="h-5 w-5 text-green-500" />
+                <div>
+                  <p className="font-medium">Websites Added to Monitoring</p>
+                  <p className="text-sm text-muted-foreground">
+                    Top {Math.min(10, result.similarWebsites.length)} similar websites are now being monitored for changes.{' '}
+                    <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/idescan/webscan/dashboard')}>
+                      View Dashboard →
+                    </Button>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Scanned Website Info */}
             <Card>
               <CardHeader>
@@ -396,12 +485,18 @@ export default function WebScan() {
             {/* Similar Websites */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-amber-500" />
-                  Similar Websites Found ({result.similarWebsites.length})
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-amber-500" />
+                    Similar Websites Found ({result.similarWebsites.length})
+                  </CardTitle>
+                  <Badge variant="secondary" className="gap-1">
+                    <Eye className="h-3 w-3" />
+                    Monitored
+                  </Badge>
+                </div>
                 <CardDescription>
-                  Websites with similar concepts ranked by similarity
+                  Websites with similar concepts ranked by similarity - all are now being monitored
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -425,6 +520,12 @@ export default function WebScan() {
                               <span className={`text-sm font-bold ${getSimilarityColor(website.similarityScore)}`}>
                                 {website.similarityScore}% similar
                               </span>
+                              {idx < 10 && (
+                                <Badge variant="outline" className="text-xs gap-1">
+                                  <Eye className="h-2 w-2" />
+                                  Watching
+                                </Badge>
+                              )}
                             </div>
                             <a 
                               href={website.url} 
@@ -464,10 +565,11 @@ export default function WebScan() {
                 })}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Export PDF
+                Download PDF
               </Button>
-              <Button onClick={() => navigate('/idescan')}>
-                Try Text-Based Scan
+              <Button onClick={() => navigate('/idescan/webscan/dashboard')}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Dashboard
               </Button>
             </div>
           </div>
@@ -489,22 +591,22 @@ export default function WebScan() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Similar Search</CardTitle>
+                <CardTitle className="text-sm">Auto-Monitor</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  We search the web for websites with similar concepts and features
+                  Top 10 similar websites are automatically monitored for changes weekly
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Similarity Scoring</CardTitle>
+                <CardTitle className="text-sm">Change Alerts</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  AI-powered scoring shows how similar each found website is to yours
+                  Get notified when competitors update their content, pricing, or features
                 </p>
               </CardContent>
             </Card>

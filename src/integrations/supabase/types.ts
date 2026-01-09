@@ -859,6 +859,130 @@ export type Database = {
           },
         ]
       }
+      user_subscription_tiers: {
+        Row: {
+          created_at: string
+          id: string
+          max_watched_websites: number | null
+          scan_frequency: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_watched_websites?: number | null
+          scan_frequency?: string | null
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_watched_websites?: number | null
+          scan_frequency?: string | null
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watched_website_changes: {
+        Row: {
+          change_summary: string
+          change_type: string
+          detected_at: string
+          id: string
+          new_content: string | null
+          previous_content: string | null
+          watched_website_id: string
+        }
+        Insert: {
+          change_summary: string
+          change_type: string
+          detected_at?: string
+          id?: string
+          new_content?: string | null
+          previous_content?: string | null
+          watched_website_id: string
+        }
+        Update: {
+          change_summary?: string
+          change_type?: string
+          detected_at?: string
+          id?: string
+          new_content?: string | null
+          previous_content?: string | null
+          watched_website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watched_website_changes_watched_website_id_fkey"
+            columns: ["watched_website_id"]
+            isOneToOne: false
+            referencedRelation: "watched_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watched_websites: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_pinned: boolean | null
+          last_checked_at: string | null
+          last_content_hash: string | null
+          name: string
+          scan_id: string | null
+          similarity_score: number | null
+          update_status: string | null
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          last_checked_at?: string | null
+          last_content_hash?: string | null
+          name: string
+          scan_id?: string | null
+          similarity_score?: number | null
+          update_status?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          last_checked_at?: string | null
+          last_content_hash?: string | null
+          name?: string
+          scan_id?: string | null
+          similarity_score?: number | null
+          update_status?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watched_websites_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "idescan_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -26,6 +26,7 @@ import IdescanResults from "./pages/IdescanResults";
 import IdescanDataSources from "./pages/IdescanDataSources";
 import WebScan from "./pages/WebScan";
 import WebScanResults from "./pages/WebScanResults";
+import WebScanDashboard from "./pages/WebScanDashboard";
 import Slides from "./pages/Slides";
 import Groups from "./pages/Groups";
 import GroupChat from "./pages/GroupChat";
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/idescan/sources" element={<IdescanDataSources />} />
               <Route path="/idescan/webscan" element={<WebScan />} />
               <Route path="/idescan/webscan/results/:id" element={<ProtectedRoute><WebScanResults /></ProtectedRoute>} />
+              <Route path="/idescan/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
