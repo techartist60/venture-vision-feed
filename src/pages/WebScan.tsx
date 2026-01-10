@@ -8,10 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Crown } from 'lucide-react';
+import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Crown, Lock, Clock } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 import { Progress } from '@/components/ui/progress';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
+import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
 
 interface WebsiteAnalysis {
   problem: string;
@@ -39,6 +40,12 @@ interface ScanResult {
   uniquenessScore: number;
 }
 
+interface ActiveSubscription {
+  id: string;
+  plan_type: string;
+  expires_at: string;
+}
+
 export default function WebScan() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -49,20 +56,34 @@ export default function WebScan() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
-  const [watchedCount, setWatchedCount] = useState(0);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [currentScanId, setCurrentScanId] = useState<string | null>(null);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription | null>(null);
 
   useEffect(() => {
     if (user) {
-      fetchWatchedCount();
+      checkSubscription();
     }
   }, [user]);
 
-  const fetchWatchedCount = async () => {
-    const { count } = await supabase
-      .from('watched_websites')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_pinned', true);
-    setWatchedCount(count || 0);
+  const checkSubscription = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('webscan_subscriptions')
+      .select('id, plan_type, expires_at')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .gt('expires_at', new Date().toISOString())
+      .order('expires_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (data) {
+      setHasActiveSubscription(true);
+      setActiveSubscription(data);
+    }
   };
 
   const isValidUrl = (urlString: string): boolean => {
@@ -145,6 +166,8 @@ export default function WebScan() {
       setProgressMessage('Saving results...');
       
       const scanData = data.data as ScanResult;
+      
+      // Save scan to history (always saved regardless of premium status)
       const { data: scanRecord, error: saveError } = await supabase
         .from('idescan_scans')
         .insert([{
@@ -166,31 +189,8 @@ export default function WebScan() {
 
       if (saveError) {
         console.error('Failed to save scan:', saveError);
-      }
-
-      // Auto-pin top 10 similar websites to watched_websites
-      if (scanRecord && scanData.similarWebsites.length > 0) {
-        setProgressMessage('Adding websites to monitoring...');
-        
-        const watchedWebsites = scanData.similarWebsites.slice(0, 10).map(website => ({
-          user_id: user.id,
-          scan_id: scanRecord.id,
-          url: website.url,
-          name: website.name,
-          description: website.description,
-          similarity_score: website.similarityScore,
-          is_pinned: true,
-        }));
-
-        const { error: watchError } = await supabase
-          .from('watched_websites')
-          .insert(watchedWebsites);
-
-        if (watchError) {
-          console.error('Failed to add watched websites:', watchError);
-        } else {
-          setWatchedCount(prev => prev + watchedWebsites.length);
-        }
+      } else if (scanRecord) {
+        setCurrentScanId(scanRecord.id);
       }
 
       setProgressMessage('Analysis complete!');
@@ -198,7 +198,7 @@ export default function WebScan() {
 
       toast({
         title: "Scan Complete!",
-        description: `Found ${scanData.similarWebsites.length} similar websites. Top 10 added to monitoring.`,
+        description: `Found ${scanData.similarWebsites.length} similar websites.`,
       });
 
     } catch (error) {
@@ -212,6 +212,37 @@ export default function WebScan() {
       setLoading(false);
       setProgress(0);
       setProgressMessage('');
+    }
+  };
+
+  const handleUnlockPremium = () => {
+    setPaywallOpen(true);
+  };
+
+  const handlePaymentSuccess = async () => {
+    setPaywallOpen(false);
+    await checkSubscription();
+    
+    // Add websites to monitoring after payment
+    if (result && currentScanId && user) {
+      const watchedWebsites = result.similarWebsites.slice(0, 10).map(website => ({
+        user_id: user.id,
+        scan_id: currentScanId,
+        url: website.url,
+        name: website.name,
+        description: website.description,
+        similarity_score: website.similarityScore,
+        is_pinned: true,
+      }));
+
+      await supabase.from('watched_websites').insert(watchedWebsites);
+      
+      toast({
+        title: "Websites Added to Monitoring!",
+        description: "Top 10 similar websites are now being tracked.",
+      });
+      
+      navigate('/idescan/webscan/dashboard');
     }
   };
 
@@ -247,7 +278,7 @@ export default function WebScan() {
               <h1 className="text-xl font-bold">WebScan</h1>
             </div>
             <div className="flex items-center gap-2">
-              {watchedCount > 0 && (
+              {hasActiveSubscription && (
                 <Button
                   variant="default"
                   size="sm"
@@ -255,7 +286,7 @@ export default function WebScan() {
                   className="gap-2"
                 >
                   <Eye className="h-4 w-4" />
-                  Watched ({watchedCount})
+                  Dashboard
                 </Button>
               )}
               <Button
@@ -278,25 +309,44 @@ export default function WebScan() {
           </div>
           <h2 className="text-3xl font-bold mb-3">URL Idea Scanner</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Submit any public website URL and we'll analyze its concept, find similar websites, and automatically monitor the top 10 for changes.
+            Submit any public website URL and we'll analyze its concept, find similar websites based on news and patents across the internet.
           </p>
         </div>
 
-        {/* Premium Banner */}
-        {user && (
+        {/* Subscription Status */}
+        {hasActiveSubscription && activeSubscription && (
+          <Card className="mb-6 border-green-500/30 bg-green-500/5">
+            <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <Crown className="h-5 w-5 text-amber-500" />
+                <div>
+                  <p className="font-medium">WebScan Premium Active</p>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Expires: {new Date(activeSubscription.expires_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="secondary" className="capitalize">{activeSubscription.plan_type} Plan</Badge>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Premium Banner for non-subscribers */}
+        {user && !hasActiveSubscription && (
           <Card className="mb-6 border-amber-500/30 bg-amber-500/5">
             <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
                 <Crown className="h-5 w-5 text-amber-500" />
                 <div>
-                  <p className="font-medium">WebScan Pro</p>
-                  <p className="text-sm text-muted-foreground">Get daily scans & monitor up to 50 websites</p>
+                  <p className="font-medium">WebScan Premium</p>
+                  <p className="text-sm text-muted-foreground">Unlock top 10 similar websites & change tracking</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="gap-2 border-amber-500/50">
-                <Crown className="h-4 w-4" />
-                Upgrade
-              </Button>
+              <div className="flex items-center gap-2 text-sm">
+                <Badge variant="outline" className="border-amber-500/50">50 KES/week</Badge>
+                <Badge variant="outline" className="border-amber-500/50">150 KES/month</Badge>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -365,22 +415,6 @@ export default function WebScan() {
         {/* Results Section */}
         {result && (
           <div className="space-y-6">
-            {/* Success Banner */}
-            <Card className="border-green-500/30 bg-green-500/5">
-              <CardContent className="p-4 flex items-center gap-3">
-                <Eye className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="font-medium">Websites Added to Monitoring</p>
-                  <p className="text-sm text-muted-foreground">
-                    Top {Math.min(10, result.similarWebsites.length)} similar websites are now being monitored for changes.{' '}
-                    <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/idescan/webscan/dashboard')}>
-                      View Dashboard →
-                    </Button>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Scanned Website Info */}
             <Card>
               <CardHeader>
@@ -482,7 +516,7 @@ export default function WebScan() {
               </Card>
             </div>
 
-            {/* Similar Websites */}
+            {/* Similar Websites - Paywalled */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -490,13 +524,23 @@ export default function WebScan() {
                     <AlertCircle className="h-5 w-5 text-amber-500" />
                     Similar Websites Found ({result.similarWebsites.length})
                   </CardTitle>
-                  <Badge variant="secondary" className="gap-1">
-                    <Eye className="h-3 w-3" />
-                    Monitored
-                  </Badge>
+                  {hasActiveSubscription ? (
+                    <Badge variant="secondary" className="gap-1">
+                      <Eye className="h-3 w-3" />
+                      Premium
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600">
+                      <Lock className="h-3 w-3" />
+                      Locked
+                    </Badge>
+                  )}
                 </div>
                 <CardDescription>
-                  Websites with similar concepts ranked by similarity - all are now being monitored
+                  {hasActiveSubscription 
+                    ? 'Websites with similar concepts ranked by similarity - all are being monitored'
+                    : 'Unlock premium to view and track the top 10 similar websites'
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -506,7 +550,8 @@ export default function WebScan() {
                     <p>No significantly similar websites found!</p>
                     <p className="text-sm mt-1">Your idea appears to be quite unique.</p>
                   </div>
-                ) : (
+                ) : hasActiveSubscription ? (
+                  // Show all websites for premium users
                   <div className="space-y-3">
                     {result.similarWebsites.map((website, idx) => (
                       <div 
@@ -523,7 +568,7 @@ export default function WebScan() {
                               {idx < 10 && (
                                 <Badge variant="outline" className="text-xs gap-1">
                                   <Eye className="h-2 w-2" />
-                                  Watching
+                                  Tracking
                                 </Badge>
                               )}
                             </div>
@@ -544,6 +589,46 @@ export default function WebScan() {
                       </div>
                     ))}
                   </div>
+                ) : (
+                  // Show locked state for free users
+                  <div className="space-y-3">
+                    {/* Show blurred preview */}
+                    <div className="relative">
+                      <div className="space-y-3 filter blur-sm pointer-events-none">
+                        {result.similarWebsites.slice(0, 3).map((website, idx) => (
+                          <div 
+                            key={idx} 
+                            className="p-4 rounded-lg border bg-muted/30"
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold">{website.name}</span>
+                              <span className="text-sm font-bold text-muted-foreground">
+                                {website.similarityScore}% similar
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {website.description?.substring(0, 100)}...
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Overlay with CTA */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                        <div className="text-center p-6">
+                          <Lock className="h-10 w-10 mx-auto mb-3 text-amber-500" />
+                          <h4 className="font-semibold mb-2">Unlock Top 10 Similar Websites</h4>
+                          <p className="text-sm text-muted-foreground mb-4 max-w-xs">
+                            Get access to detailed similarity analysis, change tracking, and notifications
+                          </p>
+                          <Button onClick={handleUnlockPremium} className="gap-2">
+                            <Crown className="h-4 w-4" />
+                            Unlock from 50 KES/week
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -559,7 +644,7 @@ export default function WebScan() {
                   websiteTitle: result.websiteTitle,
                   scannedUrl: result.scannedUrl,
                   analysis: result.analysis,
-                  similarWebsites: result.similarWebsites,
+                  similarWebsites: hasActiveSubscription ? result.similarWebsites : [],
                   overallSimilarityScore: result.overallSimilarityScore,
                   uniquenessScore: result.uniquenessScore,
                 })}
@@ -567,10 +652,18 @@ export default function WebScan() {
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </Button>
-              <Button onClick={() => navigate('/idescan/webscan/dashboard')}>
-                <Eye className="mr-2 h-4 w-4" />
-                View Dashboard
-              </Button>
+              {hasActiveSubscription && (
+                <Button onClick={() => navigate('/idescan/webscan/dashboard')}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Dashboard
+                </Button>
+              )}
+              {!hasActiveSubscription && result.similarWebsites.length > 0 && (
+                <Button onClick={handleUnlockPremium}>
+                  <Crown className="mr-2 h-4 w-4" />
+                  Unlock Premium
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -591,11 +684,14 @@ export default function WebScan() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Auto-Monitor</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  Premium Tracking
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  Top 10 similar websites are automatically monitored for changes weekly
+                  Subscribe to monitor top 10 similar websites for changes (from 50 KES/week)
                 </p>
               </CardContent>
             </Card>
@@ -618,6 +714,14 @@ export default function WebScan() {
         open={signupPrompt}
         onOpenChange={setSignupPrompt}
         action="use WebScan"
+      />
+
+      <WebScanPremiumPaywall
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        scanId={currentScanId || undefined}
+        similarWebsitesCount={result?.similarWebsites.length || 0}
+        onSuccess={handlePaymentSuccess}
       />
     </div>
   );
