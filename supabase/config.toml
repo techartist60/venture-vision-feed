@@ -92,6 +92,9 @@ verify_jwt = false
 [functions.webscan-monitor]
 verify_jwt = false
 
+[functions.paystack-verify]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 port = 54328
