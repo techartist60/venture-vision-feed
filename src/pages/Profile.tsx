@@ -36,6 +36,7 @@ import {
   MessageCircle,
   Shield
 } from 'lucide-react';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { MessageDialog } from '@/components/MessageDialog';
 
 interface UserProfile {
@@ -45,6 +46,7 @@ interface UserProfile {
   avatar_url?: string;
   username?: string;
   following_private?: boolean;
+  is_verified?: boolean;
 }
 
 export default function Profile() {
@@ -234,11 +236,12 @@ export default function Profile() {
               </AvatarFallback>
             </Avatar>
             
-            <h2 className="text-2xl font-bold text-foreground mb-1">
+            <h2 className="text-2xl font-bold text-foreground mb-1 flex items-center justify-center gap-2">
               {profile.full_name || 'User'}
+              {profile.is_verified && <VerifiedBadge size="lg" />}
             </h2>
             <p className="text-muted-foreground mb-4">
-              @{profile.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}
+              @{profile.username || profile.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}
             </p>
             
             {profile.bio && (

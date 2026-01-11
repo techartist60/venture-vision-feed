@@ -27,6 +27,7 @@ interface MediaUpload {
     full_name?: string;
     username?: string;
     avatar_url?: string;
+    is_verified?: boolean;
   };
 }
 
@@ -77,7 +78,7 @@ export const SavedContent: React.FC<SavedContentProps> = ({ userId }) => {
         .from('media_uploads')
         .select(`
           *,
-          profiles!media_uploads_user_id_fkey(full_name, username, avatar_url)
+          profiles!media_uploads_user_id_fkey(full_name, username, avatar_url, is_verified)
         `)
         .in('id', mediaIds)
         .order('created_at', { ascending: false });
@@ -266,6 +267,7 @@ export const SavedContent: React.FC<SavedContentProps> = ({ userId }) => {
               name: media.profiles.full_name || media.profiles.username || 'Anonymous',
               avatar: media.profiles.avatar_url || '',
               username: media.profiles.username || 'user',
+              isVerified: media.profiles.is_verified || false,
             }}
             stats={{
               likes: media.likes_count,

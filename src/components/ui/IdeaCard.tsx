@@ -2,6 +2,7 @@ import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, 
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
+import { VerifiedBadge } from './VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { useVideo } from '@/contexts/VideoContext';
 import { useEffect, useRef, useState } from 'react';
@@ -23,6 +24,7 @@ interface IdeaCardProps {
     avatar?: string;
     username: string;
     id?: string;
+    isVerified?: boolean;
   };
   stats: {
     likes: number;
@@ -256,6 +258,7 @@ export default function IdeaCard({
                 }}
               >
                 {user.name}
+                {user.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                 <div className="flex items-center gap-1">
@@ -295,7 +298,10 @@ export default function IdeaCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 hover:opacity-80 transition-opacity">
-              <p className="font-semibold text-sm text-foreground">{user.name}</p>
+              <p className="font-semibold text-sm text-foreground flex items-center gap-1">
+                {user.name}
+                {user.isVerified && <VerifiedBadge size="sm" />}
+              </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
@@ -483,7 +489,10 @@ export default function IdeaCard({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 hover:opacity-80 transition-opacity">
-              <p className="font-semibold text-sm text-foreground">{user.name}</p>
+              <p className="font-semibold text-sm text-foreground flex items-center gap-1">
+                {user.name}
+                {user.isVerified && <VerifiedBadge size="sm" />}
+              </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
@@ -722,7 +731,10 @@ export default function IdeaCard({
             </AvatarFallback>
           </Avatar>
           <div className="hover:opacity-80 transition-opacity">
-            <p className="font-semibold text-sm text-foreground">{user.name}</p>
+            <p className="font-semibold text-sm text-foreground flex items-center gap-1">
+              {user.name}
+              {user.isVerified && <VerifiedBadge size="sm" />}
+            </p>
           </div>
         </div>
 
