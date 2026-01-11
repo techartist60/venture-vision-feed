@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe } from 'lucide-react';
+import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe, Lock, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -45,14 +45,31 @@ export default function IdescanHistory() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scanToDelete, setScanToDelete] = useState<string | null>(null);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    fetchScans();
+    checkSubscriptionAndFetchScans();
   }, [user, navigate]);
+
+  const checkSubscriptionAndFetchScans = async () => {
+    // Check subscription status
+    const { data: subData } = await supabase
+      .from('webscan_subscriptions')
+      .select('id, plan_type, expires_at')
+      .eq('user_id', user!.id)
+      .eq('status', 'active')
+      .gt('expires_at', new Date().toISOString())
+      .order('expires_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    setHasActiveSubscription(!!subData);
+    fetchScans();
+  };
 
   const fetchScans = async () => {
     try {
@@ -180,53 +197,63 @@ export default function IdescanHistory() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {scans.map((scan) => (
-              <Card
-                key={scan.id}
-                className="hover:shadow-glow transition-all cursor-pointer"
-                onClick={() => {
-                  const isWebScan = scan.metadata?.scan_type === 'webscan';
-                  if (isWebScan) {
-                    navigate(`/idescan/webscan/results/${scan.id}`);
-                  } else {
-                    navigate(`/idescan/results/${scan.id}`);
-                  }
-                }}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {scan.metadata?.scan_type === 'webscan' ? (
-                          <Globe className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Scan className="h-4 w-4 text-primary" />
-                        )}
-                        <CardTitle className="text-lg">{scan.title}</CardTitle>
+            {scans.map((scan) => {
+              const isWebScan = scan.metadata?.scan_type === 'webscan';
+              const isLocked = isWebScan && !hasActiveSubscription;
+              
+              return (
+                <Card
+                  key={scan.id}
+                  className={`hover:shadow-glow transition-all cursor-pointer ${isLocked ? 'border-amber-500/30' : ''}`}
+                  onClick={() => {
+                    if (isWebScan) {
+                      navigate(`/idescan/webscan/results/${scan.id}`);
+                    } else {
+                      navigate(`/idescan/results/${scan.id}`);
+                    }
+                  }}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {isWebScan ? (
+                            <Globe className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Scan className="h-4 w-4 text-primary" />
+                          )}
+                          <CardTitle className="text-lg">{scan.title}</CardTitle>
+                          {isLocked && (
+                            <Badge variant="outline" className="border-amber-500/50 text-amber-500 gap-1">
+                              <Lock className="h-3 w-3" />
+                              Premium
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          {format(new Date(scan.created_at), 'PPp')}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        {format(new Date(scan.created_at), 'PPp')}
+                      <div className="flex items-center gap-2">
+                        {isLocked && <Crown className="h-4 w-4 text-amber-500" />}
+                        <Badge className={getStatusColor(scan.status)}>
+                          {scan.status}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setScanToDelete(scan.id);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(scan.status)}>
-                        {scan.status}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setScanToDelete(scan.id);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
                 <CardContent>
                   <div className="flex gap-4">
                     {scan.image_url && (
@@ -274,7 +301,8 @@ export default function IdescanHistory() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
