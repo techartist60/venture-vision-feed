@@ -30,6 +30,7 @@ interface MediaUpload {
     full_name?: string | null;
     username?: string | null;
     avatar_url?: string | null;
+    is_verified?: boolean | null;
   };
   is_liked?: boolean;
   is_saved?: boolean;
@@ -94,7 +95,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
           profiles!media_uploads_user_id_fkey (
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            is_verified
           )
         `);
 
@@ -389,7 +391,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
               name: item.profiles?.full_name || 'Anonymous',
               username: item.profiles?.username || 'user',
               avatar: item.profiles?.avatar_url || '',
-              id: item.user_id
+              id: item.user_id,
+              isVerified: item.profiles?.is_verified || false
             }}
             stats={{
               likes: item.likes_count,

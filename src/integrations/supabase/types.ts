@@ -729,6 +729,7 @@ export type Database = {
           following_private: boolean | null
           full_name: string | null
           id: string
+          is_verified: boolean | null
           social_links: Json | null
           updated_at: string
           user_id: string
@@ -742,6 +743,7 @@ export type Database = {
           following_private?: boolean | null
           full_name?: string | null
           id?: string
+          is_verified?: boolean | null
           social_links?: Json | null
           updated_at?: string
           user_id: string
@@ -755,6 +757,7 @@ export type Database = {
           following_private?: boolean | null
           full_name?: string | null
           id?: string
+          is_verified?: boolean | null
           social_links?: Json | null
           updated_at?: string
           user_id?: string
