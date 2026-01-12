@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface Profile {
   id: string;
@@ -18,6 +19,7 @@ interface Profile {
   bio: string | null;
   avatar_url: string | null;
   created_at: string;
+  is_verified?: boolean | null;
 }
 
 interface MediaUpload {
@@ -34,6 +36,7 @@ interface MediaUpload {
     full_name: string | null;
     username: string | null;
     avatar_url: string | null;
+    is_verified?: boolean | null;
   };
 }
 
@@ -61,7 +64,7 @@ export default function Search() {
       // Search creators
       const { data: creators, error: creatorsError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, is_verified')
         .or(`full_name.ilike.%${query}%,username.ilike.%${query}%`)
         .limit(20);
 
@@ -75,7 +78,8 @@ export default function Search() {
           profiles:user_id (
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            is_verified
           )
         `)
         .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
@@ -236,7 +240,10 @@ export default function Search() {
                                 {idea.profiles?.full_name?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
-                            <span>{idea.profiles?.full_name || 'Anonymous'}</span>
+                            <span className="flex items-center gap-1">
+                              {idea.profiles?.full_name || 'Anonymous'}
+                              {idea.profiles?.is_verified && <VerifiedBadge size="sm" />}
+                            </span>
                             <span>•</span>
                             <span>{idea.views_count.toLocaleString()} views</span>
                           </div>
@@ -271,8 +278,9 @@ export default function Search() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground truncate">
+                          <h3 className="font-semibold text-foreground truncate flex items-center gap-1">
                             {profile.full_name || profile.username || 'Anonymous'}
+                            {profile.is_verified && <VerifiedBadge size="sm" />}
                           </h3>
                           {profile.username && (
                             <p className="text-sm text-muted-foreground">@{profile.username}</p>
