@@ -33,6 +33,7 @@ import Groups from "./pages/Groups";
 import GroupChat from "./pages/GroupChat";
 import IdemarkVerify from "./pages/IdemarkVerify";
 import IdemarkRecords from "./pages/IdemarkRecords";
+import UsernameCheck from "./pages/UsernameCheck";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/idemark/verify/:idemarkId" element={<IdemarkVerify />} />
               <Route path="/idemark/records" element={<ProtectedRoute><IdemarkRecords /></ProtectedRoute>} />
+              <Route path="/username-check" element={<UsernameCheck />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

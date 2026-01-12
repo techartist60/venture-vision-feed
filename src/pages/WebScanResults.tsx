@@ -42,6 +42,7 @@ export default function WebScanResults() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const [scanData, setScanData] = useState<{
     title: string;
     created_at: string;
@@ -292,7 +293,7 @@ export default function WebScanResults() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
                   <Button 
-                    onClick={() => navigate('/idescan/webscan')} 
+                    onClick={() => setPaywallOpen(true)} 
                     className="gap-2"
                   >
                     <Crown className="h-4 w-4" />
@@ -369,6 +370,18 @@ export default function WebScanResults() {
           </Button>
         </div>
       </div>
+
+      {/* Premium Paywall Dialog */}
+      <WebScanPremiumPaywall
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        scanId={id}
+        similarWebsitesCount={scanData?.metadata?.similar_websites?.length || 10}
+        onSuccess={() => {
+          setPaywallOpen(false);
+          checkSubscriptionAndFetchScan();
+        }}
+      />
     </div>
   );
 }

@@ -7,12 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Lightbulb, Eye, EyeOff } from 'lucide-react';
+import { Lightbulb, Eye, EyeOff, AtSign, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { authRateLimiter, validateEmail, validatePassword, logSecurityEvent } from '@/utils/security';
+import { supabase } from '@/integrations/supabase/client';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [takenByVerified, setTakenByVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
@@ -28,6 +33,44 @@ export default function Auth() {
     }
   }, [user, navigate, from]);
 
+  // Check username availability with debounce
+  useEffect(() => {
+    const checkUsername = async () => {
+      const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+      
+      if (!cleanUsername || cleanUsername.length < 3) {
+        setUsernameStatus('idle');
+        return;
+      }
+
+      setUsernameStatus('checking');
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, is_verified')
+          .eq('username', cleanUsername)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setUsernameStatus('taken');
+          setTakenByVerified(data.is_verified || false);
+        } else {
+          setUsernameStatus('available');
+          setTakenByVerified(false);
+        }
+      } catch (error) {
+        console.error('Username check error:', error);
+        setUsernameStatus('idle');
+      }
+    };
+
+    const debounce = setTimeout(checkUsername, 500);
+    return () => clearTimeout(debounce);
+  }, [username]);
+
   const handleEmailAuth = async (isSignUp: boolean) => {
     // Enhanced validation
     if (!email || !password) {
@@ -37,6 +80,37 @@ export default function Auth() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Username validation for sign up
+    if (isSignUp) {
+      const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+      if (!cleanUsername || cleanUsername.length < 3) {
+        toast({
+          title: "Error",
+          description: "Username must be at least 3 characters",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (usernameStatus === 'taken') {
+        toast({
+          title: "Error",
+          description: "This username is already taken",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (usernameStatus === 'checking') {
+        toast({
+          title: "Please wait",
+          description: "Checking username availability...",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Rate limiting check
@@ -76,24 +150,47 @@ export default function Auth() {
     }
 
     setLoading(true);
-    const { error } = isSignUp 
-      ? await signUp(email, password)
-      : await signIn(email, password);
+    
+    if (isSignUp) {
+      const { error } = await signUp(email, password);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+      // Update profile with username after signup
+      const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        await supabase
+          .from('profiles')
+          .update({ username: cleanUsername })
+          .eq('user_id', newUser.id);
+      }
+
       toast({
         title: "Success",
-        description: isSignUp 
-          ? "Account created! Check your email to verify."
-          : "Welcome back!",
+        description: "Account created! Check your email to verify.",
       });
-      if (!isSignUp) {
+    } else {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Welcome back!",
+        });
         navigate(from, { replace: true });
       }
     }
@@ -190,6 +287,44 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4">
+              {/* Username field with availability check */}
+              <div className="space-y-2">
+                <Label htmlFor="signup-username">Username</Label>
+                <div className="relative">
+                  <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-username"
+                    type="text"
+                    placeholder="Choose a username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="pl-9 pr-10"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {usernameStatus === 'checking' && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {usernameStatus === 'available' && (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    )}
+                    {usernameStatus === 'taken' && (
+                      <div className="flex items-center gap-1">
+                        {takenByVerified && <VerifiedBadge size="sm" />}
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {usernameStatus === 'available' && (
+                  <p className="text-xs text-green-500">Username is available!</p>
+                )}
+                {usernameStatus === 'taken' && (
+                  <p className="text-xs text-red-500">
+                    This username is taken{takenByVerified ? ' (Verified account)' : ''}
+                  </p>
+                )}
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
                 <Input
@@ -227,7 +362,7 @@ export default function Auth() {
               <Button
                 className="w-full"
                 onClick={() => handleEmailAuth(true)}
-                disabled={loading}
+                disabled={loading || usernameStatus === 'checking' || usernameStatus === 'taken'}
                 variant="innovation"
               >
                 {loading ? "Creating account..." : "Sign Up"}
