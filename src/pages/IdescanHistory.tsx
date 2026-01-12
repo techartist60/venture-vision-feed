@@ -19,12 +19,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
 
 interface ScanMetadata {
   scan_type?: 'webscan' | 'idescan';
   scanned_url?: string;
   overall_similarity_score?: number;
   uniqueness_score?: number;
+  similar_websites?: { name: string; url: string; description: string; similarityScore: number }[];
 }
 
 interface ScanRecord {
@@ -46,6 +48,8 @@ export default function IdescanHistory() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scanToDelete, setScanToDelete] = useState<string | null>(null);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [selectedScanForPaywall, setSelectedScanForPaywall] = useState<ScanRecord | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -201,17 +205,25 @@ export default function IdescanHistory() {
               const isWebScan = scan.metadata?.scan_type === 'webscan';
               const isLocked = isWebScan && !hasActiveSubscription;
               
+              const handleCardClick = () => {
+                if (isWebScan) {
+                  navigate(`/idescan/webscan/results/${scan.id}`);
+                } else {
+                  navigate(`/idescan/results/${scan.id}`);
+                }
+              };
+
+              const handleSubscribeClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                setSelectedScanForPaywall(scan);
+                setPaywallOpen(true);
+              };
+              
               return (
                 <Card
                   key={scan.id}
                   className={`hover:shadow-glow transition-all cursor-pointer ${isLocked ? 'border-amber-500/30' : ''}`}
-                  onClick={() => {
-                    if (isWebScan) {
-                      navigate(`/idescan/webscan/results/${scan.id}`);
-                    } else {
-                      navigate(`/idescan/results/${scan.id}`);
-                    }
-                  }}
+                  onClick={handleCardClick}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -297,6 +309,19 @@ export default function IdescanHistory() {
                           </>
                         )}
                       </div>
+                      
+                      {/* Subscribe button for locked WebScans */}
+                      {isLocked && (
+                        <Button
+                          size="sm"
+                          className="mt-3 gap-2"
+                          variant="default"
+                          onClick={handleSubscribeClick}
+                        >
+                          <Crown className="h-3 w-3" />
+                          Subscribe Now
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -323,6 +348,18 @@ export default function IdescanHistory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Premium Paywall Dialog */}
+      <WebScanPremiumPaywall
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        scanId={selectedScanForPaywall?.id}
+        similarWebsitesCount={selectedScanForPaywall?.metadata?.similar_websites?.length || 10}
+        onSuccess={() => {
+          setPaywallOpen(false);
+          checkSubscriptionAndFetchScans();
+        }}
+      />
     </div>
   );
 }
