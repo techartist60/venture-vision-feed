@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
 import { LinkifiedText } from '@/utils/linkDetection';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface MediaUpload {
   id: string;
@@ -27,6 +28,7 @@ interface MediaUpload {
     full_name?: string;
     username?: string;
     avatar_url?: string;
+    is_verified?: boolean;
   };
   is_liked?: boolean;
   is_saved?: boolean;
@@ -75,7 +77,8 @@ export default function IdeaDetail() {
           profiles:user_id (
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            is_verified
           )
         `)
         .eq('id', id)
@@ -361,7 +364,10 @@ export default function IdeaDetail() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="font-semibold text-foreground">{idea.profiles?.full_name || 'Anonymous'}</p>
+            <p className="font-semibold text-foreground flex items-center gap-1">
+              {idea.profiles?.full_name || 'Anonymous'}
+              {idea.profiles?.is_verified && <VerifiedBadge size="sm" />}
+            </p>
             <p className="text-sm text-muted-foreground">@{idea.profiles?.username || 'anonymous'}</p>
           </div>
           <p className="text-xs text-muted-foreground">

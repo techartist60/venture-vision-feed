@@ -9,6 +9,7 @@ import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
 import { cn } from '@/lib/utils';
 import { linkifyText } from '@/utils/linkDetection';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface MediaUpload {
   id: string;
@@ -27,6 +28,7 @@ interface MediaUpload {
     full_name?: string | null;
     username?: string | null;
     avatar_url?: string | null;
+    is_verified?: boolean | null;
   };
   is_liked?: boolean;
   is_saved?: boolean;
@@ -96,7 +98,8 @@ export default function Slides() {
             profiles!media_uploads_user_id_fkey (
               full_name,
               username,
-              avatar_url
+              avatar_url,
+              is_verified
             )
           `)
           .eq('media_type', 'video')
@@ -115,7 +118,8 @@ export default function Slides() {
             profiles!media_uploads_user_id_fkey (
               full_name,
               username,
-              avatar_url
+              avatar_url,
+              is_verified
             )
           `)
           .eq('media_type', 'video')
@@ -431,8 +435,9 @@ export default function Slides() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-semibold text-sm drop-shadow-lg">
+                <p className="font-semibold text-sm drop-shadow-lg flex items-center gap-1">
                   {video.profiles?.full_name || 'Anonymous'}
+                  {video.profiles?.is_verified && <VerifiedBadge size="sm" className="text-white" />}
                 </p>
                 <p className="text-xs opacity-90 drop-shadow-lg">
                   @{video.profiles?.username || 'anonymous'}

@@ -11,6 +11,7 @@ import SignupPrompt from '@/components/SignupPrompt';
 import { cn } from '@/lib/utils';
 import { toast as sonnerToast } from 'sonner';
 import { LinkifiedText } from '@/utils/linkDetection';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 interface MediaUpload {
   id: string;
@@ -29,6 +30,7 @@ interface MediaUpload {
     full_name?: string;
     username?: string;
     avatar_url?: string;
+    is_verified?: boolean;
   };
   is_liked?: boolean;
   is_saved?: boolean;
@@ -80,7 +82,8 @@ export default function VideoDetail() {
           profiles:user_id (
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            is_verified
           )
         `)
         .eq('id', id)
@@ -142,7 +145,8 @@ export default function VideoDetail() {
           profiles:user_id (
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            is_verified
           )
         `)
         .neq('id', id)
@@ -442,7 +446,10 @@ export default function VideoDetail() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold text-foreground">{media.profiles?.full_name || 'Anonymous'}</p>
+                  <p className="font-semibold text-foreground flex items-center gap-1">
+                    {media.profiles?.full_name || 'Anonymous'}
+                    {media.profiles?.is_verified && <VerifiedBadge size="sm" />}
+                  </p>
                   <p className="text-sm text-muted-foreground">@{media.profiles?.username || 'anonymous'}</p>
                 </div>
               </div>
