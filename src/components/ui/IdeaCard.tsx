@@ -251,14 +251,14 @@ export default function IdeaCard({
                 {title}
               </h3>
               <div 
-                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleProfileClick();
                 }}
               >
                 {user.name}
-                {user.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
+                <VerifiedBadge size="sm" />
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                 <div className="flex items-center gap-1">
@@ -300,7 +300,7 @@ export default function IdeaCard({
             <div className="flex-1 hover:opacity-80 transition-opacity">
               <p className="font-semibold text-sm text-foreground flex items-center gap-1">
                 {user.name}
-                {user.isVerified && <VerifiedBadge size="sm" />}
+                <VerifiedBadge size="sm" />
               </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
@@ -491,7 +491,7 @@ export default function IdeaCard({
             <div className="flex-1 hover:opacity-80 transition-opacity">
               <p className="font-semibold text-sm text-foreground flex items-center gap-1">
                 {user.name}
-                {user.isVerified && <VerifiedBadge size="sm" />}
+                <VerifiedBadge size="sm" />
               </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">

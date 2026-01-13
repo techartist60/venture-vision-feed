@@ -1,4 +1,4 @@
-import { CheckCircle } from 'lucide-react';
+import { BadgeCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VerifiedBadgeProps {
@@ -8,16 +8,16 @@ interface VerifiedBadgeProps {
 
 export function VerifiedBadge({ className, size = 'sm' }: VerifiedBadgeProps) {
   const sizeClasses = {
-    sm: 'h-3.5 w-3.5',
-    md: 'h-4 w-4',
-    lg: 'h-5 w-5',
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5',
+    lg: 'h-6 w-6',
   };
 
   return (
-    <CheckCircle 
+    <BadgeCheck 
       className={cn(
         sizeClasses[size],
-        "text-primary fill-primary/20",
+        "text-blue-500 fill-blue-500/20",
         className
       )} 
       aria-label="Verified account"
