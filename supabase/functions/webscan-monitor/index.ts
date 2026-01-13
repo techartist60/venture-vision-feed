@@ -1,5 +1,4 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.1';
-import { Resend } from 'npm:resend@4.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -188,31 +187,7 @@ Focus on significant changes like pricing updates, new features, major content c
             link: `/idescan/webscan/dashboard`,
           });
 
-          // Send email notification if Resend is configured
-          if (resendApiKey) {
-            const resend = new Resend(resendApiKey);
-            
-            // Get user email
-            const { data: userData } = await supabase.auth.admin.getUserById(website.user_id);
-            
-            if (userData?.user?.email) {
-              await resend.emails.send({
-                from: 'Idestrim WebScan <onboarding@resend.dev>',
-                to: [userData.user.email],
-                subject: `🔔 Website Update Detected: ${website.name}`,
-                html: `
-                  <h2>Website Change Detected</h2>
-                  <p><strong>Website:</strong> ${website.name}</p>
-                  <p><strong>URL:</strong> <a href="${website.url}">${website.url}</a></p>
-                  <h3>Changes Detected:</h3>
-                  <ul>
-                    ${changes.map(c => `<li><strong>${c.type}:</strong> ${c.summary}</li>`).join('')}
-                  </ul>
-                  <p><a href="https://idestrim.com/idescan/webscan/dashboard">View Dashboard</a></p>
-                `,
-              });
-            }
-          }
+          // Email notification can be added via Supabase email hooks or external service
         }
 
         // Update the watched website record

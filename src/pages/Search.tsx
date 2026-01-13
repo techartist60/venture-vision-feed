@@ -242,7 +242,7 @@ export default function Search() {
                             </Avatar>
                             <span className="flex items-center gap-1">
                               {idea.profiles?.full_name || 'Anonymous'}
-                              {idea.profiles?.is_verified && <VerifiedBadge size="sm" />}
+                              <VerifiedBadge size="sm" />
                             </span>
                             <span>•</span>
                             <span>{idea.views_count.toLocaleString()} views</span>
@@ -280,7 +280,7 @@ export default function Search() {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-foreground truncate flex items-center gap-1">
                             {profile.full_name || profile.username || 'Anonymous'}
-                            {profile.is_verified && <VerifiedBadge size="sm" />}
+                            <VerifiedBadge size="sm" />
                           </h3>
                           {profile.username && (
                             <p className="text-sm text-muted-foreground">@{profile.username}</p>

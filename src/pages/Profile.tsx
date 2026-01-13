@@ -238,7 +238,7 @@ export default function Profile() {
             
             <h2 className="text-2xl font-bold text-foreground mb-1 flex items-center justify-center gap-2">
               {profile.full_name || 'User'}
-              {profile.is_verified && <VerifiedBadge size="lg" />}
+              <VerifiedBadge size="lg" />
             </h2>
             <p className="text-muted-foreground mb-4">
               @{profile.username || profile.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}
