@@ -6,3 +6,18 @@
     }
   ]
 }
+{
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "idescan.idestrim.site"
+        }
+      ],
+      "destination": "/idescan",
+      "permanent": true
+    }
+  ]
+}
