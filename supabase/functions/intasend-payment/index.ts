@@ -46,8 +46,38 @@ serve(async (req) => {
       const intasendSecretKey = Deno.env.get('INTASEND_SECRET_KEY');
       const intasendPublishableKey = Deno.env.get('INTASEND_PUBLISHABLE_KEY');
 
-      if (!intasendSecretKey || !intasendPublishableKey) {
-        throw new Error('Intasend API keys not configured');
+      if (!intasendSecretKey) {
+        console.error('INTASEND_SECRET_KEY not configured');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment gateway not configured', 
+            details: 'INTASEND_SECRET_KEY is missing. Please add it in Supabase Dashboard > Edge Functions > Secrets'
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!intasendPublishableKey) {
+        console.error('INTASEND_PUBLISHABLE_KEY not configured');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment gateway not configured', 
+            details: 'INTASEND_PUBLISHABLE_KEY is missing. Please add it in Supabase Dashboard > Edge Functions > Secrets'
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Validate key format (Intasend keys typically start with ISSecretKey_ or ISPubKey_)
+      if (!intasendSecretKey.startsWith('ISSecretKey_') && !intasendSecretKey.startsWith('test_') && intasendSecretKey.length < 20) {
+        console.error('INTASEND_SECRET_KEY appears invalid');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid API key format', 
+            details: 'The INTASEND_SECRET_KEY does not appear to be valid. Please check your Intasend dashboard for the correct key.'
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const amount = 10.00; // $10 USD
@@ -73,31 +103,97 @@ serve(async (req) => {
         throw new Error('Failed to create subscription record');
       }
 
-      // Create Intasend checkout session
-      const intasendResponse = await fetch('https://payment.intasend.com/api/v1/checkout/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${intasendSecretKey}`,
-        },
-        body: JSON.stringify({
-          public_key: intasendPublishableKey,
-          amount: amount,
-          currency: currency,
-          email: userEmail,
-          first_name: userData.user.user_metadata?.full_name?.split(' ')[0] || 'User',
-          last_name: userData.user.user_metadata?.full_name?.split(' ')[1] || '',
-          api_ref: reference,
-          redirect_url: `${req.headers.get('origin')}/premium/callback?ref=${reference}&plan=${planType}`,
-          webhook_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/intasend-webhook`,
-        }),
-      });
+      // Create Intasend checkout session with retry and better error handling
+      const PAYMENT_TIMEOUT = 30000; // 30 seconds
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), PAYMENT_TIMEOUT);
 
-      const checkoutData = await intasendResponse.json();
+      let intasendResponse;
+      try {
+        intasendResponse = await fetch('https://payment.intasend.com/api/v1/checkout/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${intasendSecretKey}`,
+          },
+          body: JSON.stringify({
+            public_key: intasendPublishableKey,
+            amount: amount,
+            currency: currency,
+            email: userEmail,
+            first_name: userData.user.user_metadata?.full_name?.split(' ')[0] || 'User',
+            last_name: userData.user.user_metadata?.full_name?.split(' ')[1] || '',
+            api_ref: reference,
+            redirect_url: `${req.headers.get('origin')}/premium/callback?ref=${reference}&plan=${planType}`,
+            webhook_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/intasend-webhook`,
+          }),
+          signal: controller.signal,
+        });
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        console.error('Network error calling Intasend:', fetchError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment gateway unavailable', 
+            details: 'Could not connect to Intasend. Please try again later.'
+          }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      clearTimeout(timeoutId);
+
+      // Check content type before parsing
+      const contentType = intasendResponse.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const textResponse = await intasendResponse.text();
+        console.error('Intasend returned non-JSON response:', textResponse.substring(0, 500));
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment gateway error', 
+            details: 'Intasend returned an unexpected response. Please try again.'
+          }),
+          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      let checkoutData;
+      try {
+        checkoutData = await intasendResponse.json();
+      } catch (parseError) {
+        console.error('Failed to parse Intasend response:', parseError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment gateway error', 
+            details: 'Failed to parse Intasend response.'
+          }),
+          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       if (!intasendResponse.ok) {
-        console.error('Intasend error:', checkoutData);
-        throw new Error('Failed to create payment checkout');
+        console.error('Intasend API error:', JSON.stringify(checkoutData));
+        
+        // Handle specific error types
+        const errorDetail = checkoutData.errors?.[0]?.detail || checkoutData.message || 'Unknown error';
+        const errorCode = checkoutData.errors?.[0]?.code || 'unknown';
+        
+        if (errorCode === 'authentication_failed') {
+          return new Response(
+            JSON.stringify({ 
+              error: 'API key authentication failed', 
+              details: 'The Intasend API keys may be expired or invalid. Please update your keys in Supabase secrets.'
+            }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'Payment initialization failed', 
+            details: errorDetail
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       // Update subscription with invoice ID
