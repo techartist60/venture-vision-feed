@@ -13,6 +13,7 @@ import SignupPrompt from '@/components/SignupPrompt';
 import { Progress } from '@/components/ui/progress';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
+import WebScanPremiumPlan from '@/components/WebScanPremiumPlan';
 
 interface WebsiteAnalysis {
   problem: string;
@@ -332,23 +333,11 @@ export default function WebScan() {
           </Card>
         )}
 
-        {/* Premium Banner for non-subscribers */}
-        {user && !hasActiveSubscription && (
-          <Card className="mb-6 border-amber-500/30 bg-amber-500/5">
-            <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <Crown className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-medium">WebScan Premium</p>
-                  <p className="text-sm text-muted-foreground">Unlock top 10 similar websites & change tracking</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Badge variant="outline" className="border-amber-500/50">50 KES/week</Badge>
-                <Badge variant="outline" className="border-amber-500/50">150 KES/month</Badge>
-              </div>
-            </CardContent>
-          </Card>
+        {/* $10 Premium Plan for web integration */}
+        {user && (
+          <div className="mb-6">
+            <WebScanPremiumPlan />
+          </div>
         )}
 
         {/* Scan Form */}
