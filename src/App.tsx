@@ -28,11 +28,13 @@ import WebScan from "./pages/WebScan";
 import WebScanResults from "./pages/WebScanResults";
 import WebScanDashboard from "./pages/WebScanDashboard";
 import WebScanPaymentCallback from "./pages/WebScanPaymentCallback";
+import PremiumCallback from "./pages/PremiumCallback";
 import Slides from "./pages/Slides";
 import Groups from "./pages/Groups";
 import GroupChat from "./pages/GroupChat";
 import IdemarkVerify from "./pages/IdemarkVerify";
 import IdemarkRecords from "./pages/IdemarkRecords";
+import IdemarkPage from "./pages/IdemarkPage";
 import UsernameCheck from "./pages/UsernameCheck";
 import NotFound from "./pages/NotFound";
 
@@ -75,6 +77,9 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/idemark/verify/:idemarkId" element={<IdemarkVerify />} />
               <Route path="/idemark/records" element={<ProtectedRoute><IdemarkRecords /></ProtectedRoute>} />
+              <Route path="/idemark" element={<ProtectedRoute><IdemarkPage /></ProtectedRoute>} />
+              <Route path="/premium/callback" element={<ProtectedRoute><PremiumCallback /></ProtectedRoute>} />
+              <Route path="/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
               <Route path="/username-check" element={<UsernameCheck />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

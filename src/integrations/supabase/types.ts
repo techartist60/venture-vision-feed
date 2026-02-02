@@ -721,6 +721,54 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_subscriptions: {
+        Row: {
+          amount: number
+          api_key: string | null
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          intasend_invoice_id: string | null
+          payment_reference: string | null
+          plan_type: string
+          starts_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          api_key?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          intasend_invoice_id?: string | null
+          payment_reference?: string | null
+          plan_type: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          api_key?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          intasend_invoice_id?: string | null
+          payment_reference?: string | null
+          plan_type?: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
