@@ -63,46 +63,49 @@ declare module 'jspdf' {
 }
 
 export function exportIdescanToPdf(data: IdescanData) {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  let yPosition = 20;
+  try {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPosition = 20;
 
-  // Header
-  doc.setFillColor(59, 130, 246);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Idescan Report', 14, 25);
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  const dateText = `Scanned on ${new Date(data.scanDate).toLocaleDateString('en-US', { 
-    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-  })}`;
-  doc.text(dateText, 14, 35);
+    // Header
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Idescan Report', 14, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const scanDate = data.scanDate ? new Date(data.scanDate) : new Date();
+    const dateText = `Scanned on ${scanDate.toLocaleDateString('en-US', { 
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+    })}`;
+    doc.text(dateText, 14, 35);
 
-  yPosition = 55;
+    yPosition = 55;
 
-  // Your Idea Section
-  doc.setTextColor(59, 130, 246);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Your Idea', 14, yPosition);
-  yPosition += 8;
+    // Your Idea Section
+    doc.setTextColor(59, 130, 246);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Your Idea', 14, yPosition);
+    yPosition += 8;
 
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.title, 14, yPosition);
-  yPosition += 6;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.title || 'Untitled', 14, yPosition);
+    yPosition += 6;
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  const descriptionLines = doc.splitTextToSize(data.description, pageWidth - 28);
-  doc.text(descriptionLines, 14, yPosition);
-  yPosition += descriptionLines.length * 5 + 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const description = data.description || 'No description provided';
+    const descriptionLines = doc.splitTextToSize(description, pageWidth - 28);
+    doc.text(descriptionLines, 14, yPosition);
+    yPosition += descriptionLines.length * 5 + 10;
 
   // Keywords if available
   if (data.metadata?.extractedKeywords && data.metadata.extractedKeywords.length > 0) {
@@ -284,15 +287,20 @@ export function exportIdescanToPdf(data: IdescanData) {
     );
   }
 
-  // Download the PDF immediately using blob for faster performance
-  const fileName = `idescan-${data.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`;
-  const blob = doc.output('blob');
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    // Download the PDF immediately using blob for faster performance
+    const safeTitle = (data.title || 'scan').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const fileName = `idescan-${safeTitle}-${Date.now()}.pdf`;
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
+  }
 }

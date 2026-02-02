@@ -65,11 +65,12 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error indexing sources:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -654,7 +655,7 @@ async function indexGoogleNews(supabase: any): Promise<number> {
       'patent+filed+innovation'
     ];
     
-    let allArticles = [];
+    let allArticles: Array<{title: string, description: string, link: string, pubDate?: string, source?: string}> = [];
     for (const topic of newsTopics) {
       const newsResponse = await fetch(
         `https://news.google.com/rss/search?q=${topic}&hl=en-US&gl=US&ceid=US:en`,
@@ -866,7 +867,7 @@ async function indexIdestrimData(supabase: any): Promise<number> {
       .select('id, metadata')
       .eq('source_type', 'idestrim');
 
-    const existingMediaIds = existing?.map(r => r.metadata?.media_id).filter(Boolean) || [];
+    const existingMediaIds = existing?.map((r: { id: string; metadata?: { media_id?: string } }) => r.metadata?.media_id).filter(Boolean) || [];
     
     if (!existingMediaIds.includes(media.id)) {
       const { error: insertError } = await supabase
