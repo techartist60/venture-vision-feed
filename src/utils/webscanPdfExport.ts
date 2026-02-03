@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface WebsiteAnalysis {
   problem: string;
@@ -28,11 +28,7 @@ interface WebScanData {
   scanDate?: string;
 }
 
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: unknown) => jsPDF;
-  }
-}
+// autoTable is imported directly, no module augmentation needed
 
 export function exportWebScanToPdf(data: WebScanData) {
   // Validate required fields
@@ -216,7 +212,7 @@ export function exportWebScanToPdf(data: WebScanData) {
         (website.description || '').substring(0, 80) + ((website.description || '').length > 80 ? '...' : '')
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPosition,
         head: [['Website', 'URL', 'Similarity', 'Description']],
         body: tableData,
