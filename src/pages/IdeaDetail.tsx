@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Play, Pause, Eye } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -41,15 +41,47 @@ export default function IdeaDetail() {
   const { toast } = useToast();
   const [idea, setIdea] = useState<MediaUpload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [videoPlaying, setVideoPlaying] = useState(false);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
 
   useEffect(() => {
     if (id) {
+      checkMediaTypeAndRedirect();
+    }
+  }, [id]);
+
+  const checkMediaTypeAndRedirect = async () => {
+    if (!id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('media_uploads')
+        .select('media_type')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      // If it's a video, redirect to the slides page
+      if (data && (data.media_type === 'video' || data.media_type.startsWith('video/'))) {
+        navigate(`/slides?startId=${id}`, { replace: true });
+        return;
+      }
+
+      // Otherwise fetch the full idea for images
+      fetchIdea();
+    } catch (error) {
+      console.error('Error checking media type:', error);
+      fetchIdea(); // fallback to normal fetch
+    }
+  };
+
+  useEffect(() => {
+    // Re-fetch when user changes (for like/save status)
+    if (id && user) {
       fetchIdea();
     }
-  }, [id, user]);
+  }, [user]);
 
   const trackView = async (mediaId: string) => {
     try {
@@ -115,11 +147,6 @@ export default function IdeaDetail() {
           is_liked: false,
           is_saved: false
         });
-      }
-
-      // Auto-play video if it's a video
-      if (data && data.media_type.startsWith('video/')) {
-        setVideoPlaying(true);
       }
 
       // Track view for this media
@@ -329,29 +356,19 @@ export default function IdeaDetail() {
 
       {/* Media */}
       <section className="px-4 py-6 max-w-md mx-auto">
-        <div className="relative aspect-video bg-muted rounded-xl overflow-hidden mb-6">
-          {idea.media_type.startsWith('image/') ? (
-            <img 
-              src={idea.media_url} 
-              alt={idea.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="relative w-full h-full">
-              <video 
-                src={idea.media_url}
-                controls
-                autoPlay={videoPlaying}
-                className="w-full h-full object-cover"
-                poster={idea.thumbnail_url}
-                onPlay={() => setVideoPlaying(true)}
-                onPause={() => setVideoPlaying(false)}
-              />
-            </div>
-          )}
+        <div className="relative bg-muted rounded-xl overflow-hidden mb-6">
+          <img 
+            src={idea.media_url} 
+            alt={idea.title}
+            className="w-full h-auto object-contain max-h-[70vh]"
+            onError={(e) => {
+              console.error('Image failed to load:', idea.media_url);
+              e.currentTarget.src = '/placeholder.svg';
+            }}
+          />
           
           <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
-            {idea.media_type.startsWith('video/') ? 'Video' : 'Image'}
+            Image
           </Badge>
         </div>
 

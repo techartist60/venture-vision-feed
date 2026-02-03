@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface CategoryScores {
   tech: number;
@@ -56,11 +56,7 @@ interface IdescanData {
   results: ScanResult[];
 }
 
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: unknown) => jsPDF;
-  }
-}
+// autoTable is imported directly, no module augmentation needed
 
 export function exportIdescanToPdf(data: IdescanData) {
   // Validate required fields
@@ -259,7 +255,7 @@ export function exportIdescanToPdf(data: IdescanData) {
       result.innovation_records.source_url || 'N/A'
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPosition,
       head: [['Title', 'Type', 'Score', 'Tier', 'Source Link']],
       body: tableData,
@@ -274,12 +270,12 @@ export function exportIdescanToPdf(data: IdescanData) {
         4: { cellWidth: 60, textColor: [59, 130, 246] }
       },
       margin: { left: 14, right: 14 },
-      didDrawCell: (data: any) => {
+      didDrawCell: (cellData: any) => {
         // Make source URLs clickable
-        if (data.column.index === 4 && data.cell.section === 'body') {
-          const url = tableData[data.row.index]?.[4];
+        if (cellData.column.index === 4 && cellData.cell.section === 'body') {
+          const url = tableData[cellData.row.index]?.[4];
           if (url && url !== 'N/A') {
-            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url });
+            doc.link(cellData.cell.x, cellData.cell.y, cellData.cell.width, cellData.cell.height, { url });
           }
         }
       }
