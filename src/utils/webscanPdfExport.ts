@@ -35,6 +35,19 @@ declare module 'jspdf' {
 }
 
 export function exportWebScanToPdf(data: WebScanData) {
+  // Validate required fields
+  if (!data) {
+    console.error('WebScan PDF export: No data provided');
+    alert('Cannot generate PDF: No scan data available');
+    return;
+  }
+
+  if (!data.analysis) {
+    console.error('WebScan PDF export: Missing analysis data');
+    alert('Cannot generate PDF: Analysis data is missing');
+    return;
+  }
+
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -257,6 +270,6 @@ export function exportWebScanToPdf(data: WebScanData) {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Error generating WebScan PDF:', error);
-    throw error;
+    alert('Failed to generate PDF. Please try again.');
   }
 }

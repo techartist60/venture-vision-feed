@@ -63,6 +63,19 @@ declare module 'jspdf' {
 }
 
 export function exportIdescanToPdf(data: IdescanData) {
+  // Validate required fields
+  if (!data) {
+    console.error('Idescan PDF export: No data provided');
+    alert('Cannot generate PDF: No scan data available');
+    return;
+  }
+
+  if (!data.results) {
+    console.error('Idescan PDF export: Missing results data');
+    alert('Cannot generate PDF: Results data is missing');
+    return;
+  }
+
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -300,7 +313,7 @@ export function exportIdescanToPdf(data: IdescanData) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    throw error;
+    console.error('Error generating Idescan PDF:', error);
+    alert('Failed to generate PDF. Please try again.');
   }
 }
