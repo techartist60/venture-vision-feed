@@ -13,11 +13,21 @@ interface WebsiteAnalysis {
   summary: string;
 }
 
+interface AppearanceAnalysis {
+  overallScore: number;
+  professionalScore: number;
+  modernScore: number;
+  usabilityScore: number;
+  brandingScore: number;
+  suggestions: string[];
+}
+
 interface SimilarWebsite {
   name: string;
   url: string;
   description: string;
   similarityScore: number;
+  screenshotUrl?: string;
 }
 
 Deno.serve(async (req) => {
@@ -59,9 +69,9 @@ Deno.serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    console.log('Step 1: Scraping website content from:', formattedUrl);
+    console.log('Step 1: Scraping website content and screenshot from:', formattedUrl);
 
-    // Step 1: Scrape the website using Firecrawl
+    // Step 1: Scrape the website using Firecrawl with screenshot
     const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
@@ -70,7 +80,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url: formattedUrl,
-        formats: ['markdown'],
+        formats: ['markdown', 'screenshot'],
         onlyMainContent: true,
         waitFor: 3000,
       }),
@@ -91,6 +101,7 @@ Deno.serve(async (req) => {
 
     const websiteContent = scrapeData.data?.markdown || scrapeData.markdown || '';
     const metadata = scrapeData.data?.metadata || scrapeData.metadata || {};
+    const userScreenshot = scrapeData.data?.screenshot || scrapeData.screenshot || null;
 
     if (!websiteContent || websiteContent.length < 50) {
       return new Response(
@@ -102,8 +113,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Step 2: Analyzing website content with AI...');
+    console.log('Step 2: Analyzing website content and appearance with AI...');
     console.log('Content length:', websiteContent.length);
+    console.log('Screenshot captured:', !!userScreenshot);
 
     // Step 2: Analyze the website content with AI
     const analysisPrompt = `Analyze this website content and extract the following information in JSON format:
@@ -127,24 +139,79 @@ Return a JSON object with these exact fields:
 
 Be specific and extract real information from the content. If information is not available, make reasonable inferences based on the content.`;
 
-    const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You are an expert at analyzing websites and understanding business concepts. Always respond with valid JSON only, no markdown.' },
-          { role: 'user', content: analysisPrompt }
-        ],
-        temperature: 0.3,
+    // Step 2b: Analyze website appearance
+    const appearancePrompt = `Analyze this website's visual appearance and professionalism based on the content structure:
+
+Website Content (for structure analysis):
+${websiteContent.substring(0, 4000)}
+
+Website Title: ${metadata.title || 'Unknown'}
+Website Description: ${metadata.description || 'Unknown'}
+
+Analyze the website's design quality based on:
+- Content structure and organization
+- Professional language and tone
+- Feature presentation
+- Call-to-action clarity
+- Information hierarchy
+
+Return a JSON object with these exact fields:
+{
+  "overallScore": <0-100, overall visual appeal and design quality>,
+  "professionalScore": <0-100, how professional the website looks>,
+  "modernScore": <0-100, how modern and up-to-date the design feels>,
+  "usabilityScore": <0-100, ease of navigation and user experience>,
+  "brandingScore": <0-100, consistency and strength of brand identity>,
+  "suggestions": [
+    "Specific actionable suggestion 1 to improve appearance",
+    "Specific actionable suggestion 2 to improve appearance",
+    "Specific actionable suggestion 3 to improve appearance",
+    "Specific actionable suggestion 4 to improve appearance",
+    "Specific actionable suggestion 5 to improve appearance"
+  ]
+}
+
+Be realistic with scores. Most average websites score 50-70. Only truly exceptional designs score above 85. Provide specific, actionable suggestions.`;
+
+    // Run both analyses in parallel
+    const [analysisResponse, appearanceResponse] = await Promise.all([
+      fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You are an expert at analyzing websites and understanding business concepts. Always respond with valid JSON only, no markdown.' },
+            { role: 'user', content: analysisPrompt }
+          ],
+          temperature: 0.3,
+        }),
       }),
-    });
+      fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You are an expert UI/UX designer and web design critic. Always respond with valid JSON only, no markdown.' },
+            { role: 'user', content: appearancePrompt }
+          ],
+          temperature: 0.3,
+        }),
+      })
+    ]);
 
     const analysisData = await analysisResponse.json();
+    const appearanceData = await appearanceResponse.json();
+
     let analysis: WebsiteAnalysis;
+    let appearanceAnalysis: AppearanceAnalysis;
 
     try {
       const responseText = analysisData.choices?.[0]?.message?.content || '';
@@ -152,7 +219,6 @@ Be specific and extract real information from the content. If information is not
       analysis = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error('Failed to parse analysis response:', parseError);
-      // Create a basic analysis from metadata
       analysis = {
         problem: metadata.description || 'Unable to determine',
         targetAudience: 'General users',
@@ -164,6 +230,29 @@ Be specific and extract real information from the content. If information is not
       };
     }
 
+    try {
+      const appearanceText = appearanceData.choices?.[0]?.message?.content || '';
+      const cleanedAppearance = appearanceText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      appearanceAnalysis = JSON.parse(cleanedAppearance);
+    } catch (parseError) {
+      console.error('Failed to parse appearance response:', parseError);
+      appearanceAnalysis = {
+        overallScore: 60,
+        professionalScore: 60,
+        modernScore: 55,
+        usabilityScore: 65,
+        brandingScore: 50,
+        suggestions: [
+          'Add more visual hierarchy with headings and subheadings',
+          'Include high-quality images to enhance visual appeal',
+          'Improve color contrast for better readability',
+          'Add clear call-to-action buttons',
+          'Consider adding testimonials or social proof'
+        ]
+      };
+    }
+
+    console.log('Appearance analysis:', appearanceAnalysis);
     console.log('Step 3: Searching for similar websites...');
 
     // Step 3: Search for similar websites using Firecrawl search
@@ -204,7 +293,7 @@ Be specific and extract real information from the content. If information is not
                 name: result.title || extractDomainName(result.url),
                 url: result.url,
                 description: result.description || result.snippet || 'No description available',
-                similarityScore: 0, // Will be calculated later
+                similarityScore: 0,
               });
             }
           }
@@ -287,7 +376,6 @@ Be realistic with scores. 90+ means nearly identical concept. 70-89 means very s
         }
       } catch (scoringError) {
         console.error('Scoring batch failed:', scoringError);
-        // Add with estimated scores based on keyword matching
         for (const website of batch) {
           const keywordMatches = analysis.keywords.filter(kw => 
             website.description.toLowerCase().includes(kw.toLowerCase()) ||
@@ -304,8 +392,41 @@ Be realistic with scores. 90+ means nearly identical concept. 70-89 means very s
     // Sort by similarity score
     scoredWebsites.sort((a, b) => b.similarityScore - a.similarityScore);
 
-    // Take top 10
+    // Take top 10 and get screenshots for them
     const topSimilar = scoredWebsites.slice(0, 10);
+
+    console.log('Step 5: Capturing screenshots of top similar websites...');
+
+    // Get screenshots for top similar websites (in parallel, max 5 at a time)
+    const screenshotPromises = topSimilar.slice(0, 10).map(async (website) => {
+      try {
+        const screenshotResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${firecrawlApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: website.url,
+            formats: ['screenshot'],
+            waitFor: 2000,
+          }),
+        });
+
+        const screenshotData = await screenshotResponse.json();
+        if (screenshotResponse.ok && screenshotData.success) {
+          website.screenshotUrl = screenshotData.data?.screenshot || screenshotData.screenshot || null;
+        }
+      } catch (error) {
+        console.error(`Failed to get screenshot for ${website.url}:`, error);
+      }
+      return website;
+    });
+
+    await Promise.all(screenshotPromises);
+
+    const websitesWithScreenshots = topSimilar.filter(w => w.screenshotUrl).length;
+    console.log(`Got screenshots for ${websitesWithScreenshots} of ${topSimilar.length} websites`);
 
     // Calculate overall scores
     const avgSimilarity = topSimilar.length > 0 
@@ -323,7 +444,9 @@ Be realistic with scores. 90+ means nearly identical concept. 70-89 means very s
         data: {
           scannedUrl: formattedUrl,
           websiteTitle: metadata.title || extractDomainName(formattedUrl),
+          userScreenshot,
           analysis,
+          appearanceAnalysis,
           similarWebsites: topSimilar,
           overallSimilarityScore: avgSimilarity,
           uniquenessScore,

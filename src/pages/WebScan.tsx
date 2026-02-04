@@ -8,12 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Crown, Lock, Clock } from 'lucide-react';
+import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Crown, Lock, Clock, Palette, Lightbulb, Image } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 import { Progress } from '@/components/ui/progress';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
 import WebScanPremiumPlan from '@/components/WebScanPremiumPlan';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface WebsiteAnalysis {
   problem: string;
@@ -25,17 +27,29 @@ interface WebsiteAnalysis {
   summary: string;
 }
 
+interface AppearanceAnalysis {
+  overallScore: number;
+  professionalScore: number;
+  modernScore: number;
+  usabilityScore: number;
+  brandingScore: number;
+  suggestions: string[];
+}
+
 interface SimilarWebsite {
   name: string;
   url: string;
   description: string;
   similarityScore: number;
+  screenshotUrl?: string;
 }
 
 interface ScanResult {
   scannedUrl: string;
   websiteTitle: string;
+  userScreenshot?: string;
   analysis: WebsiteAnalysis;
+  appearanceAnalysis?: AppearanceAnalysis;
   similarWebsites: SimilarWebsite[];
   overallSimilarityScore: number;
   uniquenessScore: number;
@@ -179,7 +193,9 @@ export default function WebScan() {
           metadata: JSON.parse(JSON.stringify({
             scan_type: 'webscan',
             scanned_url: scanData.scannedUrl,
+            user_screenshot: scanData.userScreenshot,
             analysis: scanData.analysis,
+            appearance_analysis: scanData.appearanceAnalysis,
             similar_websites: scanData.similarWebsites,
             overall_similarity_score: scanData.overallSimilarityScore,
             uniqueness_score: scanData.uniquenessScore,
@@ -524,6 +540,125 @@ export default function WebScan() {
               </Card>
             </div>
 
+            {/* Website Appearance Analysis Pie Chart */}
+            {result.appearanceAnalysis && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Palette className="h-5 w-5 text-primary" />
+                    Website Appearance Analysis
+                  </CardTitle>
+                  <CardDescription>
+                    Visual and design quality assessment of your website
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Pie Chart */}
+                    <div className="h-[280px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Overall Look', value: result.appearanceAnalysis.overallScore, color: 'hsl(var(--primary))' },
+                              { name: 'Professional', value: result.appearanceAnalysis.professionalScore, color: '#22c55e' },
+                              { name: 'Modern', value: result.appearanceAnalysis.modernScore, color: '#3b82f6' },
+                              { name: 'Usability', value: result.appearanceAnalysis.usabilityScore, color: '#f59e0b' },
+                              { name: 'Branding', value: result.appearanceAnalysis.brandingScore, color: '#8b5cf6' },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={90}
+                            paddingAngle={3}
+                            dataKey="value"
+                            label={({ name, value }) => `${name}: ${value}%`}
+                            labelLine={false}
+                          >
+                            {[
+                              { color: 'hsl(var(--primary))' },
+                              { color: '#22c55e' },
+                              { color: '#3b82f6' },
+                              { color: '#f59e0b' },
+                              { color: '#8b5cf6' },
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--background))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px'
+                            }}
+                            formatter={(value: number) => [`${value}%`, 'Score']}
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Score Breakdown */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Overall Look</span>
+                        <div className="flex items-center gap-2">
+                          <Progress value={result.appearanceAnalysis.overallScore} className="w-20 h-2" />
+                          <span className="text-sm font-bold w-10">{result.appearanceAnalysis.overallScore}%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Professional</span>
+                        <div className="flex items-center gap-2">
+                          <Progress value={result.appearanceAnalysis.professionalScore} className="w-20 h-2" />
+                          <span className="text-sm font-bold w-10">{result.appearanceAnalysis.professionalScore}%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Modern Design</span>
+                        <div className="flex items-center gap-2">
+                          <Progress value={result.appearanceAnalysis.modernScore} className="w-20 h-2" />
+                          <span className="text-sm font-bold w-10">{result.appearanceAnalysis.modernScore}%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Usability</span>
+                        <div className="flex items-center gap-2">
+                          <Progress value={result.appearanceAnalysis.usabilityScore} className="w-20 h-2" />
+                          <span className="text-sm font-bold w-10">{result.appearanceAnalysis.usabilityScore}%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Branding</span>
+                        <div className="flex items-center gap-2">
+                          <Progress value={result.appearanceAnalysis.brandingScore} className="w-20 h-2" />
+                          <span className="text-sm font-bold w-10">{result.appearanceAnalysis.brandingScore}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Improvement Suggestions */}
+                  {result.appearanceAnalysis.suggestions && result.appearanceAnalysis.suggestions.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-border">
+                      <h4 className="font-medium text-sm flex items-center gap-2 mb-3">
+                        <Lightbulb className="h-4 w-4 text-amber-500" />
+                        Suggestions to Improve Appearance
+                      </h4>
+                      <ul className="space-y-2">
+                        {result.appearanceAnalysis.suggestions.map((suggestion, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <span className="text-primary font-bold">{idx + 1}.</span>
+                            <span>{suggestion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Similar Websites - Paywalled */}
             <Card>
               <CardHeader>
@@ -559,42 +694,65 @@ export default function WebScan() {
                     <p className="text-sm mt-1">Your idea appears to be quite unique.</p>
                   </div>
                 ) : hasActiveSubscription ? (
-                  // Show all websites for premium users
-                  <div className="space-y-3">
+                  // Show all websites for premium users with screenshots
+                  <div className="grid gap-4 md:grid-cols-2">
                     {result.similarWebsites.map((website, idx) => (
-                      <div 
+                      <Card 
                         key={idx} 
-                        className={`p-4 rounded-lg border ${getSimilarityBg(website.similarityScore)}`}
+                        className={`overflow-hidden ${getSimilarityBg(website.similarityScore)}`}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold">{website.name}</span>
-                              <span className={`text-sm font-bold ${getSimilarityColor(website.similarityScore)}`}>
-                                {website.similarityScore}% similar
-                              </span>
-                              {idx < 10 && (
-                                <Badge variant="outline" className="text-xs gap-1">
-                                  <Eye className="h-2 w-2" />
-                                  Tracking
-                                </Badge>
-                              )}
-                            </div>
-                            <a 
-                              href={website.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline flex items-center gap-1 mb-2"
+                        {/* Screenshot */}
+                        {website.screenshotUrl && (
+                          <div className="relative border-b border-border">
+                            <AspectRatio ratio={16/9}>
+                              <img 
+                                src={website.screenshotUrl} 
+                                alt={`${website.name} homepage`}
+                                className="w-full h-full object-cover object-top"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </AspectRatio>
+                            <Badge 
+                              className={`absolute top-2 right-2 ${getSimilarityColor(website.similarityScore)} bg-background/90`}
                             >
-                              {website.url}
-                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                            </a>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {website.description}
-                            </p>
+                              {website.similarityScore}% similar
+                            </Badge>
                           </div>
-                        </div>
-                      </div>
+                        )}
+                        {!website.screenshotUrl && (
+                          <div className="h-24 bg-muted flex items-center justify-center border-b border-border">
+                            <div className="text-center text-muted-foreground">
+                              <Image className="h-8 w-8 mx-auto mb-1 opacity-50" />
+                              <p className="text-xs">Screenshot unavailable</p>
+                            </div>
+                          </div>
+                        )}
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold truncate">{website.name}</span>
+                            {idx < 10 && (
+                              <Badge variant="outline" className="text-xs gap-1 flex-shrink-0">
+                                <Eye className="h-2 w-2" />
+                                Tracking
+                              </Badge>
+                            )}
+                          </div>
+                          <a 
+                            href={website.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline flex items-center gap-1 mb-2"
+                          >
+                            <span className="truncate">{website.url}</span>
+                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                          </a>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {website.description}
+                          </p>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 ) : (

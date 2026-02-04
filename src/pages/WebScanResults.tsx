@@ -4,11 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download, Crown, Lock } from 'lucide-react';
+import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download, Crown, Lock, Palette, Lightbulb, Image } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import { format } from 'date-fns';
 import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
+import { Badge } from '@/components/ui/badge';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Progress } from '@/components/ui/progress';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface WebsiteAnalysis {
   problem: string;
@@ -20,17 +24,29 @@ interface WebsiteAnalysis {
   summary: string;
 }
 
+interface AppearanceAnalysis {
+  overallScore: number;
+  professionalScore: number;
+  modernScore: number;
+  usabilityScore: number;
+  brandingScore: number;
+  suggestions: string[];
+}
+
 interface SimilarWebsite {
   name: string;
   url: string;
   description: string;
   similarityScore: number;
+  screenshotUrl?: string;
 }
 
 interface ScanMetadata {
   scan_type: 'webscan';
   scanned_url: string;
+  user_screenshot?: string;
   analysis: WebsiteAnalysis;
+  appearance_analysis?: AppearanceAnalysis;
   similar_websites: SimilarWebsite[];
   overall_similarity_score: number;
   uniqueness_score: number;
@@ -261,6 +277,125 @@ export default function WebScanResults() {
           </Card>
         </div>
 
+        {/* Website Appearance Analysis Pie Chart */}
+        {metadata.appearance_analysis && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Palette className="h-5 w-5 text-primary" />
+                Website Appearance Analysis
+              </CardTitle>
+              <CardDescription>
+                Visual and design quality assessment of your website
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Pie Chart */}
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Overall Look', value: metadata.appearance_analysis.overallScore, color: 'hsl(var(--primary))' },
+                          { name: 'Professional', value: metadata.appearance_analysis.professionalScore, color: '#22c55e' },
+                          { name: 'Modern', value: metadata.appearance_analysis.modernScore, color: '#3b82f6' },
+                          { name: 'Usability', value: metadata.appearance_analysis.usabilityScore, color: '#f59e0b' },
+                          { name: 'Branding', value: metadata.appearance_analysis.brandingScore, color: '#8b5cf6' },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}%`}
+                        labelLine={false}
+                      >
+                        {[
+                          { color: 'hsl(var(--primary))' },
+                          { color: '#22c55e' },
+                          { color: '#3b82f6' },
+                          { color: '#f59e0b' },
+                          { color: '#8b5cf6' },
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                        formatter={(value: number) => [`${value}%`, 'Score']}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Score Breakdown */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Overall Look</span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={metadata.appearance_analysis.overallScore} className="w-20 h-2" />
+                      <span className="text-sm font-bold w-10">{metadata.appearance_analysis.overallScore}%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Professional</span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={metadata.appearance_analysis.professionalScore} className="w-20 h-2" />
+                      <span className="text-sm font-bold w-10">{metadata.appearance_analysis.professionalScore}%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Modern Design</span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={metadata.appearance_analysis.modernScore} className="w-20 h-2" />
+                      <span className="text-sm font-bold w-10">{metadata.appearance_analysis.modernScore}%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Usability</span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={metadata.appearance_analysis.usabilityScore} className="w-20 h-2" />
+                      <span className="text-sm font-bold w-10">{metadata.appearance_analysis.usabilityScore}%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Branding</span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={metadata.appearance_analysis.brandingScore} className="w-20 h-2" />
+                      <span className="text-sm font-bold w-10">{metadata.appearance_analysis.brandingScore}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Improvement Suggestions */}
+              {metadata.appearance_analysis.suggestions && metadata.appearance_analysis.suggestions.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h4 className="font-medium text-sm flex items-center gap-2 mb-3">
+                    <Lightbulb className="h-4 w-4 text-amber-500" />
+                    Suggestions to Improve Appearance
+                  </h4>
+                  <ul className="space-y-2">
+                    {metadata.appearance_analysis.suggestions.map((suggestion, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <span className="text-primary font-bold">{idx + 1}.</span>
+                        <span>{suggestion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Similar Websites - Premium Section */}
         <Card className={!hasActiveSubscription ? 'border-amber-500/30' : ''}>
           <CardHeader>
@@ -310,35 +445,58 @@ export default function WebScanResults() {
                 <p>No significantly similar websites found!</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 {metadata.similar_websites.map((website, idx) => (
-                  <div 
+                  <Card 
                     key={idx} 
-                    className={`p-4 rounded-lg border ${getSimilarityBg(website.similarityScore)}`}
+                    className={`overflow-hidden ${getSimilarityBg(website.similarityScore)}`}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">{website.name}</span>
-                          <span className={`text-sm font-bold ${getSimilarityColor(website.similarityScore)}`}>
-                            {website.similarityScore}% similar
-                          </span>
-                        </div>
-                        <a 
-                          href={website.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline flex items-center gap-1 mb-2"
+                    {/* Screenshot */}
+                    {website.screenshotUrl && (
+                      <div className="relative border-b border-border">
+                        <AspectRatio ratio={16/9}>
+                          <img 
+                            src={website.screenshotUrl} 
+                            alt={`${website.name} homepage`}
+                            className="w-full h-full object-cover object-top"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </AspectRatio>
+                        <Badge 
+                          className={`absolute top-2 right-2 ${getSimilarityColor(website.similarityScore)} bg-background/90`}
                         >
-                          {website.url}
-                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                        </a>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {website.description}
-                        </p>
+                          {website.similarityScore}% similar
+                        </Badge>
                       </div>
-                    </div>
-                  </div>
+                    )}
+                    {!website.screenshotUrl && (
+                      <div className="h-24 bg-muted flex items-center justify-center border-b border-border">
+                        <div className="text-center text-muted-foreground">
+                          <Image className="h-8 w-8 mx-auto mb-1 opacity-50" />
+                          <p className="text-xs">Screenshot unavailable</p>
+                        </div>
+                      </div>
+                    )}
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold truncate">{website.name}</span>
+                      </div>
+                      <a 
+                        href={website.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 mb-2"
+                      >
+                        <span className="truncate">{website.url}</span>
+                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {website.description}
+                      </p>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
