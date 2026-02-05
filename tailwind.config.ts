@@ -67,11 +67,14 @@ export default {
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-innovation': 'var(--gradient-innovation)',
-				'gradient-discovery': 'var(--gradient-discovery)'
+				'gradient-discovery': 'var(--gradient-discovery)',
+				'gradient-idescan': 'var(--gradient-idescan)',
+				'gradient-idescan-warm': 'var(--gradient-idescan-warm)'
 			},
 			boxShadow: {
 				'card': 'var(--shadow-card)',
-				'glow': 'var(--shadow-glow)'
+				'glow': 'var(--shadow-glow)',
+				'idescan': 'var(--shadow-idescan)'
 			},
 			transitionTimingFunction: {
 				'smooth': 'var(--transition-smooth)',
