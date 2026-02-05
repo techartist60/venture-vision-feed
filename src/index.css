@@ -42,14 +42,22 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
+    /* Idescan Accent Colors */
+    --idescan-teal: 175 70% 45%;
+    --idescan-purple: 265 65% 55%;
+    --idescan-orange: 25 95% 60%;
+
     /* Custom Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-innovation: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
     --gradient-discovery: linear-gradient(180deg, hsl(var(--background)), hsl(220 14% 98%));
+    --gradient-idescan: linear-gradient(135deg, hsl(var(--idescan-teal)), hsl(var(--idescan-purple)));
+    --gradient-idescan-warm: linear-gradient(135deg, hsl(var(--idescan-purple)), hsl(var(--idescan-orange)));
 
     /* Shadows */
     --shadow-card: 0 4px 16px hsl(var(--primary) / 0.1);
     --shadow-glow: 0 0 24px hsl(var(--primary-glow) / 0.3);
+    --shadow-idescan: 0 4px 20px hsl(var(--idescan-teal) / 0.4);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -119,4 +127,93 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Idescan Button Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 20px hsl(175 70% 45% / 0.3), 0 0 0 0 hsl(175 70% 45% / 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px hsl(175 70% 45% / 0.5), 0 0 20px 4px hsl(265 65% 55% / 0.3);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scan-progress {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.idescan-button {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.idescan-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  opacity: 0;
+  z-index: -1;
+}
+
+.idescan-button:hover::before,
+.idescan-button:focus::before {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-float-up {
+  animation: float-up 0.6s ease-out forwards;
+}
+
+.animate-float-up-delay-1 {
+  animation: float-up 0.6s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.animate-float-up-delay-2 {
+  animation: float-up 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.scan-progress-bar {
+  background: linear-gradient(
+    90deg,
+    hsl(175 70% 45% / 0.3) 0%,
+    hsl(265 65% 55%) 50%,
+    hsl(175 70% 45% / 0.3) 100%
+  );
+  background-size: 200% 100%;
+  animation: scan-progress 1.5s linear infinite;
+}
+
+.input-focus-glow:focus-within {
+  box-shadow: 0 0 0 3px hsl(175 70% 45% / 0.2), 0 4px 12px hsl(175 70% 45% / 0.15);
 }

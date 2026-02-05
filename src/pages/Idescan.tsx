@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Scan, Upload, Sparkles, Image as ImageIcon, Globe, ArrowRight } from 'lucide-react';
+import { Scan, Sparkles, Image as ImageIcon, Globe, ArrowRight, Loader2 } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 
 export default function Idescan() {
@@ -18,10 +18,17 @@ export default function Idescan() {
   const [loading, setLoading] = useState(false);
   const [signupPrompt, setSignupPrompt] = useState(false);
   const [indexingData, setIndexingData] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+
+  // Page load animation trigger
+  useEffect(() => {
+    const timer = setTimeout(() => setPageLoaded(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Auto-index data sources on component mount
   useEffect(() => {
@@ -31,14 +38,12 @@ export default function Idescan() {
         
         console.log('Force re-indexing innovation sources from external APIs...');
         
-        // Clear old data and fetch fresh
         const { data: countData } = await supabase
           .from('innovation_records')
           .select('*', { count: 'exact', head: true });
         
         console.log(`Current records in DB: ${countData || 0}`);
         
-        // Always trigger fresh indexing to get latest data
         const { error: indexError } = await supabase.functions.invoke('index-external-sources', {
           body: { sourceType: 'all' }
         });
@@ -182,198 +187,196 @@ export default function Idescan() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-discovery pb-20">
+    <div className={`min-h-screen bg-gradient-discovery pb-20 transition-all duration-500 ${pageLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-10">
-        <div className="px-4 py-4 max-w-4xl mx-auto">
+        <div className="px-4 py-4 max-w-3xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Scan className="h-6 w-6 text-primary" />
+              <div className="p-2 rounded-xl bg-gradient-idescan">
+                <Scan className="h-5 w-5 text-white" />
+              </div>
               <h1 className="text-xl font-bold">Idescan</h1>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate('/idescan/history')}
+              className="rounded-full"
             >
-              Scan History
+              History
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary mb-4">
-            <Sparkles className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h2 className="text-3xl font-bold mb-3">Find Similar Ideas</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            See if your idea already exists. We'll search patents, startups, and innovation databases to find similar ideas.
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* Hero Section - Minimal */}
+        <div className={`text-center mb-10 transition-all duration-700 delay-100 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">What's your idea?</h2>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            We'll search patents, startups & innovations to find similar concepts
           </p>
         </div>
 
-        {/* WebScan Banner */}
-        <Card 
-          className="mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20 cursor-pointer hover:shadow-glow transition-all"
-          onClick={() => navigate('/idescan/webscan')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Globe className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
-                    WebScan
-                    <span className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded-full">New</span>
-                  </h3>
+        {/* Main Input Area - Large & Central */}
+        <div className={`transition-all duration-700 delay-200 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <Card className="shadow-idescan border-0 bg-card/80 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-6 md:p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Description - Primary Focus */}
+                <div className="space-y-3">
+                  <Label htmlFor="description" className="text-base font-medium">
+                    Describe your idea
+                  </Label>
+                  <div className="input-focus-glow rounded-xl transition-all duration-300">
+                    <Textarea
+                      id="description"
+                      placeholder="Tell us what problem it solves, how it works, and who it's for..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={8}
+                      className="resize-none border-2 border-muted/50 focus:border-[hsl(175,70%,45%)] rounded-xl text-base transition-colors duration-300"
+                      required
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Scan any website URL to find similar ideas and competitors
+                    Minimum 50 characters for best results
                   </p>
                 </div>
-              </div>
-              <ArrowRight className="h-5 w-5 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Scan Form */}
-        <Card className="shadow-glow">
-          <CardHeader>
-            <CardTitle>Search for Your Idea</CardTitle>
-            <CardDescription>
-              Tell us about your idea and we'll find similar ones from around the world
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Describe Your Idea *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="What's your idea? Tell us what problem it solves, how it works, and who it's for. The more you tell us, the better we can help."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={10}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Need at least 50 characters. Be specific to get the best results.
-                </p>
-              </div>
-
-              {/* Image Upload */}
-              <div className="space-y-2">
-                <Label htmlFor="image">Add a Picture (Optional)</Label>
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                  {imagePreview ? (
-                    <div className="space-y-4">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-h-64 mx-auto rounded-lg"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview('');
-                        }}
-                      >
-                        Remove Image
-                      </Button>
-                    </div>
-                  ) : (
-                    <label htmlFor="image" className="cursor-pointer">
-                      <div className="flex flex-col items-center gap-2">
-                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
-                        <p className="text-sm font-medium">
-                          Click to add a picture
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          JPG or PNG, max 10MB
-                        </p>
+                {/* Image Upload - Compact */}
+                <div className="space-y-2">
+                  <Label htmlFor="image" className="text-sm text-muted-foreground">
+                    Add an image (optional)
+                  </Label>
+                  <div className="border-2 border-dashed border-muted/50 rounded-xl p-4 text-center hover:border-[hsl(175,70%,45%)/50] transition-all duration-300 input-focus-glow">
+                    {imagePreview ? (
+                      <div className="space-y-3">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="max-h-40 mx-auto rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview('');
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          Remove
+                        </Button>
                       </div>
-                      <Input
-                        id="image"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                  )}
+                    ) : (
+                      <label htmlFor="image" className="cursor-pointer block py-2">
+                        <div className="flex items-center justify-center gap-3">
+                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            Click to add an image
+                          </span>
+                        </div>
+                        <Input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
+
+                {/* Submit Button with Progress Animation */}
+                <div className="pt-2">
+                  {loading && (
+                    <div className="h-1 rounded-full overflow-hidden mb-4 bg-muted">
+                      <div className="h-full scan-progress-bar rounded-full" />
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading || indexingData}
+                    className="idescan-button w-full relative group rounded-2xl px-8 py-4 bg-gradient-idescan text-white font-medium
+                      transform transition-all duration-300 ease-out
+                      hover:scale-[1.02] active:scale-[0.98]
+                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(175,70%,45%)]
+                      disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100
+                      overflow-hidden"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {indexingData ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          Preparing...
+                        </>
+                      ) : loading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          Scanning...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-5 w-5" />
+                          Find Similar Ideas
+                        </>
+                      )}
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
+                      translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* WebScan Banner - Below main input */}
+        <div className={`mt-8 transition-all duration-700 delay-300 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <Card 
+            className="bg-gradient-to-r from-[hsl(265,65%,55%)/10] via-transparent to-[hsl(25,95%,60%)/10] border-[hsl(265,65%,55%)/20] cursor-pointer hover:shadow-lg transition-all duration-300 group"
+            onClick={() => navigate('/idescan/webscan')}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-idescan-warm">
+                    <Globe className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm flex items-center gap-2">
+                      WebScan
+                      <span className="px-2 py-0.5 text-[10px] bg-[hsl(265,65%,55%)/20] text-[hsl(265,65%,55%)] rounded-full">New</span>
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Scan any website URL for competitors
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
               </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={loading || indexingData}
-              >
-                {indexingData ? (
-                  <>
-                    <Upload className="mr-2 h-5 w-5 animate-spin" />
-                    Preparing Databases...
-                  </>
-                ) : loading ? (
-                  <>
-                    <Upload className="mr-2 h-5 w-5 animate-spin" />
-                    Processing Scan...
-                  </>
-                ) : (
-                  <>
-                    <Scan className="mr-2 h-5 w-5" />
-                    Search for Similar Ideas
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Info Cards */}
-        <div className="grid md:grid-cols-3 gap-4 mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Patents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                We search global patent databases
-              </p>
             </CardContent>
           </Card>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Startups</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                We check startup databases worldwide
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Community Ideas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                We compare with ideas from our community
-              </p>
-            </CardContent>
-          </Card>
+        {/* Info Cards - Minimal */}
+        <div className={`grid grid-cols-3 gap-3 mt-8 transition-all duration-700 delay-400 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <div className="text-center p-4 rounded-xl bg-muted/30">
+            <p className="text-xs font-medium">Patents</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Global databases</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-muted/30">
+            <p className="text-xs font-medium">Startups</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Worldwide</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-muted/30">
+            <p className="text-xs font-medium">Community</p>
+            <p className="text-[10px] text-muted-foreground mt-1">User ideas</p>
+          </div>
         </div>
       </div>
 
