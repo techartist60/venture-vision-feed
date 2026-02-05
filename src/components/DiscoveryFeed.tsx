@@ -7,6 +7,7 @@ import { CommentDialog } from '@/components/CommentDialog';
 import { MessageDialog } from '@/components/MessageDialog';
 import { useToast } from '@/hooks/use-toast';
 import SignupPrompt from './SignupPrompt';
+import { createNotification } from '@/utils/notifications';
 
 interface MediaUpload {
   id: string;
@@ -210,6 +211,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
     ));
 
     try {
+      // Get media owner for notification
+      const mediaItem = media.find(item => item.id === mediaId);
+      const ownerId = mediaItem?.user_id;
+
       if (isLiked) {
         // Unlike - use parallel operations for speed
         await Promise.all([
@@ -228,6 +233,16 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
             .insert({ user_id: user.id, media_id: mediaId }),
           supabase.rpc('increment_likes_count', { media_id: mediaId })
         ]);
+
+        // Send notification to media owner
+        if (ownerId) {
+          await createNotification({
+            recipientId: ownerId,
+            actorId: user.id,
+            type: 'like',
+            mediaId: mediaId
+          });
+        }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -252,6 +267,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
     }
 
     try {
+      // Get media owner for notification
+      const mediaItem = media.find(item => item.id === mediaId);
+      const ownerId = mediaItem?.user_id;
+
       if (isSaved) {
         // Unsave
         await supabase
@@ -296,6 +315,16 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
             .from('media_uploads')
             .update({ saves_count: currentMedia.saves_count + 1 })
             .eq('id', mediaId);
+        }
+
+        // Send notification to media owner
+        if (ownerId) {
+          await createNotification({
+            recipientId: ownerId,
+            actorId: user.id,
+            type: 'save',
+            mediaId: mediaId
+          });
         }
 
         toast({

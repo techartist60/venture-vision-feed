@@ -11,6 +11,11 @@ import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
 import { LinkifiedText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
+import DynamicMetaTags from '@/components/DynamicMetaTags';
+import { createNotification } from '@/utils/notifications';
+
+// Default fallback logo for OG images
+const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
 
 interface MediaUpload {
   id: string;
@@ -207,7 +212,7 @@ export default function IdeaDetail() {
         // Update likes count directly
         const { data: currentMedia } = await supabase
           .from('media_uploads')
-          .select('likes_count')
+          .select('likes_count, user_id')
           .eq('id', idea.id)
           .single();
 
@@ -216,6 +221,14 @@ export default function IdeaDetail() {
             .from('media_uploads')
             .update({ likes_count: currentMedia.likes_count + 1 })
             .eq('id', idea.id);
+          
+          // Send notification to media owner
+          await createNotification({
+            recipientId: currentMedia.user_id,
+            actorId: user.id,
+            type: 'like',
+            mediaId: idea.id
+          });
         }
       }
 
@@ -281,7 +294,7 @@ export default function IdeaDetail() {
         // Update saves count directly
         const { data: currentMedia } = await supabase
           .from('media_uploads')
-          .select('saves_count')
+          .select('saves_count, user_id')
           .eq('id', idea.id)
           .single();
 
@@ -290,6 +303,14 @@ export default function IdeaDetail() {
             .from('media_uploads')
             .update({ saves_count: currentMedia.saves_count + 1 })
             .eq('id', idea.id);
+          
+          // Send notification to media owner
+          await createNotification({
+            recipientId: currentMedia.user_id,
+            actorId: user.id,
+            type: 'save',
+            mediaId: idea.id
+          });
         }
 
         toast({
@@ -340,8 +361,20 @@ export default function IdeaDetail() {
     );
   }
 
+  // Get the OG image - use thumbnail, media URL, or fallback to logo
+  const ogImage = idea.thumbnail_url || idea.media_url || `${window.location.origin}${DEFAULT_OG_IMAGE}`;
+  
   return (
     <div className="min-h-screen bg-background">
+      {/* Dynamic OG Meta Tags for sharing */}
+      <DynamicMetaTags
+        title={idea.title}
+        description={idea.description || `Shared by ${idea.profiles?.full_name || 'Anonymous'} on Idestrim`}
+        image={ogImage}
+        url={`${window.location.origin}/idea/${idea.id}`}
+        type="article"
+      />
+      
       {/* Header */}
       <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 max-w-md mx-auto">
