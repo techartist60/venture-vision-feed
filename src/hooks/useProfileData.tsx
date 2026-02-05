@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-
+import { createNotification } from '@/utils/notifications';
 interface ProfileStats {
   followers: number;
   following: number;
@@ -211,6 +211,13 @@ export const useProfileData = (userId?: string) => {
         setIsFollowing(true);
         // Update optimistically but real-time will sync
         setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
+        
+        // Send follow notification
+        await createNotification({
+          recipientId: userId,
+          actorId: user.id,
+          type: 'follow'
+        });
         
         toast({
           title: "Following",

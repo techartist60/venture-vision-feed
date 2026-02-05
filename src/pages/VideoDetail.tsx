@@ -12,6 +12,11 @@ import { cn } from '@/lib/utils';
 import { toast as sonnerToast } from 'sonner';
 import { LinkifiedText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
+import DynamicMetaTags from '@/components/DynamicMetaTags';
+import { createNotification } from '@/utils/notifications';
+
+// Default fallback logo for OG images
+const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
 
 interface MediaUpload {
   id: string;
@@ -207,7 +212,7 @@ export default function VideoDetail() {
 
         const { data: currentMedia } = await supabase
           .from('media_uploads')
-          .select('likes_count')
+          .select('likes_count, user_id')
           .eq('id', media.id)
           .single();
 
@@ -216,6 +221,14 @@ export default function VideoDetail() {
             .from('media_uploads')
             .update({ likes_count: currentMedia.likes_count + 1 })
             .eq('id', media.id);
+          
+          // Send notification to media owner
+          await createNotification({
+            recipientId: currentMedia.user_id,
+            actorId: user.id,
+            type: 'like',
+            mediaId: media.id
+          });
         }
       }
 
@@ -279,7 +292,7 @@ export default function VideoDetail() {
 
         const { data: currentMedia } = await supabase
           .from('media_uploads')
-          .select('saves_count')
+          .select('saves_count, user_id')
           .eq('id', media.id)
           .single();
 
@@ -288,6 +301,14 @@ export default function VideoDetail() {
             .from('media_uploads')
             .update({ saves_count: currentMedia.saves_count + 1 })
             .eq('id', media.id);
+          
+          // Send notification to media owner
+          await createNotification({
+            recipientId: currentMedia.user_id,
+            actorId: user.id,
+            type: 'save',
+            mediaId: media.id
+          });
         }
 
         toast({
@@ -383,8 +404,20 @@ export default function VideoDetail() {
 
   const isVideo = media.media_type === 'video' || media.media_type.startsWith('video/');
 
+  // Get the OG image - use thumbnail, media URL for images, or fallback to logo
+  const ogImage = media.thumbnail_url || (!isVideo ? media.media_url : null) || `${window.location.origin}${DEFAULT_OG_IMAGE}`;
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Dynamic OG Meta Tags for sharing */}
+      <DynamicMetaTags
+        title={media.title}
+        description={media.description || `Shared by ${media.profiles?.full_name || 'Anonymous'} on Idestrim`}
+        image={ogImage}
+        url={`${window.location.origin}/video/${media.id}`}
+        type={isVideo ? 'video.other' : 'article'}
+      />
+      
       {/* Header - YouTube style */}
       <header className="bg-background border-b border-border sticky top-0 z-40">
         <div className="px-4 h-14 flex items-center gap-3">

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createNotification, getMediaOwnerId } from '@/utils/notifications';
 
 interface Comment {
   id: string;
@@ -145,6 +146,18 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: Comme
           .from('media_uploads')
           .update({ comments_count: (currentMedia.comments_count || 0) + 1 })
           .eq('id', mediaId);
+      }
+
+      // Create notification for the media owner
+      const ownerId = await getMediaOwnerId(mediaId);
+      if (ownerId && user) {
+        await createNotification({
+          recipientId: ownerId,
+          actorId: user.id,
+          type: 'comment',
+          mediaId: mediaId,
+          commentContent: newComment.trim().substring(0, 100)
+        });
       }
 
       toast({
