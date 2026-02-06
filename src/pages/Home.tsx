@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { Search, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,35 +16,70 @@ const IdescanButton = ({ onClick }: { onClick: () => void }) => (
       transform transition-all duration-300 ease-out shadow-idescan
       hover:scale-[1.03] active:scale-[0.98]
       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(175,70%,45%)]
-      overflow-hidden drop-shadow-lg"
+      overflow-hidden"
   >
     <span className="relative z-10 flex items-center gap-2">
       <Sparkles className="h-4 w-4" />
       Explore Ideas
     </span>
-    {/* Shimmer effect on hover */}
     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
       translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
   </button>
 );
 
+const FloatingIdescanLogo = ({ onClick }: { onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="idescan-button p-2.5 rounded-full bg-gradient-idescan shadow-idescan
+      transform transition-all duration-300 ease-out
+      hover:scale-110 active:scale-95
+      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(175,70%,45%)]
+      drop-shadow-lg"
+    aria-label="Open Idescan"
+  >
+    <Sparkles className="h-5 w-5 text-white" />
+  </button>
+);
+
+function useScrolledPast(threshold: number) {
+  const [scrolledPast, setScrolledPast] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolledPast(window.scrollY > threshold);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [threshold]);
+
+  return scrolledPast;
+}
+
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const scrolledPast = useScrolledPast(120);
 
   // Desktop layout
   if (!isMobile) {
     return (
       <div className="space-y-6">
-      {/* Ideas Feed */}
+        {/* Idescan Invitation - inline */}
+        <div className="flex flex-col items-center justify-center py-8 space-y-4 animate-float-up">
+          <p className="text-muted-foreground text-sm">Curious if your idea already exists?</p>
+          <IdescanButton onClick={() => navigate('/idescan')} />
+        </div>
+
+        {/* Ideas Feed */}
         <section>
           <DiscoveryFeed />
         </section>
 
-        {/* Floating Idescan Button */}
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 ml-32 z-40 animate-float-up">
-          <IdescanButton onClick={() => navigate('/idescan')} />
+        {/* Floating mini logo - appears on scroll */}
+        <div className={`fixed top-20 left-72 z-40 transition-all duration-300 ${
+          scrolledPast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+        }`}>
+          <FloatingIdescanLogo onClick={() => navigate('/idescan')} />
         </div>
       </div>
     );
@@ -78,14 +114,22 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Idescan Invitation - inline */}
+      <div className="px-4 py-6 max-w-md mx-auto flex flex-col items-center space-y-3 animate-float-up">
+        <p className="text-muted-foreground text-xs text-center">Curious if your idea already exists?</p>
+        <IdescanButton onClick={() => navigate('/idescan')} />
+      </div>
+
       {/* Ideas Feed */}
       <section className="px-4 pb-8 max-w-md mx-auto">
         <DiscoveryFeed />
       </section>
 
-      {/* Floating Idescan Button */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-float-up">
-        <IdescanButton onClick={() => navigate('/idescan')} />
+      {/* Floating mini logo - appears on scroll, top-left */}
+      <div className={`fixed top-16 left-3 z-50 transition-all duration-300 ${
+        scrolledPast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+      }`}>
+        <FloatingIdescanLogo onClick={() => navigate('/idescan')} />
       </div>
     </div>
   );
