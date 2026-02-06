@@ -210,9 +210,37 @@ export default function Idescan() {
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        {/* WebScan Banner - Prominent at top */}
+        <div className={`mb-6 transition-all duration-500 delay-100 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <Card 
+            className="bg-gradient-to-r from-[hsl(265,65%,55%)/10] via-transparent to-[hsl(25,95%,60%)/10] border-[hsl(265,65%,55%)/20] cursor-pointer hover:shadow-lg transition-all duration-300 group"
+            onClick={() => navigate('/idescan/webscan')}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-idescan-warm">
+                    <Globe className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm flex items-center gap-2">
+                      WebScan
+                      <span className="px-2 py-0.5 text-[10px] bg-[hsl(265,65%,55%)/20] text-[hsl(265,65%,55%)] rounded-full">New</span>
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Scan any website URL for competitors
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Hero Section - Minimal */}
-        <div className={`text-center mb-10 transition-all duration-700 delay-100 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+        <div className={`text-center mb-8 transition-all duration-700 delay-200 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
           <h2 className="text-2xl md:text-3xl font-bold mb-2">What's your idea?</h2>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
             We'll search patents, startups & innovations to find similar concepts
@@ -331,34 +359,6 @@ export default function Idescan() {
                   </button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* WebScan Banner - Below main input */}
-        <div className={`mt-8 transition-all duration-700 delay-300 ${pageLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-          <Card 
-            className="bg-gradient-to-r from-[hsl(265,65%,55%)/10] via-transparent to-[hsl(25,95%,60%)/10] border-[hsl(265,65%,55%)/20] cursor-pointer hover:shadow-lg transition-all duration-300 group"
-            onClick={() => navigate('/idescan/webscan')}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-idescan-warm">
-                    <Globe className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-sm flex items-center gap-2">
-                      WebScan
-                      <span className="px-2 py-0.5 text-[10px] bg-[hsl(265,65%,55%)/20] text-[hsl(265,65%,55%)] rounded-full">New</span>
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Scan any website URL for competitors
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
-              </div>
             </CardContent>
           </Card>
         </div>
