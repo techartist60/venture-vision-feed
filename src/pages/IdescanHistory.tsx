@@ -46,34 +46,14 @@ export default function IdescanHistory() {
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [scanToDelete, setScanToDelete] = useState<string | null>(null);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [selectedScanForPaywall, setSelectedScanForPaywall] = useState<ScanRecord | null>(null);
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    checkSubscriptionAndFetchScans();
-  }, [user, navigate]);
-
-  const checkSubscriptionAndFetchScans = async () => {
-    // Check subscription status
-    const { data: subData } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user!.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    setHasActiveSubscription(!!subData);
     fetchScans();
-  };
+  }, [user, navigate]);
 
   const fetchScans = async () => {
     try {
