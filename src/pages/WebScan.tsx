@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Crown, Lock, Clock, Palette, Lightbulb, Image } from 'lucide-react';
+import { Globe, Scan, Sparkles, Link2, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Loader2, Download, Eye, Clock, Palette, Lightbulb, Image } from 'lucide-react';
 import SignupPrompt from '@/components/SignupPrompt';
 import { Progress } from '@/components/ui/progress';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
-import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
-import WebScanPremiumPlan from '@/components/WebScanPremiumPlan';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface WebsiteAnalysis {
