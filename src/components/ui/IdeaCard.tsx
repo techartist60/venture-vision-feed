@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LinkifiedText } from '@/utils/linkDetection';
+import EditPostDialog from '@/components/EditPostDialog';
 
 interface IdeaCardProps {
   id: string;
