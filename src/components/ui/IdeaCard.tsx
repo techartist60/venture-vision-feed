@@ -81,6 +81,7 @@ export default function IdeaCard({
   const navigate = useNavigate();
   const { currentlyPlaying, setCurrentlyPlaying, videoRefs } = useVideo();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
