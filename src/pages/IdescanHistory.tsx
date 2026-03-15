@@ -277,18 +277,6 @@ export default function IdescanHistory() {
                         )}
                       </div>
                       
-                      {/* Subscribe button for locked WebScans */}
-                      {isLocked && (
-                        <Button
-                          size="sm"
-                          className="mt-3 gap-2"
-                          variant="default"
-                          onClick={handleSubscribeClick}
-                        >
-                          <Crown className="h-3 w-3" />
-                          Subscribe Now
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
