@@ -8,8 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Globe, ArrowLeft, Eye, Trash2, RefreshCw, Clock, 
-  AlertCircle, CheckCircle2, ExternalLink, Crown, Bell,
-  TrendingUp, Calendar, Lock
+  CheckCircle2, ExternalLink, Bell,
+  TrendingUp, Calendar
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
