@@ -283,6 +283,7 @@ export default function IdeaCard({
   // Text-only idea layout
   if (mediaType === 'text') {
     return (
+    <>
       <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
         {/* User Info at top */}
         <div className="p-4 pb-3">
