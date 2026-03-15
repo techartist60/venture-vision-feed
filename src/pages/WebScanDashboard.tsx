@@ -247,7 +247,7 @@ export default function WebScanDashboard() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Crown className={subscription?.tier === 'pro' ? 'h-5 w-5 text-amber-500' : 'h-5 w-5 text-muted-foreground'} />
+                  <Eye className="h-5 w-5 text-primary" />
                   <span className="font-medium capitalize">{subscription?.tier || 'Free'} Plan</span>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -258,12 +258,6 @@ export default function WebScanDashboard() {
                   {subscription?.scan_frequency === 'daily' ? 'Daily' : 'Weekly'} scans
                 </div>
               </div>
-              {subscription?.tier !== 'pro' && (
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Crown className="h-4 w-4" />
-                  Upgrade to Pro
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
