@@ -203,15 +203,7 @@ export default function WebScan() {
     }
   };
 
-  const handleUnlockPremium = () => {
-    setPaywallOpen(true);
-  };
-
-  const handlePaymentSuccess = async () => {
-    setPaywallOpen(false);
-    await checkSubscription();
-    
-    // Add websites to monitoring after payment
+  const handleAddToMonitoring = async () => {
     if (result && currentScanId && user) {
       const watchedWebsites = result.similarWebsites.slice(0, 10).map(website => ({
         user_id: user.id,
@@ -266,17 +258,15 @@ export default function WebScan() {
               <h1 className="text-xl font-bold">WebScan</h1>
             </div>
             <div className="flex items-center gap-2">
-              {hasActiveSubscription && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate('/idescan/webscan/dashboard')}
-                  className="gap-2"
-                >
-                  <Eye className="h-4 w-4" />
-                  Dashboard
-                </Button>
-              )}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate('/idescan/webscan/dashboard')}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Dashboard
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -300,51 +290,6 @@ export default function WebScan() {
             Submit any public website URL and we'll analyze its concept, find similar websites based on news and patents across the internet.
           </p>
         </div>
-
-        {/* Subscription Status */}
-        {hasActiveSubscription && activeSubscription && (
-          <Card className="mb-6 border-green-500/30 bg-green-500/5">
-            <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <Crown className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-medium">WebScan Premium Active</p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Expires: {new Date(activeSubscription.expires_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <Badge variant="secondary" className="capitalize">{activeSubscription.plan_type} Plan</Badge>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* KES Premium Banner for non-subscribers */}
-        {user && !hasActiveSubscription && (
-          <Card className="mb-6 border-amber-500/30 bg-amber-500/5">
-            <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <Crown className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-medium">WebScan Premium</p>
-                  <p className="text-sm text-muted-foreground">Unlock top 10 similar websites & change tracking</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Badge variant="outline" className="border-amber-500/50">50 KES/week</Badge>
-                <Badge variant="outline" className="border-amber-500/50">150 KES/month</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* $10 Premium Plan for web integration (separate from KES plans) */}
-        {user && (
-          <div className="mb-6">
-            <WebScanPremiumPlan />
-          </div>
-        )}
 
         {/* Scan Form */}
         <Card className="shadow-glow mb-8">
@@ -493,9 +438,6 @@ export default function WebScan() {
                     {result.overallSimilarityScore}%
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">Overall Similarity</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Average similarity to found websites
-                  </p>
                 </CardContent>
               </Card>
               <Card className={getSimilarityBg(100 - result.uniquenessScore)}>
@@ -504,9 +446,6 @@ export default function WebScan() {
                     {result.uniquenessScore}%
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">Uniqueness Score</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    How unique this idea appears to be
-                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -525,7 +464,6 @@ export default function WebScan() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* Pie Chart */}
                     <div className="h-[280px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -568,8 +506,6 @@ export default function WebScan() {
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
-
-                    {/* Score Breakdown */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm">Overall Look</span>
@@ -609,7 +545,6 @@ export default function WebScan() {
                     </div>
                   </div>
 
-                  {/* Improvement Suggestions */}
                   {result.appearanceAnalysis.suggestions && result.appearanceAnalysis.suggestions.length > 0 && (
                     <div className="mt-6 pt-6 border-t border-border">
                       <h4 className="font-medium text-sm flex items-center gap-2 mb-3">
@@ -630,31 +565,15 @@ export default function WebScan() {
               </Card>
             )}
 
-            {/* Similar Websites - Paywalled */}
+            {/* Similar Websites - All visible */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-amber-500" />
-                    Similar Websites Found ({result.similarWebsites.length})
-                  </CardTitle>
-                  {hasActiveSubscription ? (
-                    <Badge variant="secondary" className="gap-1">
-                      <Eye className="h-3 w-3" />
-                      Premium
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600">
-                      <Lock className="h-3 w-3" />
-                      Locked
-                    </Badge>
-                  )}
-                </div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                  Similar Websites Found ({result.similarWebsites.length})
+                </CardTitle>
                 <CardDescription>
-                  {hasActiveSubscription 
-                    ? 'Websites with similar concepts ranked by similarity - all are being monitored'
-                    : 'Unlock premium to view and track the top 10 similar websites'
-                  }
+                  Websites with similar concepts ranked by similarity
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -664,15 +583,13 @@ export default function WebScan() {
                     <p>No significantly similar websites found!</p>
                     <p className="text-sm mt-1">Your idea appears to be quite unique.</p>
                   </div>
-                ) : hasActiveSubscription ? (
-                  // Show all websites for premium users with screenshots
+                ) : (
                   <div className="grid gap-4 md:grid-cols-2">
                     {result.similarWebsites.map((website, idx) => (
                       <Card 
                         key={idx} 
                         className={`overflow-hidden ${getSimilarityBg(website.similarityScore)}`}
                       >
-                        {/* Screenshot */}
                         {website.screenshotUrl && (
                           <div className="relative border-b border-border">
                             <AspectRatio ratio={16/9}>
@@ -726,46 +643,6 @@ export default function WebScan() {
                       </Card>
                     ))}
                   </div>
-                ) : (
-                  // Show locked state for free users
-                  <div className="space-y-3">
-                    {/* Show blurred preview */}
-                    <div className="relative">
-                      <div className="space-y-3 filter blur-sm pointer-events-none">
-                        {result.similarWebsites.slice(0, 3).map((website, idx) => (
-                          <div 
-                            key={idx} 
-                            className="p-4 rounded-lg border bg-muted/30"
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold">{website.name}</span>
-                              <span className="text-sm font-bold text-muted-foreground">
-                                {website.similarityScore}% similar
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {website.description?.substring(0, 100)}...
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Overlay with CTA */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-                        <div className="text-center p-6">
-                          <Lock className="h-10 w-10 mx-auto mb-3 text-amber-500" />
-                          <h4 className="font-semibold mb-2">Unlock Top 10 Similar Websites</h4>
-                          <p className="text-sm text-muted-foreground mb-4 max-w-xs">
-                            Get access to detailed similarity analysis, change tracking, and notifications
-                          </p>
-                          <Button onClick={handleUnlockPremium} className="gap-2">
-                            <Crown className="h-4 w-4" />
-                            Unlock from 50 KES/week
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 )}
               </CardContent>
             </Card>
@@ -781,7 +658,7 @@ export default function WebScan() {
                   websiteTitle: result.websiteTitle,
                   scannedUrl: result.scannedUrl,
                   analysis: result.analysis,
-                  similarWebsites: hasActiveSubscription ? result.similarWebsites : [],
+                  similarWebsites: result.similarWebsites,
                   overallSimilarityScore: result.overallSimilarityScore,
                   uniquenessScore: result.uniquenessScore,
                 })}
@@ -789,16 +666,10 @@ export default function WebScan() {
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </Button>
-              {hasActiveSubscription && (
-                <Button onClick={() => navigate('/idescan/webscan/dashboard')}>
+              {result.similarWebsites.length > 0 && (
+                <Button onClick={handleAddToMonitoring}>
                   <Eye className="mr-2 h-4 w-4" />
-                  View Dashboard
-                </Button>
-              )}
-              {!hasActiveSubscription && result.similarWebsites.length > 0 && (
-                <Button onClick={handleUnlockPremium}>
-                  <Crown className="mr-2 h-4 w-4" />
-                  Unlock Premium
+                  Track & Monitor
                 </Button>
               )}
             </div>
@@ -821,14 +692,11 @@ export default function WebScan() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  Premium Tracking
-                </CardTitle>
+                <CardTitle className="text-sm">Similar Websites</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  Subscribe to monitor top 10 similar websites for changes (from 50 KES/week)
+                  View and track the top 10 similar websites for changes
                 </p>
               </CardContent>
             </Card>
@@ -851,14 +719,6 @@ export default function WebScan() {
         open={signupPrompt}
         onOpenChange={setSignupPrompt}
         action="use WebScan"
-      />
-
-      <WebScanPremiumPaywall
-        open={paywallOpen}
-        onOpenChange={setPaywallOpen}
-        scanId={currentScanId || undefined}
-        similarWebsitesCount={result?.similarWebsites.length || 0}
-        onSuccess={handlePaymentSuccess}
       />
     </div>
   );
