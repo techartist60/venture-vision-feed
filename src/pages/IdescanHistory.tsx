@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe, Lock, Crown } from 'lucide-react';
+import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
