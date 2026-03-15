@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download, Crown, Lock, Palette, Lightbulb, Image } from 'lucide-react';
+import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download, Palette, Lightbulb, Image } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import { format } from 'date-fns';
-import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
 import { Badge } from '@/components/ui/badge';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Progress } from '@/components/ui/progress';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Progress } from '@/components/ui/progress';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 
