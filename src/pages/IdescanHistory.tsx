@@ -216,7 +216,6 @@ export default function IdescanHistory() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isLocked && <Crown className="h-4 w-4 text-amber-500" />}
                         <Badge className={getStatusColor(scan.status)}>
                           {scan.status}
                         </Badge>
