@@ -498,6 +498,7 @@ export default function IdeaCard({
   // YouTube-style photo post layout (list view)
   if (mediaType === 'image') {
     return (
+    <>
       <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
         {/* User Info at top */}
         <div className="p-4 pb-3">
