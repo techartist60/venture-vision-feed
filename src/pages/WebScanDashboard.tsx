@@ -59,37 +59,12 @@ export default function WebScanDashboard() {
   const [changes, setChanges] = useState<Record<string, WebsiteChange[]>>({});
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (user) {
-      checkSubscriptionAndFetchData();
+      fetchData();
     }
   }, [user]);
-
-  const checkSubscriptionAndFetchData = async () => {
-    setLoading(true);
-    
-    // First check if user has an active subscription
-    const { data: subData } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user!.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (!subData) {
-      setHasActiveSubscription(false);
-      setLoading(false);
-      return;
-    }
-    
-    setHasActiveSubscription(true);
-    fetchData();
-  };
 
   const fetchData = async () => {
     setLoading(true);
