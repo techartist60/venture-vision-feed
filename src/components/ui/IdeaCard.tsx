@@ -717,6 +717,7 @@ export default function IdeaCard({
 
   // Video layout - Clicking thumbnail navigates to detail page
   return (
+    <>
     <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
       {/* Media - Clicking thumbnail goes to video page */}
       <div 
