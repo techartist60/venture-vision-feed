@@ -70,35 +70,7 @@ export default function WebScan() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
-  const [paywallOpen, setPaywallOpen] = useState(false);
   const [currentScanId, setCurrentScanId] = useState<string | null>(null);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      checkSubscription();
-    }
-  }, [user]);
-
-  const checkSubscription = async () => {
-    if (!user) return;
-    
-    const { data } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (data) {
-      setHasActiveSubscription(true);
-      setActiveSubscription(data);
-    }
-  };
 
   const isValidUrl = (urlString: string): boolean => {
     try {
