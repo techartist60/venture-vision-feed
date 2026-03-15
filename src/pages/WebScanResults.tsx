@@ -58,8 +58,6 @@ export default function WebScanResults() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
-  const [paywallOpen, setPaywallOpen] = useState(false);
   const [scanData, setScanData] = useState<{
     title: string;
     created_at: string;
@@ -71,24 +69,8 @@ export default function WebScanResults() {
       navigate('/auth');
       return;
     }
-    if (id) checkSubscriptionAndFetchScan();
+    if (id) fetchScan();
   }, [user, id]);
-
-  const checkSubscriptionAndFetchScan = async () => {
-    // First check subscription status
-    const { data: subData } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user!.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    setHasActiveSubscription(!!subData);
-    fetchScan();
-  };
 
   const fetchScan = async () => {
     try {
