@@ -14,7 +14,6 @@ import { Progress } from '@/components/ui/progress';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface WebsiteAnalysis {
   problem: string;
