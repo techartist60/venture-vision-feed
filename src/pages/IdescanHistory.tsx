@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
+
 
 interface ScanMetadata {
   scan_type?: 'webscan' | 'idescan';
