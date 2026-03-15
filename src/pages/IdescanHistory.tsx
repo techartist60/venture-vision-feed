@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe, Lock, Crown } from 'lucide-react';
+import { ArrowLeft, Scan, Clock, Image as ImageIcon, FileText, Trash2, Plus, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
+
 
 interface ScanMetadata {
   scan_type?: 'webscan' | 'idescan';
@@ -47,33 +47,14 @@ export default function IdescanHistory() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scanToDelete, setScanToDelete] = useState<string | null>(null);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [selectedScanForPaywall, setSelectedScanForPaywall] = useState<ScanRecord | null>(null);
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    checkSubscriptionAndFetchScans();
-  }, [user, navigate]);
-
-  const checkSubscriptionAndFetchScans = async () => {
-    // Check subscription status
-    const { data: subData } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user!.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    setHasActiveSubscription(!!subData);
     fetchScans();
-  };
+  }, [user, navigate]);
 
   const fetchScans = async () => {
     try {
@@ -203,7 +184,6 @@ export default function IdescanHistory() {
           <div className="space-y-4">
             {scans.map((scan) => {
               const isWebScan = scan.metadata?.scan_type === 'webscan';
-              const isLocked = isWebScan && !hasActiveSubscription;
               
               const handleCardClick = () => {
                 if (isWebScan) {
@@ -212,17 +192,11 @@ export default function IdescanHistory() {
                   navigate(`/idescan/results/${scan.id}`);
                 }
               };
-
-              const handleSubscribeClick = (e: React.MouseEvent) => {
-                e.stopPropagation();
-                setSelectedScanForPaywall(scan);
-                setPaywallOpen(true);
-              };
               
               return (
                 <Card
                   key={scan.id}
-                  className={`hover:shadow-glow transition-all cursor-pointer ${isLocked ? 'border-amber-500/30' : ''}`}
+                  className="hover:shadow-glow transition-all cursor-pointer"
                   onClick={handleCardClick}
                 >
                   <CardHeader>
@@ -235,12 +209,6 @@ export default function IdescanHistory() {
                             <Scan className="h-4 w-4 text-primary" />
                           )}
                           <CardTitle className="text-lg">{scan.title}</CardTitle>
-                          {isLocked && (
-                            <Badge variant="outline" className="border-amber-500/50 text-amber-500 gap-1">
-                              <Lock className="h-3 w-3" />
-                              Premium
-                            </Badge>
-                          )}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
@@ -248,7 +216,6 @@ export default function IdescanHistory() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isLocked && <Crown className="h-4 w-4 text-amber-500" />}
                         <Badge className={getStatusColor(scan.status)}>
                           {scan.status}
                         </Badge>
@@ -310,18 +277,6 @@ export default function IdescanHistory() {
                         )}
                       </div>
                       
-                      {/* Subscribe button for locked WebScans */}
-                      {isLocked && (
-                        <Button
-                          size="sm"
-                          className="mt-3 gap-2"
-                          variant="default"
-                          onClick={handleSubscribeClick}
-                        >
-                          <Crown className="h-3 w-3" />
-                          Subscribe Now
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -348,18 +303,6 @@ export default function IdescanHistory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Premium Paywall Dialog */}
-      <WebScanPremiumPaywall
-        open={paywallOpen}
-        onOpenChange={setPaywallOpen}
-        scanId={selectedScanForPaywall?.id}
-        similarWebsitesCount={selectedScanForPaywall?.metadata?.similar_websites?.length || 10}
-        onSuccess={() => {
-          setPaywallOpen(false);
-          checkSubscriptionAndFetchScans();
-        }}
-      />
     </div>
   );
 }

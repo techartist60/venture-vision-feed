@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download, Crown, Lock, Palette, Lightbulb, Image } from 'lucide-react';
+import { Globe, Sparkles, ExternalLink, ArrowLeft, AlertCircle, CheckCircle2, Download, Palette, Lightbulb, Image } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportWebScanToPdf } from '@/utils/webscanPdfExport';
 import { format } from 'date-fns';
-import WebScanPremiumPaywall from '@/components/WebScanPremiumPaywall';
 import { Badge } from '@/components/ui/badge';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Progress } from '@/components/ui/progress';
@@ -57,8 +56,6 @@ export default function WebScanResults() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
-  const [paywallOpen, setPaywallOpen] = useState(false);
   const [scanData, setScanData] = useState<{
     title: string;
     created_at: string;
@@ -70,24 +67,8 @@ export default function WebScanResults() {
       navigate('/auth');
       return;
     }
-    if (id) checkSubscriptionAndFetchScan();
+    if (id) fetchScan();
   }, [user, id]);
-
-  const checkSubscriptionAndFetchScan = async () => {
-    // First check subscription status
-    const { data: subData } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user!.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    setHasActiveSubscription(!!subData);
-    fetchScan();
-  };
 
   const fetchScan = async () => {
     try {
@@ -396,50 +377,19 @@ export default function WebScanResults() {
           </Card>
         )}
 
-        {/* Similar Websites - Premium Section */}
-        <Card className={!hasActiveSubscription ? 'border-amber-500/30' : ''}>
+        {/* Similar Websites */}
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-amber-500" />
-                Similar Websites ({metadata.similar_websites.length})
-                {!hasActiveSubscription && (
-                  <Lock className="h-4 w-4 text-amber-500" />
-                )}
-              </CardTitle>
-              {!hasActiveSubscription && (
-                <Crown className="h-5 w-5 text-amber-500" />
-              )}
-            </div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Similar Websites ({metadata.similar_websites.length})
+            </CardTitle>
             <CardDescription>
-              {hasActiveSubscription 
-                ? 'Websites with similar concepts ranked by similarity'
-                : 'Subscribe to unlock the top 10 similar websites and track their changes'
-              }
+              Websites with similar concepts ranked by similarity
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {!hasActiveSubscription ? (
-              <div className="text-center py-8">
-                <Lock className="h-12 w-12 mx-auto mb-4 text-amber-500" />
-                <h3 className="text-lg font-semibold mb-2">Premium Feature</h3>
-                <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
-                  Subscribe to WebScan Premium to view similar websites and monitor their changes.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <Button 
-                    onClick={() => setPaywallOpen(true)} 
-                    className="gap-2"
-                  >
-                    <Crown className="h-4 w-4" />
-                    Subscribe Now
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-4">
-                  Starting at 50 KES/week or 150 KES/month
-                </p>
-              </div>
-            ) : metadata.similar_websites.length === 0 ? (
+            {metadata.similar_websites.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
                 <p>No significantly similar websites found!</p>
@@ -451,7 +401,6 @@ export default function WebScanResults() {
                     key={idx} 
                     className={`overflow-hidden ${getSimilarityBg(website.similarityScore)}`}
                   >
-                    {/* Screenshot */}
                     {website.screenshotUrl && (
                       <div className="relative border-b border-border">
                         <AspectRatio ratio={16/9}>
@@ -528,18 +477,6 @@ export default function WebScanResults() {
           </Button>
         </div>
       </div>
-
-      {/* Premium Paywall Dialog */}
-      <WebScanPremiumPaywall
-        open={paywallOpen}
-        onOpenChange={setPaywallOpen}
-        scanId={id}
-        similarWebsitesCount={scanData?.metadata?.similar_websites?.length || 10}
-        onSuccess={() => {
-          setPaywallOpen(false);
-          checkSubscriptionAndFetchScan();
-        }}
-      />
     </div>
   );
 }

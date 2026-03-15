@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LinkifiedText } from '@/utils/linkDetection';
+import EditPostDialog from '@/components/EditPostDialog';
 
 interface IdeaCardProps {
   id: string;
@@ -80,6 +81,7 @@ export default function IdeaCard({
   const navigate = useNavigate();
   const { currentlyPlaying, setCurrentlyPlaying, videoRefs } = useVideo();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -281,6 +283,7 @@ export default function IdeaCard({
   // Text-only idea layout
   if (mediaType === 'text') {
     return (
+    <>
       <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
         {/* User Info at top */}
         <div className="p-4 pb-3">
@@ -435,17 +438,30 @@ export default function IdeaCard({
 
             <div className="flex items-center gap-2">
               {isOwner && (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="hover:text-destructive transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete();
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-destructive transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
               )}
               
               <Button 
@@ -466,12 +482,23 @@ export default function IdeaCard({
           </div>
         </div>
       </div>
+      <EditPostDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        postId={id}
+        currentTitle={title}
+        currentDescription={description}
+        currentCategory={category}
+        onSuccess={onDelete}
+      />
+    </>
     );
   }
   
   // YouTube-style photo post layout (list view)
   if (mediaType === 'image') {
     return (
+    <>
       <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
         {/* User Info at top */}
         <div className="p-4 pb-3">
@@ -631,17 +658,30 @@ export default function IdeaCard({
 
             <div className="flex items-center gap-2">
               {isOwner && (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="hover:text-destructive transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete();
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-destructive transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
               )}
               
               <Button 
@@ -662,11 +702,22 @@ export default function IdeaCard({
           </div>
         </div>
       </div>
+      <EditPostDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        postId={id}
+        currentTitle={title}
+        currentDescription={description}
+        currentCategory={category}
+        onSuccess={onDelete}
+      />
+    </>
     );
   }
 
   // Video layout - Clicking thumbnail navigates to detail page
   return (
+    <>
     <div className="bg-card rounded-2xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
       {/* Media - Clicking thumbnail goes to video page */}
       <div 
@@ -833,19 +884,32 @@ export default function IdeaCard({
           </div>
 
           <div className="flex items-center gap-2">
-            {isOwner && (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="hover:text-destructive transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+              {isOwner && (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="hover:text-destructive transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             
             <Button 
               variant="ghost" 
@@ -865,5 +929,15 @@ export default function IdeaCard({
         </div>
       </div>
     </div>
+      <EditPostDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        postId={id}
+        currentTitle={title}
+        currentDescription={description}
+        currentCategory={category}
+        onSuccess={onDelete}
+      />
+    </>
   );
 }

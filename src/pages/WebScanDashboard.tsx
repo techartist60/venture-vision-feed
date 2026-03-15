@@ -8,8 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Globe, ArrowLeft, Eye, Trash2, RefreshCw, Clock, 
-  AlertCircle, CheckCircle2, ExternalLink, Crown, Bell,
-  TrendingUp, Calendar, Lock
+  CheckCircle2, ExternalLink, Bell,
+  TrendingUp, Calendar
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -59,37 +59,12 @@ export default function WebScanDashboard() {
   const [changes, setChanges] = useState<Record<string, WebsiteChange[]>>({});
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (user) {
-      checkSubscriptionAndFetchData();
+      fetchData();
     }
   }, [user]);
-
-  const checkSubscriptionAndFetchData = async () => {
-    setLoading(true);
-    
-    // First check if user has an active subscription
-    const { data: subData } = await supabase
-      .from('webscan_subscriptions')
-      .select('id, plan_type, expires_at')
-      .eq('user_id', user!.id)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (!subData) {
-      setHasActiveSubscription(false);
-      setLoading(false);
-      return;
-    }
-    
-    setHasActiveSubscription(true);
-    fetchData();
-  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -235,50 +210,6 @@ export default function WebScanDashboard() {
     );
   }
 
-  // Show paywall if no active subscription
-  if (hasActiveSubscription === false) {
-    return (
-      <div className="min-h-screen bg-gradient-discovery pb-20">
-        <header className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-10">
-          <div className="px-4 py-4 max-w-6xl mx-auto">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/idescan/webscan')}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <Eye className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">Watched Websites</h1>
-            </div>
-          </div>
-        </header>
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Card className="border-amber-500/30">
-            <CardContent className="p-8 text-center">
-              <Crown className="h-16 w-16 text-amber-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Premium Feature</h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Access to the tracking dashboard requires an active WebScan Premium subscription. 
-                Scan a website and subscribe to unlock tracking for similar websites.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button onClick={() => navigate('/idescan/webscan')} className="gap-2">
-                  <Globe className="h-4 w-4" />
-                  Start a WebScan
-                </Button>
-                <Button variant="outline" onClick={() => navigate('/idescan/history')}>
-                  View History
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-discovery pb-20">
       {/* Header */}
@@ -316,7 +247,7 @@ export default function WebScanDashboard() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Crown className={subscription?.tier === 'pro' ? 'h-5 w-5 text-amber-500' : 'h-5 w-5 text-muted-foreground'} />
+                  <Eye className="h-5 w-5 text-primary" />
                   <span className="font-medium capitalize">{subscription?.tier || 'Free'} Plan</span>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -327,12 +258,6 @@ export default function WebScanDashboard() {
                   {subscription?.scan_frequency === 'daily' ? 'Daily' : 'Weekly'} scans
                 </div>
               </div>
-              {subscription?.tier !== 'pro' && (
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Crown className="h-4 w-4" />
-                  Upgrade to Pro
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
