@@ -209,12 +209,6 @@ export default function IdescanHistory() {
                             <Scan className="h-4 w-4 text-primary" />
                           )}
                           <CardTitle className="text-lg">{scan.title}</CardTitle>
-                          {isLocked && (
-                            <Badge variant="outline" className="border-amber-500/50 text-amber-500 gap-1">
-                              <Lock className="h-3 w-3" />
-                              Premium
-                            </Badge>
-                          )}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
