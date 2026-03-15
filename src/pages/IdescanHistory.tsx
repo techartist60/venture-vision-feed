@@ -46,6 +46,7 @@ export default function IdescanHistory() {
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scanToDelete, setScanToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
