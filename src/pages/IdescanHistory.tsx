@@ -348,18 +348,6 @@ export default function IdescanHistory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Premium Paywall Dialog */}
-      <WebScanPremiumPaywall
-        open={paywallOpen}
-        onOpenChange={setPaywallOpen}
-        scanId={selectedScanForPaywall?.id}
-        similarWebsitesCount={selectedScanForPaywall?.metadata?.similar_websites?.length || 10}
-        onSuccess={() => {
-          setPaywallOpen(false);
-          checkSubscriptionAndFetchScans();
-        }}
-      />
     </div>
   );
 }
