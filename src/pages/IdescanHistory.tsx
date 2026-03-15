@@ -196,7 +196,7 @@ export default function IdescanHistory() {
               return (
                 <Card
                   key={scan.id}
-                  className={`hover:shadow-glow transition-all cursor-pointer ${isLocked ? 'border-amber-500/30' : ''}`}
+                  className="hover:shadow-glow transition-all cursor-pointer"
                   onClick={handleCardClick}
                 >
                   <CardHeader>
