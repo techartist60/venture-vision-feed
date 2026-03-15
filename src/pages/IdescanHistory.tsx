@@ -184,7 +184,6 @@ export default function IdescanHistory() {
           <div className="space-y-4">
             {scans.map((scan) => {
               const isWebScan = scan.metadata?.scan_type === 'webscan';
-              const isLocked = isWebScan && !hasActiveSubscription;
               
               const handleCardClick = () => {
                 if (isWebScan) {
@@ -192,12 +191,6 @@ export default function IdescanHistory() {
                 } else {
                   navigate(`/idescan/results/${scan.id}`);
                 }
-              };
-
-              const handleSubscribeClick = (e: React.MouseEvent) => {
-                e.stopPropagation();
-                setSelectedScanForPaywall(scan);
-                setPaywallOpen(true);
               };
               
               return (
