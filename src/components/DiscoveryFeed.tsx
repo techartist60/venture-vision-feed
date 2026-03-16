@@ -121,6 +121,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         query = query.neq('media_type', 'video');
       }
 
+      // Filter by category if specified
+      if (category) {
+        query = query.ilike('category', category);
+      }
+
       // Random ordering like YouTube algorithm - using PostgreSQL RANDOM() function
       const { data, error } = await query.order('id', { ascending: false }).limit(50);
       

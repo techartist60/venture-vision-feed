@@ -138,9 +138,20 @@ export default function Home() {
         <IdescanButton onClick={() => navigate('/idescan')} />
       </div>
 
+      {/* Active Category Filter */}
+      {activeCategory && (
+        <div className="flex items-center gap-2 px-4 max-w-md mx-auto mb-2">
+          <span className="text-sm text-muted-foreground">Filtered by:</span>
+          <Badge variant="secondary" className="capitalize flex items-center gap-1">
+            {activeCategory}
+            <X className="h-3 w-3 cursor-pointer" onClick={clearCategory} />
+          </Badge>
+        </div>
+      )}
+
       {/* Ideas Feed */}
       <section className="px-4 pb-8 max-w-md mx-auto">
-        <DiscoveryFeed />
+        <DiscoveryFeed category={activeCategory} />
       </section>
 
       {/* Floating mini logo - appears on scroll, top-left */}
