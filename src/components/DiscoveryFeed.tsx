@@ -73,7 +73,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
 
   useEffect(() => {
     fetchMedia();
-  }, [user, userOnly, userId, mediaType]);
+  }, [user, userOnly, userId, mediaType, category]);
 
   // Track view for media when component mounts
   const trackView = async (mediaId: string) => {
