@@ -113,7 +113,7 @@ export default function Categories() {
               {filteredCategories.map((category) => (
                 <div
                   key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
+                  onClick={() => handleCategoryClick(category.name)}
                   className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:shadow-card transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex items-center gap-4">
