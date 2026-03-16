@@ -58,8 +58,14 @@ function useScrolledPast(threshold: number) {
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const scrolledPast = useScrolledPast(120);
+  const activeCategory = searchParams.get('category') || undefined;
+
+  const clearCategory = () => {
+    setSearchParams({});
+  };
 
   // Desktop layout
   if (!isMobile) {
