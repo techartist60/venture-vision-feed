@@ -60,8 +60,8 @@ export default function Categories() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleCategoryClick = (categoryId: string) => {
-    navigate(`/?category=${categoryId}`);
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/?category=${encodeURIComponent(categoryName.toLowerCase())}`);
   };
 
   const handleExploreMore = () => {
