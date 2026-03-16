@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Sparkles, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { DiscoveryFeed } from '@/components/DiscoveryFeed';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from '@/components/NotificationBell';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Badge } from '@/components/ui/badge';
 import idestrimLogo from '@/assets/idestrim-logo.png';
 
 const IdescanButton = ({ onClick }: { onClick: () => void }) => (
