@@ -152,7 +152,7 @@ export default function Categories() {
               {categories.filter(cat => cat.trending).map((category) => (
                 <div
                   key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
+                  onClick={() => handleCategoryClick(category.name)}
                   className="relative p-6 rounded-2xl bg-gradient-to-br shadow-card hover:shadow-glow transition-all duration-300 cursor-pointer group"
                   style={{
                     background: `linear-gradient(135deg, var(--primary), var(--accent))`
