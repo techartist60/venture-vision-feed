@@ -42,9 +42,10 @@ interface DiscoveryFeedProps {
   userOnly?: boolean;
   userId?: string;
   mediaType?: 'image' | 'video' | 'text' | 'all';
+  category?: string;
 }
 
-export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', category }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
