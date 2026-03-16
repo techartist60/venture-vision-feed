@@ -60,8 +60,8 @@ export default function Categories() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleCategoryClick = (categoryId: string) => {
-    navigate(`/?category=${categoryId}`);
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/?category=${encodeURIComponent(categoryName.toLowerCase())}`);
   };
 
   const handleExploreMore = () => {
@@ -113,7 +113,7 @@ export default function Categories() {
               {filteredCategories.map((category) => (
                 <div
                   key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
+                  onClick={() => handleCategoryClick(category.name)}
                   className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:shadow-card transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex items-center gap-4">
@@ -152,7 +152,7 @@ export default function Categories() {
               {categories.filter(cat => cat.trending).map((category) => (
                 <div
                   key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
+                  onClick={() => handleCategoryClick(category.name)}
                   className="relative p-6 rounded-2xl bg-gradient-to-br shadow-card hover:shadow-glow transition-all duration-300 cursor-pointer group"
                   style={{
                     background: `linear-gradient(135deg, var(--primary), var(--accent))`
@@ -179,7 +179,7 @@ export default function Categories() {
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
+                  onClick={() => handleCategoryClick(category.name)}
                   className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:shadow-card transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex items-center gap-4">

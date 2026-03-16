@@ -42,9 +42,10 @@ interface DiscoveryFeedProps {
   userOnly?: boolean;
   userId?: string;
   mediaType?: 'image' | 'video' | 'text' | 'all';
+  category?: string;
 }
 
-export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', category }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
@@ -72,7 +73,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
 
   useEffect(() => {
     fetchMedia();
-  }, [user, userOnly, userId, mediaType]);
+  }, [user, userOnly, userId, mediaType, category]);
 
   // Track view for media when component mounts
   const trackView = async (mediaId: string) => {
@@ -118,6 +119,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all' }: D
       } else {
         // By default, exclude videos from the feed (only show images and text)
         query = query.neq('media_type', 'video');
+      }
+
+      // Filter by category if specified
+      if (category) {
+        query = query.ilike('category', category);
       }
 
       // Random ordering like YouTube algorithm - using PostgreSQL RANDOM() function
