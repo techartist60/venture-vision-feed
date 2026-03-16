@@ -16,7 +16,7 @@ export default function DesktopLayout({
       
       {/* Main Content */}
       <main className={`ml-64 mt-16 ${showTrendingSidebar ? 'mr-80' : ''} min-h-screen`}>
-        <div className="w-full px-4 py-4">
+        <div className="max-w-2xl mx-auto px-4 py-4">
           {children}
         </div>
       </main>
