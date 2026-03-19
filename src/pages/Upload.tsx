@@ -286,39 +286,33 @@ export default function Upload() {
         
         // Save media metadata to database
         for (const mediaUrl of uploadedUrls) {
-          const insertData: Record<string, unknown> = {
-            user_id: user.id,
-            title: formData.title,
-            description: formData.description || null,
-            media_type: mediaType === 'photo' ? 'image' : mediaType === 'text' ? 'text' : 'video',
-            media_url: mediaUrl,
-            thumbnail_url: null,
-            mime_type: mediaType === 'text' ? 'text/plain' : (selectedFiles[0]?.type || null),
-            file_size: mediaType === 'text' ? null : (selectedFiles[0]?.size || null),
-            investment_status: formData.investmentStatus,
-            category: formData.category || null,
-          };
-          
-          // Add investment fields if status is 'open'
-          if (formData.investmentStatus === 'open') {
-            insertData.funding_amount = parseFloat(formData.fundingAmount);
-            insertData.investment_stage = formData.investmentStage;
-            insertData.pitch_summary = formData.pitchSummary;
-          }
-          
           const { data: mediaData, error: dbError } = await supabase
             .from('media_uploads')
-            .insert(insertData as any)
+            .insert({
+              user_id: user.id,
+              title: formData.title,
+              description: formData.description || null,
+              media_type: mediaType === 'photo' ? 'image' : mediaType === 'text' ? 'text' : 'video',
+              media_url: mediaUrl,
+              thumbnail_url: null,
+              mime_type: mediaType === 'text' ? 'text/plain' : (selectedFiles[0]?.type || null),
+              file_size: mediaType === 'text' ? null : (selectedFiles[0]?.size || null),
+              investment_status: formData.investmentStatus,
+              category: formData.category || null,
+              ...(formData.investmentStatus === 'open' ? {
+                funding_amount: parseFloat(formData.fundingAmount),
+                investment_stage: formData.investmentStage,
+                pitch_summary: formData.pitchSummary,
+              } : {}),
+            })
             .select('id')
             .single();
 
           if (dbError) {
-            console.error('Error saving media metadata:', dbError);
+            console.error('Error saving media metadata:', dbError.message, dbError.details, dbError.hint, dbError.code);
             toast({
               title: "Upload failed",
-              description: mediaType === 'text' 
-                ? "Failed to publish your idea. Please try again." 
-                : "Files uploaded but metadata save failed. Please try again.",
+              description: `Metadata save failed: ${dbError.message}`,
               variant: "destructive"
             });
             return;
