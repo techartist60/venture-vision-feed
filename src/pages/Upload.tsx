@@ -53,20 +53,15 @@ export default function Upload() {
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
-    // Validate input before setting
-    const maxLengths = { title: 100, description: 1000, category: 50 };
-    const maxLength = maxLengths[field as keyof typeof maxLengths] || 1000;
+    // Only enforce max length during typing — full validation happens on submit
+    const maxLengths: Record<string, number> = { title: 100, description: 1000, category: 50, pitchSummary: 500 };
+    const maxLength = maxLengths[field] || 1000;
     
-    const validation = validateTextInput(value, maxLength);
-    if (validation.isValid || value === '') {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    } else {
-      toast({
-        title: "Invalid input",
-        description: validation.error,
-        variant: "destructive"
-      });
+    if (value.length > maxLength) {
+      return; // silently prevent exceeding max length
     }
+    
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

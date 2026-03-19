@@ -821,27 +821,6 @@ export type Database = {
         }
         Relationships: []
       }
-      Profiles: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          id: string
-          role: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          role?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          role?: string | null
-        }
-        Relationships: []
-      }
       scan_results: {
         Row: {
           created_at: string | null
