@@ -116,9 +116,6 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
       // If mediaType is specified (not 'all'), filter by media type
       if (mediaType && mediaType !== 'all') {
         query = query.eq('media_type', mediaType);
-      } else {
-        // By default, exclude videos from the feed (only show images and text)
-        query = query.neq('media_type', 'video');
       }
 
       // Filter by category if specified
