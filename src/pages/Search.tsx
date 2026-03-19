@@ -75,7 +75,7 @@ export default function Search() {
         .from('media_uploads')
         .select(`
           *,
-          profiles:user_id (
+          profiles!media_uploads_user_id_fkey (
             full_name,
             username,
             avatar_url,
