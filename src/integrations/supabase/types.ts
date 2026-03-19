@@ -621,6 +621,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "media_uploads_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -811,6 +818,27 @@ export type Database = {
           user_id?: string
           username?: string | null
           website_url?: string | null
+        }
+        Relationships: []
+      }
+      Profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          role?: string | null
         }
         Relationships: []
       }
