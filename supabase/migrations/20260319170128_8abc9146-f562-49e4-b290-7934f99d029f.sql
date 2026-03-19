@@ -1,0 +1,1 @@
+ALTER TABLE public.media_uploads DROP CONSTRAINT fk_user;
