@@ -489,8 +489,24 @@ export default function Upload() {
                 </div>
               </div>
             </Button>
-          </div>
 
+            <Button
+              onClick={() => setMediaType('youtube')}
+              variant="discovery"
+              size="lg"
+              className="w-full h-20 flex-col gap-2 text-left justify-center bg-card hover:shadow-card border-2 border-border hover:border-red-500 transition-all"
+            >
+              <div className="flex items-center gap-4 w-full">
+                <div className="p-3 rounded-full bg-gradient-to-br from-red-600 to-red-500">
+                  <Youtube className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Upload (Youtube)</div>
+                  <div className="text-sm text-muted-foreground">Share a YouTube video link</div>
+                </div>
+              </div>
+            </Button>
+          </div>
           <div className="mt-8 p-4 bg-gradient-discovery rounded-xl border border-border">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-full bg-accent/20">
