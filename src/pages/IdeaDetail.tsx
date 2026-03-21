@@ -68,8 +68,8 @@ export default function IdeaDetail() {
 
       if (error) throw error;
 
-      // If it's a video, redirect to the slides page
-      if (data && (data.media_type === 'video' || data.media_type.startsWith('video/'))) {
+      // If it's a native video (not YouTube), redirect to the slides page
+      if (data && data.media_type !== 'youtube' && (data.media_type === 'video' || data.media_type.startsWith('video/'))) {
         navigate(`/slides?startId=${id}`, { replace: true });
         return;
       }
