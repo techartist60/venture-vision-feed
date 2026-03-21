@@ -317,9 +317,9 @@ export default function Upload() {
               investment_status: formData.investmentStatus,
               category: formData.category || null,
               ...(formData.investmentStatus === 'open' ? {
-                funding_amount: parseFloat(formData.fundingAmount),
+                funding_amount: formData.fundingAmount ? parseInt(formData.fundingAmount, 10) : null,
                 investment_stage: formData.investmentStage,
-                pitch_summary: formData.pitchSummary,
+                pitch_summary: formData.pitchSummary || null,
               } : {}),
             })
             .select('id')
