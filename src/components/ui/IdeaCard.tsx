@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube } from 'lucide-react';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -11,13 +11,14 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LinkifiedText } from '@/utils/linkDetection';
 import EditPostDialog from '@/components/EditPostDialog';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
 
 interface IdeaCardProps {
   id: string;
   title: string;
   description: string;
   category?: string;
-  mediaType: 'image' | 'video' | 'text';
+  mediaType: 'image' | 'video' | 'text' | 'youtube';
   mediaUrl: string;
   thumbnailUrl?: string;
   user: {
@@ -492,6 +493,197 @@ export default function IdeaCard({
         onSuccess={onDelete}
       />
     </>
+    );
+  }
+
+  // YouTube video layout
+  if (mediaType === 'youtube') {
+    const videoId = extractYouTubeVideoId(mediaUrl);
+    return (
+      <>
+        <div className="bg-card rounded-xl shadow-card hover:shadow-glow transition-all duration-300 overflow-hidden">
+          {/* User Info at top */}
+          <div className="p-4 pb-3">
+            <div 
+              className="flex items-center gap-3 cursor-pointer" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleProfileClick();
+              }}
+            >
+              <Avatar className="h-10 w-10 hover:ring-2 hover:ring-primary/20 transition-all">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback className="bg-gradient-primary text-primary-foreground">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 hover:opacity-80 transition-opacity">
+                <p className="font-semibold text-sm text-foreground flex items-center gap-1">
+                  {user.name}
+                  {user.isVerified && <VerifiedBadge size="sm" />}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Eye className="h-3 w-3" />
+                    <span>{stats.views.toLocaleString()} views</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {category && (
+                  <Badge className="bg-background/90 text-foreground text-xs">
+                    {category}
+                  </Badge>
+                )}
+                <Badge className="bg-red-600/90 text-white flex items-center gap-1 text-xs">
+                  <Youtube className="h-2.5 w-2.5" />
+                  YouTube
+                </Badge>
+                {isIdemarked && (
+                  <Badge className="bg-primary/90 text-primary-foreground flex items-center gap-1 text-xs">
+                    <Shield className="h-2.5 w-2.5" />
+                    Idemarked
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Post content */}
+          <div className="px-4 pb-3">
+            <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2">
+              {title}
+            </h3>
+            {description && (
+              <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                <LinkifiedText 
+                  text={description} 
+                  linkClassName="text-primary hover:underline break-all"
+                />
+              </p>
+            )}
+          </div>
+
+          {/* YouTube Embed */}
+          <div className="relative w-full aspect-video bg-muted">
+            {videoId ? (
+              <iframe
+                src={getYouTubeEmbedUrl(videoId)}
+                title={title}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+              />
+            ) : (
+              <img 
+                src={thumbnailUrl || 'https://placehold.co/1280x720/333/999?text=YouTube'}
+                alt={title}
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={cn(
+                    "gap-2 hover:text-red-500 transition-colors p-0 h-auto",
+                    isLiked && "text-red-500"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLike?.();
+                  }}
+                >
+                  <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
+                  <span className="text-sm">{stats.likes}</span>
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2 p-0 h-auto" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onComment?.();
+                  }}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="text-sm">{stats.comments}</span>
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2 p-0 h-auto" 
+                  onClick={handleShare}
+                >
+                  <Share className="h-5 w-5" />
+                  <span className="text-sm">Share</span>
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isOwner && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="hover:text-primary transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="hover:text-destructive transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete();
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className={cn(
+                    "hover:text-accent transition-colors",
+                    isSaved && "text-accent"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSave?.();
+                  }}
+                >
+                  <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <EditPostDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          postId={id}
+          currentTitle={title}
+          currentDescription={description}
+          currentCategory={category}
+          onSuccess={onDelete}
+        />
+      </>
     );
   }
   

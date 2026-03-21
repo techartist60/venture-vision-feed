@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { LinkifiedText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
@@ -67,8 +68,8 @@ export default function IdeaDetail() {
 
       if (error) throw error;
 
-      // If it's a video, redirect to the slides page
-      if (data && (data.media_type === 'video' || data.media_type.startsWith('video/'))) {
+      // If it's a native video (not YouTube), redirect to the slides page
+      if (data && data.media_type !== 'youtube' && (data.media_type === 'video' || data.media_type.startsWith('video/'))) {
         navigate(`/slides?startId=${id}`, { replace: true });
         return;
       }
@@ -390,18 +391,43 @@ export default function IdeaDetail() {
       {/* Media */}
       <section className="px-4 py-6 max-w-md mx-auto">
         <div className="relative bg-muted rounded-xl overflow-hidden mb-6">
-          <img 
-            src={idea.media_url} 
-            alt={idea.title}
-            className="w-full h-auto object-contain max-h-[70vh]"
-            onError={(e) => {
-              console.error('Image failed to load:', idea.media_url);
-              e.currentTarget.src = '/placeholder.svg';
-            }}
-          />
+          {idea.media_type === 'youtube' ? (
+            (() => {
+              const videoId = extractYouTubeVideoId(idea.media_url);
+              return videoId ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={getYouTubeEmbedUrl(videoId)}
+                    title={idea.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <img 
+                  src={idea.thumbnail_url || '/placeholder.svg'} 
+                  alt={idea.title}
+                  className="w-full h-auto object-contain max-h-[70vh]"
+                />
+              );
+            })()
+          ) : (
+            <img 
+              src={idea.media_url} 
+              alt={idea.title}
+              className="w-full h-auto object-contain max-h-[70vh]"
+              onError={(e) => {
+                console.error('Image failed to load:', idea.media_url);
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          )}
           
           <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
-            Image
+            {idea.media_type === 'youtube' ? (
+              <span className="flex items-center gap-1"><Youtube className="h-3 w-3" /> YouTube</span>
+            ) : 'Image'}
           </Badge>
         </div>
 

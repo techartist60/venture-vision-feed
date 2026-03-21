@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X, FileText } from 'lucide-react';
+import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X, FileText, Youtube } from 'lucide-react';
 import ThumbnailSelection from '@/components/ThumbnailSelection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ import {
   generateFingerprintHash, 
   IdemarkData 
 } from '@/utils/idemark';
+import { isValidYouTubeUrl, extractYouTubeVideoId, getYouTubeThumbnail } from '@/utils/youtube';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
@@ -32,7 +33,9 @@ const categories = [
 ];
 
 export default function Upload() {
-  const [mediaType, setMediaType] = useState<'photo' | 'video' | 'text' | null>(null);
+  const [mediaType, setMediaType] = useState<'photo' | 'video' | 'text' | 'youtube' | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeError, setYoutubeError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -222,6 +225,18 @@ export default function Upload() {
         return;
       }
     }
+
+    // Validate YouTube URL
+    if (mediaType === 'youtube') {
+      if (!youtubeUrl || !isValidYouTubeUrl(youtubeUrl)) {
+        toast({
+          title: "Invalid YouTube URL",
+          description: "Please enter a valid YouTube video link.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
     
     // Validate description if provided (optional for non-text uploads)
     if (formData.description && formData.description.trim().length > 0) {
@@ -259,8 +274,8 @@ export default function Upload() {
       }
     }
     
-    // Only require files for non-text uploads
-    if (mediaType !== 'text' && !selectedFiles.length) {
+    // Only require files for photo/video uploads
+    if ((mediaType === 'photo' || mediaType === 'video') && !selectedFiles.length) {
       toast({
         title: "No files selected",
         description: "Please select files to upload.",
@@ -277,6 +292,8 @@ export default function Upload() {
       // For text-only posts, use a placeholder URL
       if (mediaType === 'text') {
         uploadedUrls = ['text-only'];
+      } else if (mediaType === 'youtube') {
+        uploadedUrls = [youtubeUrl.trim()];
       } else {
         uploadedUrls = await uploadFiles();
       }
@@ -292,11 +309,11 @@ export default function Upload() {
               user_id: user.id,
               title: formData.title,
               description: formData.description || null,
-              media_type: mediaType === 'photo' ? 'image' : mediaType === 'text' ? 'text' : 'video',
+              media_type: mediaType === 'photo' ? 'image' : mediaType === 'text' ? 'text' : mediaType === 'youtube' ? 'youtube' : 'video',
               media_url: mediaUrl,
-              thumbnail_url: null,
-              mime_type: mediaType === 'text' ? 'text/plain' : (selectedFiles[0]?.type || null),
-              file_size: mediaType === 'text' ? null : (selectedFiles[0]?.size || null),
+              thumbnail_url: mediaType === 'youtube' ? getYouTubeThumbnail(extractYouTubeVideoId(mediaUrl) || '') : null,
+              mime_type: mediaType === 'text' ? 'text/plain' : mediaType === 'youtube' ? 'text/html' : (selectedFiles[0]?.type || null),
+              file_size: (mediaType === 'text' || mediaType === 'youtube') ? null : (selectedFiles[0]?.size || null),
               investment_status: formData.investmentStatus,
               category: formData.category || null,
               ...(formData.investmentStatus === 'open' ? {
@@ -389,6 +406,8 @@ export default function Upload() {
         });
         setIdemarkEnabled(false);
         setIdemarkTitlePublic(true);
+        setYoutubeUrl('');
+        setYoutubeError('');
         setMediaType(null);
       }
     } catch (error) {
@@ -486,8 +505,24 @@ export default function Upload() {
                 </div>
               </div>
             </Button>
-          </div>
 
+            <Button
+              onClick={() => setMediaType('youtube')}
+              variant="discovery"
+              size="lg"
+              className="w-full h-20 flex-col gap-2 text-left justify-center bg-card hover:shadow-card border-2 border-border hover:border-red-500 transition-all"
+            >
+              <div className="flex items-center gap-4 w-full">
+                <div className="p-3 rounded-full bg-gradient-to-br from-red-600 to-red-500">
+                  <Youtube className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Upload (Youtube)</div>
+                  <div className="text-sm text-muted-foreground">Share a YouTube video link</div>
+                </div>
+              </div>
+            </Button>
+          </div>
           <div className="mt-8 p-4 bg-gradient-discovery rounded-xl border border-border">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-full bg-accent/20">
@@ -521,7 +556,7 @@ export default function Upload() {
             </Button>
             <div>
             <h1 className="text-xl font-bold">
-                {mediaType === 'photo' ? 'Photo Upload' : mediaType === 'video' ? 'Video Upload' : 'Text Idea'}
+                {mediaType === 'photo' ? 'Photo Upload' : mediaType === 'video' ? 'Video Upload' : mediaType === 'youtube' ? 'Upload (Youtube)' : 'Text Idea'}
               </h1>
               <p className="text-sm text-muted-foreground">Step 2 of 2</p>
             </div>
@@ -530,8 +565,64 @@ export default function Upload() {
       </header>
 
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+        {/* YouTube URL Input */}
+        {mediaType === 'youtube' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                YouTube Video URL *
+              </label>
+              <Input
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={youtubeUrl}
+                onChange={(e) => {
+                  setYoutubeUrl(e.target.value);
+                  if (e.target.value && !isValidYouTubeUrl(e.target.value)) {
+                    setYoutubeError('Please enter a valid YouTube URL');
+                  } else {
+                    setYoutubeError('');
+                  }
+                }}
+                className="rounded-xl"
+              />
+              {youtubeError && (
+                <p className="text-sm text-destructive mt-1">{youtubeError}</p>
+              )}
+            </div>
+
+            {/* YouTube Thumbnail Preview */}
+            {youtubeUrl && isValidYouTubeUrl(youtubeUrl) && (
+              <div className="relative rounded-xl overflow-hidden bg-muted">
+                <div className="aspect-video relative">
+                  <img
+                    src={getYouTubeThumbnail(extractYouTubeVideoId(youtubeUrl) || '')}
+                    alt="YouTube video thumbnail"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = getYouTubeThumbnail(extractYouTubeVideoId(youtubeUrl) || '', 'default');
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-red-600 rounded-full p-3">
+                      <Youtube className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7 rounded-full"
+                  onClick={() => { setYoutubeUrl(''); setYoutubeError(''); }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Media Upload Area - Only show for photo/video */}
-        {mediaType !== 'text' && (
+        {(mediaType === 'photo' || mediaType === 'video') && (
         <div className="relative">
           <input
             ref={fileInputRef}
@@ -792,7 +883,7 @@ export default function Upload() {
             variant="innovation" 
             size="lg" 
             className="w-full"
-            disabled={!formData.title || !formData.description || !formData.category || (mediaType !== 'text' && selectedFiles.length === 0) || isUploading}
+            disabled={!formData.title || !formData.description || !formData.category || (mediaType === 'photo' && selectedFiles.length === 0) || (mediaType === 'video' && selectedFiles.length === 0) || (mediaType === 'youtube' && (!youtubeUrl || !isValidYouTubeUrl(youtubeUrl))) || isUploading}
             onClick={handlePublish}
           >
             <Sparkles className="h-5 w-5 mr-2" />
