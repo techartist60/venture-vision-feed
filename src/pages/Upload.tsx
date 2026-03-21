@@ -225,6 +225,18 @@ export default function Upload() {
         return;
       }
     }
+
+    // Validate YouTube URL
+    if (mediaType === 'youtube') {
+      if (!youtubeUrl || !isValidYouTubeUrl(youtubeUrl)) {
+        toast({
+          title: "Invalid YouTube URL",
+          description: "Please enter a valid YouTube video link.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
     
     // Validate description if provided (optional for non-text uploads)
     if (formData.description && formData.description.trim().length > 0) {
