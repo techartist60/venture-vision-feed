@@ -33,7 +33,9 @@ const categories = [
 ];
 
 export default function Upload() {
-  const [mediaType, setMediaType] = useState<'photo' | 'video' | 'text' | null>(null);
+  const [mediaType, setMediaType] = useState<'photo' | 'video' | 'text' | 'youtube' | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeError, setYoutubeError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
