@@ -25,6 +25,7 @@ import {
   generateFingerprintHash, 
   IdemarkData 
 } from '@/utils/idemark';
+import { isValidYouTubeUrl, extractYouTubeVideoId, getYouTubeThumbnail } from '@/utils/youtube';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
