@@ -292,6 +292,8 @@ export default function Upload() {
       // For text-only posts, use a placeholder URL
       if (mediaType === 'text') {
         uploadedUrls = ['text-only'];
+      } else if (mediaType === 'youtube') {
+        uploadedUrls = [youtubeUrl.trim()];
       } else {
         uploadedUrls = await uploadFiles();
       }
