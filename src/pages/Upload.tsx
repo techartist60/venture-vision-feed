@@ -565,8 +565,64 @@ export default function Upload() {
       </header>
 
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+        {/* YouTube URL Input */}
+        {mediaType === 'youtube' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                YouTube Video URL *
+              </label>
+              <Input
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={youtubeUrl}
+                onChange={(e) => {
+                  setYoutubeUrl(e.target.value);
+                  if (e.target.value && !isValidYouTubeUrl(e.target.value)) {
+                    setYoutubeError('Please enter a valid YouTube URL');
+                  } else {
+                    setYoutubeError('');
+                  }
+                }}
+                className="rounded-xl"
+              />
+              {youtubeError && (
+                <p className="text-sm text-destructive mt-1">{youtubeError}</p>
+              )}
+            </div>
+
+            {/* YouTube Thumbnail Preview */}
+            {youtubeUrl && isValidYouTubeUrl(youtubeUrl) && (
+              <div className="relative rounded-xl overflow-hidden bg-muted">
+                <div className="aspect-video relative">
+                  <img
+                    src={getYouTubeThumbnail(extractYouTubeVideoId(youtubeUrl) || '')}
+                    alt="YouTube video thumbnail"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = getYouTubeThumbnail(extractYouTubeVideoId(youtubeUrl) || '', 'default');
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-red-600 rounded-full p-3">
+                      <Youtube className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7 rounded-full"
+                  onClick={() => { setYoutubeUrl(''); setYoutubeError(''); }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Media Upload Area - Only show for photo/video */}
-        {mediaType !== 'text' && (
+        {(mediaType === 'photo' || mediaType === 'video') && (
         <div className="relative">
           <input
             ref={fileInputRef}
