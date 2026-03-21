@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LinkifiedText } from '@/utils/linkDetection';
 import EditPostDialog from '@/components/EditPostDialog';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
 
 interface IdeaCardProps {
   id: string;
