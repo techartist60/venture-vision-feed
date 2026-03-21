@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { LinkifiedText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
