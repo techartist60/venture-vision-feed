@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X, FileText } from 'lucide-react';
+import { Camera, Video, Image, ArrowLeft, Upload as UploadIcon, Sparkles, X, FileText, Youtube } from 'lucide-react';
 import ThumbnailSelection from '@/components/ThumbnailSelection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
