@@ -556,7 +556,7 @@ export default function Upload() {
             </Button>
             <div>
             <h1 className="text-xl font-bold">
-                {mediaType === 'photo' ? 'Photo Upload' : mediaType === 'video' ? 'Video Upload' : 'Text Idea'}
+                {mediaType === 'photo' ? 'Photo Upload' : mediaType === 'video' ? 'Video Upload' : mediaType === 'youtube' ? 'Upload (Youtube)' : 'Text Idea'}
               </h1>
               <p className="text-sm text-muted-foreground">Step 2 of 2</p>
             </div>
