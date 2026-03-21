@@ -274,8 +274,8 @@ export default function Upload() {
       }
     }
     
-    // Only require files for non-text uploads
-    if (mediaType !== 'text' && !selectedFiles.length) {
+    // Only require files for photo/video uploads
+    if ((mediaType === 'photo' || mediaType === 'video') && !selectedFiles.length) {
       toast({
         title: "No files selected",
         description: "Please select files to upload.",
