@@ -41,7 +41,7 @@ interface MediaUpload {
 interface DiscoveryFeedProps {
   userOnly?: boolean;
   userId?: string;
-  mediaType?: 'image' | 'video' | 'text' | 'all';
+  mediaType?: 'image' | 'video' | 'text' | 'youtube' | 'all';
   category?: string;
 }
 
