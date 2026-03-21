@@ -406,6 +406,8 @@ export default function Upload() {
         });
         setIdemarkEnabled(false);
         setIdemarkTitlePublic(true);
+        setYoutubeUrl('');
+        setYoutubeError('');
         setMediaType(null);
       }
     } catch (error) {
