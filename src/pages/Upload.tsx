@@ -883,7 +883,7 @@ export default function Upload() {
             variant="innovation" 
             size="lg" 
             className="w-full"
-            disabled={!formData.title || !formData.description || !formData.category || (mediaType !== 'text' && selectedFiles.length === 0) || isUploading}
+            disabled={!formData.title || !formData.description || !formData.category || (mediaType === 'photo' && selectedFiles.length === 0) || (mediaType === 'video' && selectedFiles.length === 0) || (mediaType === 'youtube' && (!youtubeUrl || !isValidYouTubeUrl(youtubeUrl))) || isUploading}
             onClick={handlePublish}
           >
             <Sparkles className="h-5 w-5 mr-2" />
