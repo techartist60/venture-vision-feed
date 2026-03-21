@@ -391,18 +391,43 @@ export default function IdeaDetail() {
       {/* Media */}
       <section className="px-4 py-6 max-w-md mx-auto">
         <div className="relative bg-muted rounded-xl overflow-hidden mb-6">
-          <img 
-            src={idea.media_url} 
-            alt={idea.title}
-            className="w-full h-auto object-contain max-h-[70vh]"
-            onError={(e) => {
-              console.error('Image failed to load:', idea.media_url);
-              e.currentTarget.src = '/placeholder.svg';
-            }}
-          />
+          {idea.media_type === 'youtube' ? (
+            (() => {
+              const videoId = extractYouTubeVideoId(idea.media_url);
+              return videoId ? (
+                <div className="aspect-video">
+                  <iframe
+                    src={getYouTubeEmbedUrl(videoId)}
+                    title={idea.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <img 
+                  src={idea.thumbnail_url || '/placeholder.svg'} 
+                  alt={idea.title}
+                  className="w-full h-auto object-contain max-h-[70vh]"
+                />
+              );
+            })()
+          ) : (
+            <img 
+              src={idea.media_url} 
+              alt={idea.title}
+              className="w-full h-auto object-contain max-h-[70vh]"
+              onError={(e) => {
+                console.error('Image failed to load:', idea.media_url);
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          )}
           
           <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
-            Image
+            {idea.media_type === 'youtube' ? (
+              <span className="flex items-center gap-1"><Youtube className="h-3 w-3" /> YouTube</span>
+            ) : 'Image'}
           </Badge>
         </div>
 
