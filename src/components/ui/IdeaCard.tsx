@@ -19,7 +19,7 @@ interface IdeaCardProps {
   title: string;
   description: string;
   category?: string;
-  mediaType: 'image' | 'video' | 'text' | 'youtube';
+  mediaType: 'image' | 'video' | 'text' | 'youtube' | 'website';
   mediaUrl: string;
   thumbnailUrl?: string;
   user: {
