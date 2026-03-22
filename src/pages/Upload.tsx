@@ -404,7 +404,8 @@ export default function Upload() {
           investmentStatus: 'normal',
           fundingAmount: '',
           investmentStage: 'concept',
-          pitchSummary: ''
+          pitchSummary: '',
+          demoUrl: ''
         });
         setIdemarkEnabled(false);
         setIdemarkTitlePublic(true);
