@@ -39,6 +39,7 @@ interface MediaUpload {
   };
   is_liked?: boolean;
   is_saved?: boolean;
+  demo_url?: string | null;
 }
 
 export default function IdeaDetail() {
