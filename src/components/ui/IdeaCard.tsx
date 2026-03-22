@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube, Globe } from 'lucide-react';
 import TryItMode from '@/components/TryItMode';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
