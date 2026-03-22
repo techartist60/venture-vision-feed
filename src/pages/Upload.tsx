@@ -43,7 +43,8 @@ export default function Upload() {
     investmentStatus: 'normal' as 'open' | 'normal',
     fundingAmount: '',
     investmentStage: 'concept' as 'concept' | 'prototype' | 'ready',
-    pitchSummary: ''
+    pitchSummary: '',
+    demoUrl: ''
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
