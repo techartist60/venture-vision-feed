@@ -552,6 +552,7 @@ export type Database = {
           category: string | null
           comments_count: number
           created_at: string
+          demo_url: string | null
           description: string | null
           file_size: number | null
           funding_amount: number | null
@@ -576,6 +577,7 @@ export type Database = {
           category?: string | null
           comments_count?: number
           created_at?: string
+          demo_url?: string | null
           description?: string | null
           file_size?: number | null
           funding_amount?: number | null
@@ -600,6 +602,7 @@ export type Database = {
           category?: string | null
           comments_count?: number
           created_at?: string
+          demo_url?: string | null
           description?: string | null
           file_size?: number | null
           funding_amount?: number | null
