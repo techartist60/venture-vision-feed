@@ -417,7 +417,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
             title={item.title}
             description={item.description || ''}
             category={item.category || undefined}
-            mediaType={(item.media_type === 'image' || item.media_type === 'video' || item.media_type === 'text' || item.media_type === 'youtube') ? item.media_type : 'image'}
+            mediaType={(item.media_type === 'image' || item.media_type === 'video' || item.media_type === 'text' || item.media_type === 'youtube' || item.media_type === 'website') ? item.media_type : 'image'}
             mediaUrl={item.media_url}
             thumbnailUrl={item.thumbnail_url || undefined}
             user={{
