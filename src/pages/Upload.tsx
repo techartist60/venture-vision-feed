@@ -749,21 +749,7 @@ export default function Upload() {
             </Select>
           </div>
 
-          {/* Demo URL (optional) */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Live Demo URL (optional)
-            </label>
-            <Input
-              placeholder="https://your-demo.com"
-              value={formData.demoUrl}
-              onChange={(e) => handleInputChange('demoUrl', e.target.value)}
-              className="rounded-xl"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Add a link so users can try your idea live inside Idestrim
-            </p>
-          </div>
+          {/* Demo URL removed — "Try It Now" is a separate feature on the home page */}
         </div>
 
         {/* Investment Settings */}
