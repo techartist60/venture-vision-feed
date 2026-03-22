@@ -14,6 +14,7 @@ import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
+import TryItMode from '@/components/TryItMode';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
