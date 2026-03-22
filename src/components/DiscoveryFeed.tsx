@@ -27,6 +27,7 @@ interface MediaUpload {
   investment_stage?: string | null;
   pitch_summary?: string | null;
   category?: string | null;
+  demo_url?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
