@@ -73,6 +73,7 @@ export default function IdeaCard({
   fundingAmount,
   investmentStage,
   pitchSummary,
+  demoUrl,
   onLike,
   onComment,
   onShare,
