@@ -317,6 +317,7 @@ export default function Upload() {
               file_size: (mediaType === 'text' || mediaType === 'youtube') ? null : (selectedFiles[0]?.size || null),
               investment_status: formData.investmentStatus,
               category: formData.category || null,
+              demo_url: formData.demoUrl?.trim() || null,
               ...(formData.investmentStatus === 'open' ? {
                 funding_amount: formData.fundingAmount ? parseInt(formData.fundingAmount, 10) : null,
                 investment_stage: formData.investmentStage,
