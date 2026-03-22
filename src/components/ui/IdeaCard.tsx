@@ -359,6 +359,13 @@ export default function IdeaCard({
           </div>
         </div>
 
+        {/* Try It Mode */}
+        {demoUrl && (
+          <div className="px-4 py-3">
+            <TryItMode demoUrl={demoUrl} title={title} />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="p-4 pt-0">
           {/* Investment Ready CTA */}
