@@ -1019,6 +1019,13 @@ export default function IdeaCard({
           <span className="text-xs">{stats.views.toLocaleString()} views</span>
         </div>
 
+        {/* Try It Mode */}
+        {demoUrl && (
+          <div className="py-3">
+            <TryItMode demoUrl={demoUrl} title={title} />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center justify-between">
           {/* Investment Ready CTA */}
