@@ -472,6 +472,13 @@ export default function IdeaDetail() {
           </div>
         </div>
 
+        {/* Try It Mode */}
+        {idea.demo_url && (
+          <div className="mb-6">
+            <TryItMode demoUrl={idea.demo_url} title={idea.title} />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center justify-between py-4 border-t border-border">
           <div className="flex items-center gap-6">
