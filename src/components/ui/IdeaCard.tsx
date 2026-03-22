@@ -44,6 +44,7 @@ interface IdeaCardProps {
   fundingAmount?: number;
   investmentStage?: 'concept' | 'prototype' | 'ready';
   pitchSummary?: string;
+  demoUrl?: string;
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
