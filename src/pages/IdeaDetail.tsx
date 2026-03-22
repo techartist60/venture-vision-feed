@@ -14,6 +14,7 @@ import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
+import TryItMode from '@/components/TryItMode';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
@@ -38,6 +39,7 @@ interface MediaUpload {
   };
   is_liked?: boolean;
   is_saved?: boolean;
+  demo_url?: string | null;
 }
 
 export default function IdeaDetail() {
@@ -469,6 +471,13 @@ export default function IdeaDetail() {
             <span className="text-sm">{idea.views_count.toLocaleString()} views</span>
           </div>
         </div>
+
+        {/* Try It Mode */}
+        {idea.demo_url && (
+          <div className="mb-6">
+            <TryItMode demoUrl={idea.demo_url} title={idea.title} />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center justify-between py-4 border-t border-border">

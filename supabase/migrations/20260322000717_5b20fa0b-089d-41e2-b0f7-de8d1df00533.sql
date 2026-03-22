@@ -1,0 +1,1 @@
+ALTER TABLE public.media_uploads ADD COLUMN IF NOT EXISTS demo_url text DEFAULT NULL;

@@ -1,4 +1,5 @@
 import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube } from 'lucide-react';
+import TryItMode from '@/components/TryItMode';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Badge } from './badge';
@@ -43,6 +44,7 @@ interface IdeaCardProps {
   fundingAmount?: number;
   investmentStage?: 'concept' | 'prototype' | 'ready';
   pitchSummary?: string;
+  demoUrl?: string;
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
@@ -71,6 +73,7 @@ export default function IdeaCard({
   fundingAmount,
   investmentStage,
   pitchSummary,
+  demoUrl,
   onLike,
   onComment,
   onShare,
@@ -356,6 +359,13 @@ export default function IdeaCard({
           </div>
         </div>
 
+        {/* Try It Mode */}
+        {demoUrl && (
+          <div className="px-4 py-3">
+            <TryItMode demoUrl={demoUrl} title={title} />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="p-4 pt-0">
           {/* Investment Ready CTA */}
@@ -584,6 +594,13 @@ export default function IdeaCard({
             )}
           </div>
 
+          {/* Try It Mode */}
+          {demoUrl && (
+            <div className="px-4 py-3">
+              <TryItMode demoUrl={demoUrl} title={title} />
+            </div>
+          )}
+
           {/* Actions */}
           <div className="p-4">
             <div className="flex items-center justify-between">
@@ -766,6 +783,13 @@ export default function IdeaCard({
             }}
           />
         </div>
+
+        {/* Try It Mode */}
+        {demoUrl && (
+          <div className="px-4 py-3">
+            <TryItMode demoUrl={demoUrl} title={title} />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="p-4">
@@ -994,6 +1018,13 @@ export default function IdeaCard({
           <Eye className="h-4 w-4" />
           <span className="text-xs">{stats.views.toLocaleString()} views</span>
         </div>
+
+        {/* Try It Mode */}
+        {demoUrl && (
+          <div className="py-3">
+            <TryItMode demoUrl={demoUrl} title={title} />
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center justify-between">

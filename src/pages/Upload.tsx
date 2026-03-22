@@ -43,7 +43,8 @@ export default function Upload() {
     investmentStatus: 'normal' as 'open' | 'normal',
     fundingAmount: '',
     investmentStage: 'concept' as 'concept' | 'prototype' | 'ready',
-    pitchSummary: ''
+    pitchSummary: '',
+    demoUrl: ''
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -316,6 +317,7 @@ export default function Upload() {
               file_size: (mediaType === 'text' || mediaType === 'youtube') ? null : (selectedFiles[0]?.size || null),
               investment_status: formData.investmentStatus,
               category: formData.category || null,
+              demo_url: formData.demoUrl?.trim() || null,
               ...(formData.investmentStatus === 'open' ? {
                 funding_amount: formData.fundingAmount ? parseInt(formData.fundingAmount, 10) : null,
                 investment_stage: formData.investmentStage,
@@ -402,7 +404,8 @@ export default function Upload() {
           investmentStatus: 'normal',
           fundingAmount: '',
           investmentStage: 'concept',
-          pitchSummary: ''
+          pitchSummary: '',
+          demoUrl: ''
         });
         setIdemarkEnabled(false);
         setIdemarkTitlePublic(true);
@@ -744,6 +747,22 @@ export default function Upload() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Demo URL (optional) */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Live Demo URL (optional)
+            </label>
+            <Input
+              placeholder="https://your-demo.com"
+              value={formData.demoUrl}
+              onChange={(e) => handleInputChange('demoUrl', e.target.value)}
+              className="rounded-xl"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Add a link so users can try your idea live inside Idestrim
+            </p>
           </div>
         </div>
 

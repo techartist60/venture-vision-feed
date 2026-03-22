@@ -27,6 +27,7 @@ interface MediaUpload {
   investment_stage?: string | null;
   pitch_summary?: string | null;
   category?: string | null;
+  demo_url?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
@@ -441,6 +442,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
             fundingAmount={item.funding_amount || undefined}
             investmentStage={item.investment_stage as 'concept' | 'prototype' | 'ready' | undefined}
             pitchSummary={item.pitch_summary || undefined}
+            demoUrl={item.demo_url || undefined}
             onLike={() => handleLike(item.id, item.is_liked || false)}
             onComment={() => {
               if (!user) {
