@@ -9,24 +9,24 @@ interface TryItModeProps {
   autoLoad?: boolean;
 }
 
-export default function TryItMode({ demoUrl, title }: TryItModeProps) {
-  const [showDemo, setShowDemo] = useState(false);
-  const [loading, setLoading] = useState(false);
+export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItModeProps) {
+  const [showDemo, setShowDemo] = useState(autoLoad);
+  const [loading, setLoading] = useState(autoLoad);
   const [embedFailed, setEmbedFailed] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const launchDemo = useCallback(() => {
-    setShowDemo(true);
-    setLoading(true);
-    setEmbedFailed(false);
-
-    // Fallback timeout — if iframe doesn't load in 8s, assume blocked
-    timeoutRef.current = setTimeout(() => {
-      setLoading(false);
-      setEmbedFailed(true);
-    }, 8000);
-  }, []);
+  useEffect(() => {
+    if (autoLoad) {
+      timeoutRef.current = setTimeout(() => {
+        setLoading(false);
+        setEmbedFailed(true);
+      }, 10000);
+    }
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [autoLoad]);
 
   const handleIframeLoad = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
