@@ -53,14 +53,12 @@ export default function TryItNowDialog({ open, onOpenChange }: TryItNowDialogPro
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('media_uploads').insert({
+      const { error } = await supabase.from('live_links').insert({
         user_id: user.id,
         title: title.trim(),
         description: description.trim() || null,
-        media_type: 'website',
-        media_url: websiteUrl.trim(),
+        website_url: websiteUrl.trim(),
         category: category || null,
-        mime_type: 'text/html',
       });
 
       if (error) throw error;

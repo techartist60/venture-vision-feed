@@ -451,6 +451,54 @@ export type Database = {
         }
         Relationships: []
       }
+      live_links: {
+        Row: {
+          category: string | null
+          comments_count: number
+          created_at: string
+          description: string | null
+          id: string
+          likes_count: number
+          saves_count: number
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          views_count: number
+          website_url: string
+        }
+        Insert: {
+          category?: string | null
+          comments_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          likes_count?: number
+          saves_count?: number
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          views_count?: number
+          website_url: string
+        }
+        Update: {
+          category?: string | null
+          comments_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          likes_count?: number
+          saves_count?: number
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number
+          website_url?: string
+        }
+        Relationships: []
+      }
       media_comments: {
         Row: {
           content: string
