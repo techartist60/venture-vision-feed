@@ -126,20 +126,77 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
 
       // Random ordering like YouTube algorithm - using PostgreSQL RANDOM() function
       const { data, error } = await query.order('id', { ascending: false }).limit(50);
-      
-      // Shuffle the results client-side for random ordering (only if not userOnly)
-      if (data && !userOnly) {
-        for (let i = data.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [data[i], data[j]] = [data[j], data[i]];
-        }
-      }
 
       if (error) throw error;
 
+      // Also fetch live_links (website uploads) unless filtering by specific media type
+      let liveLinkItems: MediaUpload[] = [];
+      if (mediaType === 'all' || mediaType === undefined) {
+        let liveLinkQuery = supabase
+          .from('live_links')
+          .select('*');
+
+        if (userOnly) {
+          const targetUserId = userId || user?.id;
+          if (targetUserId) {
+            liveLinkQuery = liveLinkQuery.eq('user_id', targetUserId);
+          }
+        }
+
+        if (category) {
+          liveLinkQuery = liveLinkQuery.ilike('category', category);
+        }
+
+        const { data: liveLinksData } = await liveLinkQuery.order('created_at', { ascending: false }).limit(20);
+
+        if (liveLinksData && liveLinksData.length > 0) {
+          // Fetch profiles for live link users
+          const liveUserIds = [...new Set(liveLinksData.map(l => l.user_id))];
+          const { data: liveProfiles } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, username, avatar_url, is_verified')
+            .in('user_id', liveUserIds);
+
+          const profileMap = new Map(
+            (liveProfiles || []).map(p => [p.user_id, p])
+          );
+
+          liveLinkItems = liveLinksData.map(link => ({
+            id: link.id,
+            title: link.title,
+            description: link.description,
+            media_type: 'website',
+            media_url: link.website_url,
+            thumbnail_url: link.thumbnail_url,
+            likes_count: link.likes_count,
+            comments_count: link.comments_count,
+            saves_count: link.saves_count,
+            views_count: link.views_count,
+            created_at: link.created_at,
+            user_id: link.user_id,
+            category: link.category,
+            profiles: profileMap.get(link.user_id) || { full_name: 'Anonymous', username: 'user', avatar_url: null, is_verified: false },
+            is_liked: false,
+            is_saved: false,
+            is_idemarked: false,
+          }));
+        }
+      }
+
+      // Merge media_uploads and live_links
+      const allData = [...(data || []), ...liveLinkItems];
+
+      // Shuffle the results client-side for random ordering (only if not userOnly)
+      if (!userOnly) {
+        for (let i = allData.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allData[i], allData[j]] = [allData[j], allData[i]];
+        }
+      }
+
       if (user) {
         // Check if user has liked and saved each media, and fetch idemark status
-        const mediaIds = (data || []).map(item => item.id);
+        const mediaIds = allData.map(item => item.id);
         
         const [likesResponse, savesResponse, idemarkResponse] = await Promise.all([
           supabase
@@ -163,7 +220,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
         const idemarkedMediaIds = new Set(idemarkResponse.data?.map(record => record.media_id) || []);
         
-        const mediaWithInteractions = (data || []).map(item => ({
+        const mediaWithInteractions = allData.map(item => ({
           ...item,
           is_liked: likedMediaIds.has(item.id),
           is_saved: savedMediaIds.has(item.id),
@@ -173,7 +230,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         setMedia(mediaWithInteractions);
       } else {
         // For unauthenticated users, fetch idemark status only
-        const mediaIds = (data || []).map(item => item.id);
+        const mediaIds = allData.map(item => item.id);
         const { data: idemarkData } = await supabase
           .from('idemark_records')
           .select('media_id')
@@ -182,7 +239,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         
         const idemarkedMediaIds = new Set(idemarkData?.map(record => record.media_id) || []);
         
-        setMedia((data || []).map(item => ({
+        setMedia(allData.map(item => ({
           ...item,
           is_liked: false,
           is_saved: false,
