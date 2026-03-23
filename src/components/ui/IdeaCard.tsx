@@ -334,9 +334,33 @@ export default function IdeaCard({
             )}
           </div>
 
-          {/* Embedded website via TryItMode */}
-          <div className="px-4 py-3">
-            <TryItMode demoUrl={mediaUrl} title={title} />
+          {/* Website thumbnail / Live Demo */}
+          <div className="px-4 pb-3">
+            {!showWebsiteDemo ? (
+              <div className="relative group cursor-pointer rounded-lg overflow-hidden" onClick={() => setShowWebsiteDemo(true)}>
+                <img
+                  src={thumbnailUrl || `https://image.thum.io/get/width/600/crop/400/${mediaUrl}`}
+                  alt={`${title} website preview`}
+                  className="w-full aspect-video object-cover object-top bg-muted"
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="bg-primary text-primary-foreground rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium shadow-lg">
+                    <Play className="h-4 w-4" />
+                    Try Live Demo
+                  </div>
+                </div>
+                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                  <Globe className="h-3 w-3" />
+                  Live Website
+                </div>
+              </div>
+            ) : (
+              <TryItMode demoUrl={mediaUrl} title={title} autoLoad />
+            )}
           </div>
 
           {/* Actions */}
