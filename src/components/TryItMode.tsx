@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ExternalLink, Play, AlertTriangle, Loader2, X, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 interface TryItModeProps {
   demoUrl: string;
   title?: string;
+  autoLoad?: boolean;
 }
 
 export default function TryItMode({ demoUrl, title }: TryItModeProps) {
