@@ -4,10 +4,11 @@ export const securityHeaders = {
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://gnhimfnwkwhusiggcowq.supabase.co; " +
     "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: https: blob:; " +
+    "img-src 'self' data: https: http: blob:; " +
     "font-src 'self' data:; " +
     "connect-src 'self' https://gnhimfnwkwhusiggcowq.supabase.co wss://gnhimfnwkwhusiggcowq.supabase.co; " +
     "media-src 'self' blob:; " +
+    "frame-src https: http:; " +
     "object-src 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self'; " +

@@ -136,7 +136,8 @@ export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItMod
         title={title || 'Live Demo'}
         className={cn("w-full rounded-lg border border-border", loading && "opacity-0")}
         style={{ minHeight: '400px', height: '50vh', maxHeight: '600px' }}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
+        referrerPolicy="no-referrer-when-downgrade"
         onLoad={handleIframeLoad}
         onError={handleIframeError}
       />
