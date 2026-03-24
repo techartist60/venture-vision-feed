@@ -16,17 +16,21 @@ export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItMod
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const cleanup = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (autoLoad) {
       timeoutRef.current = setTimeout(() => {
         setLoading(false);
-        setEmbedFailed(true);
-      }, 10000);
+      }, 8000);
     }
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [autoLoad]);
+    return cleanup;
+  }, [autoLoad, cleanup]);
 
   const launchDemo = useCallback(() => {
     setShowDemo(true);
@@ -34,28 +38,19 @@ export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItMod
     setEmbedFailed(false);
     timeoutRef.current = setTimeout(() => {
       setLoading(false);
-      setEmbedFailed(true);
-    }, 10000);
+    }, 8000);
   }, []);
 
   const handleIframeLoad = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    cleanup();
     setLoading(false);
-    try {
-      const doc = iframeRef.current?.contentDocument;
-      if (!doc || !doc.body || doc.body.innerHTML === '') {
-        setEmbedFailed(true);
-      }
-    } catch {
-      // Cross-origin — loaded fine
-    }
-  }, []);
+  }, [cleanup]);
 
   const handleIframeError = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    cleanup();
     setLoading(false);
     setEmbedFailed(true);
-  }, []);
+  }, [cleanup]);
 
   const openExternal = () => {
     window.open(demoUrl, '_blank', 'noopener,noreferrer');
@@ -65,7 +60,7 @@ export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItMod
     setShowDemo(false);
     setLoading(false);
     setEmbedFailed(false);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    cleanup();
   };
 
   if (!showDemo) {
@@ -92,11 +87,11 @@ export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItMod
       <div className="text-center py-4 animate-in fade-in duration-300">
         <AlertTriangle className="h-6 w-6 text-destructive mx-auto mb-2" />
         <h4 className="font-semibold text-sm text-foreground mb-1">Demo can't be displayed here</h4>
-        <p className="text-xs text-muted-foreground mb-3">This experience needs a secure view to run properly.</p>
+        <p className="text-xs text-muted-foreground mb-3">This website blocks inline viewing. Open it directly instead.</p>
         <div className="flex items-center justify-center gap-2">
           <Button onClick={openExternal} size="sm" variant="default" className="gap-2">
             <ExternalLink className="h-4 w-4" />
-            Open Live Demo
+            Open Website
           </Button>
           <Button onClick={closeDemo} size="sm" variant="ghost">
             Close
