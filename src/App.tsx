@@ -36,6 +36,7 @@ import IdemarkVerify from "./pages/IdemarkVerify";
 import IdemarkRecords from "./pages/IdemarkRecords";
 import IdemarkPage from "./pages/IdemarkPage";
 import UsernameCheck from "./pages/UsernameCheck";
+import ArtemisLive from "./pages/ArtemisLive";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
