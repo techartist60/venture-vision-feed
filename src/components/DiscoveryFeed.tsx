@@ -185,8 +185,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         }
       }
 
-      // Merge media_uploads and live_links
-      const allData = [...(data || []), ...liveLinkItems];
+      // Merge media_uploads and live_links, cast to common type
+      const allData: MediaUpload[] = [...(data || []).map(d => ({ ...d, _source: 'media_uploads' as const })), ...liveLinkItems];
 
       // Shuffle the results client-side for random ordering (only if not userOnly)
       if (!userOnly) {
