@@ -197,41 +197,32 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
       }
 
       if (user) {
-        // Check if user has liked and saved each media, and fetch idemark status
-        const mediaIds = allData.map(item => item.id);
+        const mediaIds = allData.filter(i => i._source !== 'live_links').map(i => i.id);
+        const liveLinkIds = allData.filter(i => i._source === 'live_links').map(i => i.id);
         
-        const [likesResponse, savesResponse, idemarkResponse] = await Promise.all([
-          supabase
-            .from('media_likes')
-            .select('media_id')
-            .eq('user_id', user.id)
-            .in('media_id', mediaIds),
-          supabase
-            .from('media_saves')
-            .select('media_id')
-            .eq('user_id', user.id)
-            .in('media_id', mediaIds),
-          supabase
-            .from('idemark_records')
-            .select('media_id')
-            .in('media_id', mediaIds)
-            .eq('status', 'active')
+        const [likesResponse, savesResponse, idemarkResponse, llLikesResponse, llSavesResponse] = await Promise.all([
+          mediaIds.length ? supabase.from('media_likes').select('media_id').eq('user_id', user.id).in('media_id', mediaIds) : { data: [] },
+          mediaIds.length ? supabase.from('media_saves').select('media_id').eq('user_id', user.id).in('media_id', mediaIds) : { data: [] },
+          supabase.from('idemark_records').select('media_id').in('media_id', allData.map(i => i.id)).eq('status', 'active'),
+          liveLinkIds.length ? supabase.from('live_link_likes').select('live_link_id').eq('user_id', user.id).in('live_link_id', liveLinkIds) : { data: [] },
+          liveLinkIds.length ? supabase.from('live_link_saves').select('live_link_id').eq('user_id', user.id).in('live_link_id', liveLinkIds) : { data: [] },
         ]);
 
-        const likedMediaIds = new Set(likesResponse.data?.map(like => like.media_id) || []);
-        const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
-        const idemarkedMediaIds = new Set(idemarkResponse.data?.map(record => record.media_id) || []);
+        const likedMediaIds = new Set(likesResponse.data?.map((l: any) => l.media_id) || []);
+        const savedMediaIds = new Set(savesResponse.data?.map((s: any) => s.media_id) || []);
+        const idemarkedMediaIds = new Set(idemarkResponse.data?.map((r: any) => r.media_id) || []);
+        const likedLiveLinkIds = new Set(llLikesResponse.data?.map((l: any) => l.live_link_id) || []);
+        const savedLiveLinkIds = new Set(llSavesResponse.data?.map((s: any) => s.live_link_id) || []);
         
         const mediaWithInteractions = allData.map(item => ({
           ...item,
-          is_liked: likedMediaIds.has(item.id),
-          is_saved: savedMediaIds.has(item.id),
+          is_liked: item._source === 'live_links' ? likedLiveLinkIds.has(item.id) : likedMediaIds.has(item.id),
+          is_saved: item._source === 'live_links' ? savedLiveLinkIds.has(item.id) : savedMediaIds.has(item.id),
           is_idemarked: idemarkedMediaIds.has(item.id)
         }));
 
         setMedia(mediaWithInteractions);
       } else {
-        // For unauthenticated users, fetch idemark status only
         const mediaIds = allData.map(item => item.id);
         const { data: idemarkData } = await supabase
           .from('idemark_records')
