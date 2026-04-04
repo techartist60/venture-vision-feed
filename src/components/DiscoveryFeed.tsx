@@ -37,6 +37,7 @@ interface MediaUpload {
   is_liked?: boolean;
   is_saved?: boolean;
   is_idemarked?: boolean;
+  _source?: 'media_uploads' | 'live_links';
 }
 
 interface DiscoveryFeedProps {
