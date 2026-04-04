@@ -116,27 +116,33 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
 
     setSubmitting(true);
     try {
-      // Insert comment
-      const { data: commentData, error: commentError } = await supabase
-        .from('media_comments')
-        .insert({
-          media_id: mediaId,
-          user_id: user.id,
-          content: newComment.trim()
-        })
-        .select()
-        .single();
+      const isLiveLink = source === 'live_links';
+      let commentData: any;
 
-      if (commentError) throw commentError;
+      if (isLiveLink) {
+        const { data, error } = await supabase
+          .from('live_link_comments')
+          .insert({ live_link_id: mediaId, user_id: user.id, content: newComment.trim() })
+          .select()
+          .single();
+        if (error) throw error;
+        commentData = data;
+      } else {
+        const { data, error } = await supabase
+          .from('media_comments')
+          .insert({ media_id: mediaId, user_id: user.id, content: newComment.trim() })
+          .select()
+          .single();
+        if (error) throw error;
+        commentData = data;
+      }
 
-      // Get user profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('full_name, avatar_url')
         .eq('user_id', user.id)
         .single();
 
-      // Add to comments list
       const newCommentWithUser = {
         ...commentData,
         user_name: profileData?.full_name || 'Anonymous',
@@ -148,29 +154,39 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
       setNewComment('');
       
       // Update comment count
-      const { data: currentMedia } = await supabase
-        .from('media_uploads')
-        .select('comments_count')
-        .eq('id', mediaId)
-        .single();
-
-      if (currentMedia) {
-        await supabase
-          .from('media_uploads')
-          .update({ comments_count: (currentMedia.comments_count || 0) + 1 })
-          .eq('id', mediaId);
+      if (isLiveLink) {
+        await supabase.rpc('increment_live_link_comments', { link_id: mediaId });
+      } else {
+        await supabase.rpc('increment_comment_count', { media_id: mediaId });
       }
 
-      // Create notification for the media owner
-      const ownerId = await getMediaOwnerId(mediaId);
-      if (ownerId && user) {
-        await createNotification({
-          recipientId: ownerId,
-          actorId: user.id,
-          type: 'comment',
-          mediaId: mediaId,
-          commentContent: newComment.trim().substring(0, 100)
-        });
+      // Create notification for the owner
+      if (!isLiveLink) {
+        const ownerId = await getMediaOwnerId(mediaId);
+        if (ownerId && user) {
+          await createNotification({
+            recipientId: ownerId,
+            actorId: user.id,
+            type: 'comment',
+            mediaId: mediaId,
+            commentContent: newComment.trim().substring(0, 100)
+          });
+        }
+      } else {
+        // For live links, get owner from live_links table
+        const { data: linkData } = await supabase
+          .from('live_links')
+          .select('user_id')
+          .eq('id', mediaId)
+          .maybeSingle();
+        if (linkData && linkData.user_id !== user.id) {
+          await createNotification({
+            recipientId: linkData.user_id,
+            actorId: user.id,
+            type: 'comment',
+            commentContent: newComment.trim().substring(0, 100)
+          });
+        }
       }
 
       toast({
