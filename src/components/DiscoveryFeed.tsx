@@ -325,73 +325,39 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     }
 
     try {
-      // Get media owner for notification
       const mediaItem = media.find(item => item.id === mediaId);
       const ownerId = mediaItem?.user_id;
+      const isWebsite = mediaItem?._source === 'live_links';
 
       if (isSaved) {
-        // Unsave
-        await supabase
-          .from('media_saves')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('media_id', mediaId);
-
-        // Update saves count directly with SQL
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('saves_count')
-          .eq('id', mediaId)
-          .single();
-
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ saves_count: Math.max(0, currentMedia.saves_count - 1) })
-            .eq('id', mediaId);
+        if (isWebsite) {
+          await supabase.from('live_link_saves').delete().eq('user_id', user.id).eq('live_link_id', mediaId);
+          await supabase.rpc('decrement_live_link_saves', { link_id: mediaId });
+        } else {
+          await supabase.from('media_saves').delete().eq('user_id', user.id).eq('media_id', mediaId);
+          await supabase.rpc('decrement_saves_count', { media_id: mediaId });
         }
-
-        toast({
-          title: "Removed from saved",
-          description: "Idea removed from your saved items",
-        });
+        toast({ title: "Removed from saved", description: "Idea removed from your saved items" });
       } else {
-        // Save
-        await supabase
-          .from('media_saves')
-          .insert({ user_id: user.id, media_id: mediaId });
-
-        // Update saves count directly with SQL
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('saves_count')
-          .eq('id', mediaId)
-          .single();
-
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ saves_count: currentMedia.saves_count + 1 })
-            .eq('id', mediaId);
+        if (isWebsite) {
+          await supabase.from('live_link_saves').insert({ user_id: user.id, live_link_id: mediaId });
+          await supabase.rpc('increment_live_link_saves', { link_id: mediaId });
+        } else {
+          await supabase.from('media_saves').insert({ user_id: user.id, media_id: mediaId });
+          await supabase.rpc('increment_saves_count', { media_id: mediaId });
         }
 
-        // Send notification to media owner
         if (ownerId) {
           await createNotification({
             recipientId: ownerId,
             actorId: user.id,
             type: 'save',
-            mediaId: mediaId
+            mediaId: isWebsite ? undefined : mediaId
           });
         }
-
-        toast({
-          title: "Saved successfully",
-          description: "Idea saved to your collection",
-        });
+        toast({ title: "Saved successfully", description: "Idea saved to your collection" });
       }
 
-      // Update local state
       setMedia(prev => prev.map(item => 
         item.id === mediaId 
           ? { 
