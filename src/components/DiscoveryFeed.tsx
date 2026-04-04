@@ -180,6 +180,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
             is_liked: false,
             is_saved: false,
             is_idemarked: false,
+            _source: 'live_links' as const,
           }));
         }
       }
