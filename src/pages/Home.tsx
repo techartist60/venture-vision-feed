@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Badge } from '@/components/ui/badge';
 import TryItNowDialog from '@/components/TryItNowDialog';
 import idestrimLogo from '@/assets/idestrim-logo.png';
+import ArtemisLivePopup from '@/components/ArtemisLivePopup';
 
 const IdescanButton = ({ onClick }: { onClick: () => void }) => (
   <button
