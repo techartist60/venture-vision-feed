@@ -470,7 +470,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
                 setSignupPrompt({ open: true, action: 'comment on this video' });
                 return;
               }
-              setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title });
+              setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title, source: item._source || 'media_uploads' });
             }}
             onShare={() => {}}
             onSave={() => handleSave(item.id, item.is_saved || false)}
