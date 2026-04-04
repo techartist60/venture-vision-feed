@@ -46,14 +46,27 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
     setLoading(true);
     try {
       const isLiveLink = source === 'live_links';
-      const tableName = isLiveLink ? 'live_link_comments' : 'media_comments';
-      const idColumn = isLiveLink ? 'live_link_id' : 'media_id';
 
-      const { data: commentsData, error: commentsError } = await supabase
-        .from(tableName)
-        .select('*')
-        .eq(idColumn, mediaId)
-        .order('created_at', { ascending: true });
+      let commentsData: any[] | null = null;
+      let commentsError: any = null;
+
+      if (isLiveLink) {
+        const res = await supabase
+          .from('live_link_comments')
+          .select('*')
+          .eq('live_link_id', mediaId)
+          .order('created_at', { ascending: true });
+        commentsData = res.data;
+        commentsError = res.error;
+      } else {
+        const res = await supabase
+          .from('media_comments')
+          .select('*')
+          .eq('media_id', mediaId)
+          .order('created_at', { ascending: true });
+        commentsData = res.data;
+        commentsError = res.error;
+      }
 
       if (commentsError) throw commentsError;
 
