@@ -45,27 +45,27 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
   const fetchComments = async () => {
     setLoading(true);
     try {
-      // Fetch comments first
+      const isLiveLink = source === 'live_links';
+      const tableName = isLiveLink ? 'live_link_comments' : 'media_comments';
+      const idColumn = isLiveLink ? 'live_link_id' : 'media_id';
+
       const { data: commentsData, error: commentsError } = await supabase
-        .from('media_comments')
+        .from(tableName)
         .select('*')
-        .eq('media_id', mediaId)
+        .eq(idColumn, mediaId)
         .order('created_at', { ascending: true });
 
       if (commentsError) throw commentsError;
 
-      // Get unique user IDs
       const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
       
-      // Fetch user profiles
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
 
-      // Check which comments are liked by current user
       let likedComments: string[] = [];
-      if (user) {
+      if (user && !isLiveLink) {
         const { data: likesData } = await supabase
           .from('comment_likes')
           .select('comment_id')
@@ -74,7 +74,6 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
         likedComments = likesData?.map(l => l.comment_id) || [];
       }
 
-      // Combine comments with user data and like status
       const commentsWithUsers = commentsData?.map(comment => {
         const profile = profilesData?.find(p => p.user_id === comment.user_id);
         return {
