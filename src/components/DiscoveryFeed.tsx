@@ -252,7 +252,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
       return;
     }
 
-    // Optimistic update - update UI immediately for instant feedback
+    // Optimistic update
     const previousState = media.find(item => item.id === mediaId);
     setMedia(prev => prev.map(item => 
       item.id === mediaId 
@@ -265,42 +265,46 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     ));
 
     try {
-      // Get media owner for notification
       const mediaItem = media.find(item => item.id === mediaId);
       const ownerId = mediaItem?.user_id;
+      const isWebsite = mediaItem?._source === 'live_links';
 
       if (isLiked) {
-        // Unlike - use parallel operations for speed
-        await Promise.all([
-          supabase
-            .from('media_likes')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('media_id', mediaId),
-          supabase.rpc('decrement_likes_count', { media_id: mediaId })
-        ]);
+        if (isWebsite) {
+          await Promise.all([
+            supabase.from('live_link_likes').delete().eq('user_id', user.id).eq('live_link_id', mediaId),
+            supabase.rpc('decrement_live_link_likes', { link_id: mediaId })
+          ]);
+        } else {
+          await Promise.all([
+            supabase.from('media_likes').delete().eq('user_id', user.id).eq('media_id', mediaId),
+            supabase.rpc('decrement_likes_count', { media_id: mediaId })
+          ]);
+        }
       } else {
-        // Like - use parallel operations for speed
-        await Promise.all([
-          supabase
-            .from('media_likes')
-            .insert({ user_id: user.id, media_id: mediaId }),
-          supabase.rpc('increment_likes_count', { media_id: mediaId })
-        ]);
+        if (isWebsite) {
+          await Promise.all([
+            supabase.from('live_link_likes').insert({ user_id: user.id, live_link_id: mediaId }),
+            supabase.rpc('increment_live_link_likes', { link_id: mediaId })
+          ]);
+        } else {
+          await Promise.all([
+            supabase.from('media_likes').insert({ user_id: user.id, media_id: mediaId }),
+            supabase.rpc('increment_likes_count', { media_id: mediaId })
+          ]);
+        }
 
-        // Send notification to media owner
         if (ownerId) {
           await createNotification({
             recipientId: ownerId,
             actorId: user.id,
             type: 'like',
-            mediaId: mediaId
+            mediaId: isWebsite ? undefined : mediaId
           });
         }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
-      // Revert optimistic update on error
       if (previousState) {
         setMedia(prev => prev.map(item => 
           item.id === mediaId ? previousState : item
