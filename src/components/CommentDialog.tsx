@@ -25,6 +25,7 @@ interface CommentDialogProps {
   onOpenChange: (open: boolean) => void;
   mediaId: string;
   mediaTitle: string;
+  source?: 'media_uploads' | 'live_links';
 }
 
 export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: CommentDialogProps) {
