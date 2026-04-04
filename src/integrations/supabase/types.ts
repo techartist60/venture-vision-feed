@@ -451,6 +451,102 @@ export type Database = {
         }
         Relationships: []
       }
+      live_link_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          likes_count: number
+          live_link_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          live_link_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          live_link_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_link_comments_live_link_id_fkey"
+            columns: ["live_link_id"]
+            isOneToOne: false
+            referencedRelation: "live_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_link_likes: {
+        Row: {
+          created_at: string
+          id: string
+          live_link_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          live_link_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          live_link_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_link_likes_live_link_id_fkey"
+            columns: ["live_link_id"]
+            isOneToOne: false
+            referencedRelation: "live_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_link_saves: {
+        Row: {
+          created_at: string
+          id: string
+          live_link_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          live_link_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          live_link_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_link_saves_live_link_id_fkey"
+            columns: ["live_link_id"]
+            isOneToOne: false
+            referencedRelation: "live_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_links: {
         Row: {
           category: string | null
@@ -1162,6 +1258,14 @@ export type Database = {
         Returns: undefined
       }
       decrement_likes_count: { Args: { media_id: string }; Returns: undefined }
+      decrement_live_link_likes: {
+        Args: { link_id: string }
+        Returns: undefined
+      }
+      decrement_live_link_saves: {
+        Args: { link_id: string }
+        Returns: undefined
+      }
       decrement_saves_count: { Args: { media_id: string }; Returns: undefined }
       get_follower_count: { Args: { profile_user_id: string }; Returns: number }
       get_following_count: {
@@ -1187,6 +1291,18 @@ export type Database = {
         Returns: undefined
       }
       increment_likes_count: { Args: { media_id: string }; Returns: undefined }
+      increment_live_link_comments: {
+        Args: { link_id: string }
+        Returns: undefined
+      }
+      increment_live_link_likes: {
+        Args: { link_id: string }
+        Returns: undefined
+      }
+      increment_live_link_saves: {
+        Args: { link_id: string }
+        Returns: undefined
+      }
       increment_saves_count: { Args: { media_id: string }; Returns: undefined }
       increment_view_count: {
         Args: { media_id: string; viewer_ip?: string; viewer_user_id?: string }

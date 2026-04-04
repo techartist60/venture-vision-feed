@@ -37,6 +37,7 @@ interface MediaUpload {
   is_liked?: boolean;
   is_saved?: boolean;
   is_idemarked?: boolean;
+  _source?: 'media_uploads' | 'live_links';
 }
 
 interface DiscoveryFeedProps {
@@ -51,10 +52,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string }>({
+  const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string; source: 'media_uploads' | 'live_links' }>({
     open: false,
     mediaId: '',
-    mediaTitle: ''
+    mediaTitle: '',
+    source: 'media_uploads'
   });
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
   const [messageDialog, setMessageDialog] = useState<{
@@ -179,12 +181,13 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
             is_liked: false,
             is_saved: false,
             is_idemarked: false,
+            _source: 'live_links' as const,
           }));
         }
       }
 
-      // Merge media_uploads and live_links
-      const allData = [...(data || []), ...liveLinkItems];
+      // Merge media_uploads and live_links, cast to common type
+      const allData: MediaUpload[] = [...(data || []).map(d => ({ ...d, _source: 'media_uploads' as const })), ...liveLinkItems];
 
       // Shuffle the results client-side for random ordering (only if not userOnly)
       if (!userOnly) {
@@ -195,41 +198,32 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
       }
 
       if (user) {
-        // Check if user has liked and saved each media, and fetch idemark status
-        const mediaIds = allData.map(item => item.id);
+        const mediaIds = allData.filter(i => i._source !== 'live_links').map(i => i.id);
+        const liveLinkIds = allData.filter(i => i._source === 'live_links').map(i => i.id);
         
-        const [likesResponse, savesResponse, idemarkResponse] = await Promise.all([
-          supabase
-            .from('media_likes')
-            .select('media_id')
-            .eq('user_id', user.id)
-            .in('media_id', mediaIds),
-          supabase
-            .from('media_saves')
-            .select('media_id')
-            .eq('user_id', user.id)
-            .in('media_id', mediaIds),
-          supabase
-            .from('idemark_records')
-            .select('media_id')
-            .in('media_id', mediaIds)
-            .eq('status', 'active')
+        const [likesResponse, savesResponse, idemarkResponse, llLikesResponse, llSavesResponse] = await Promise.all([
+          mediaIds.length ? supabase.from('media_likes').select('media_id').eq('user_id', user.id).in('media_id', mediaIds) : { data: [] },
+          mediaIds.length ? supabase.from('media_saves').select('media_id').eq('user_id', user.id).in('media_id', mediaIds) : { data: [] },
+          supabase.from('idemark_records').select('media_id').in('media_id', allData.map(i => i.id)).eq('status', 'active'),
+          liveLinkIds.length ? supabase.from('live_link_likes').select('live_link_id').eq('user_id', user.id).in('live_link_id', liveLinkIds) : { data: [] },
+          liveLinkIds.length ? supabase.from('live_link_saves').select('live_link_id').eq('user_id', user.id).in('live_link_id', liveLinkIds) : { data: [] },
         ]);
 
-        const likedMediaIds = new Set(likesResponse.data?.map(like => like.media_id) || []);
-        const savedMediaIds = new Set(savesResponse.data?.map(save => save.media_id) || []);
-        const idemarkedMediaIds = new Set(idemarkResponse.data?.map(record => record.media_id) || []);
+        const likedMediaIds = new Set(likesResponse.data?.map((l: any) => l.media_id) || []);
+        const savedMediaIds = new Set(savesResponse.data?.map((s: any) => s.media_id) || []);
+        const idemarkedMediaIds = new Set(idemarkResponse.data?.map((r: any) => r.media_id) || []);
+        const likedLiveLinkIds = new Set(llLikesResponse.data?.map((l: any) => l.live_link_id) || []);
+        const savedLiveLinkIds = new Set(llSavesResponse.data?.map((s: any) => s.live_link_id) || []);
         
         const mediaWithInteractions = allData.map(item => ({
           ...item,
-          is_liked: likedMediaIds.has(item.id),
-          is_saved: savedMediaIds.has(item.id),
+          is_liked: item._source === 'live_links' ? likedLiveLinkIds.has(item.id) : likedMediaIds.has(item.id),
+          is_saved: item._source === 'live_links' ? savedLiveLinkIds.has(item.id) : savedMediaIds.has(item.id),
           is_idemarked: idemarkedMediaIds.has(item.id)
         }));
 
         setMedia(mediaWithInteractions);
       } else {
-        // For unauthenticated users, fetch idemark status only
         const mediaIds = allData.map(item => item.id);
         const { data: idemarkData } = await supabase
           .from('idemark_records')
@@ -259,7 +253,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
       return;
     }
 
-    // Optimistic update - update UI immediately for instant feedback
+    // Optimistic update
     const previousState = media.find(item => item.id === mediaId);
     setMedia(prev => prev.map(item => 
       item.id === mediaId 
@@ -272,42 +266,46 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     ));
 
     try {
-      // Get media owner for notification
       const mediaItem = media.find(item => item.id === mediaId);
       const ownerId = mediaItem?.user_id;
+      const isWebsite = mediaItem?._source === 'live_links';
 
       if (isLiked) {
-        // Unlike - use parallel operations for speed
-        await Promise.all([
-          supabase
-            .from('media_likes')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('media_id', mediaId),
-          supabase.rpc('decrement_likes_count', { media_id: mediaId })
-        ]);
+        if (isWebsite) {
+          await Promise.all([
+            supabase.from('live_link_likes').delete().eq('user_id', user.id).eq('live_link_id', mediaId),
+            supabase.rpc('decrement_live_link_likes', { link_id: mediaId })
+          ]);
+        } else {
+          await Promise.all([
+            supabase.from('media_likes').delete().eq('user_id', user.id).eq('media_id', mediaId),
+            supabase.rpc('decrement_likes_count', { media_id: mediaId })
+          ]);
+        }
       } else {
-        // Like - use parallel operations for speed
-        await Promise.all([
-          supabase
-            .from('media_likes')
-            .insert({ user_id: user.id, media_id: mediaId }),
-          supabase.rpc('increment_likes_count', { media_id: mediaId })
-        ]);
+        if (isWebsite) {
+          await Promise.all([
+            supabase.from('live_link_likes').insert({ user_id: user.id, live_link_id: mediaId }),
+            supabase.rpc('increment_live_link_likes', { link_id: mediaId })
+          ]);
+        } else {
+          await Promise.all([
+            supabase.from('media_likes').insert({ user_id: user.id, media_id: mediaId }),
+            supabase.rpc('increment_likes_count', { media_id: mediaId })
+          ]);
+        }
 
-        // Send notification to media owner
         if (ownerId) {
           await createNotification({
             recipientId: ownerId,
             actorId: user.id,
             type: 'like',
-            mediaId: mediaId
+            mediaId: isWebsite ? undefined : mediaId
           });
         }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
-      // Revert optimistic update on error
       if (previousState) {
         setMedia(prev => prev.map(item => 
           item.id === mediaId ? previousState : item
@@ -328,73 +326,39 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     }
 
     try {
-      // Get media owner for notification
       const mediaItem = media.find(item => item.id === mediaId);
       const ownerId = mediaItem?.user_id;
+      const isWebsite = mediaItem?._source === 'live_links';
 
       if (isSaved) {
-        // Unsave
-        await supabase
-          .from('media_saves')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('media_id', mediaId);
-
-        // Update saves count directly with SQL
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('saves_count')
-          .eq('id', mediaId)
-          .single();
-
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ saves_count: Math.max(0, currentMedia.saves_count - 1) })
-            .eq('id', mediaId);
+        if (isWebsite) {
+          await supabase.from('live_link_saves').delete().eq('user_id', user.id).eq('live_link_id', mediaId);
+          await supabase.rpc('decrement_live_link_saves', { link_id: mediaId });
+        } else {
+          await supabase.from('media_saves').delete().eq('user_id', user.id).eq('media_id', mediaId);
+          await supabase.rpc('decrement_saves_count', { media_id: mediaId });
         }
-
-        toast({
-          title: "Removed from saved",
-          description: "Idea removed from your saved items",
-        });
+        toast({ title: "Removed from saved", description: "Idea removed from your saved items" });
       } else {
-        // Save
-        await supabase
-          .from('media_saves')
-          .insert({ user_id: user.id, media_id: mediaId });
-
-        // Update saves count directly with SQL
-        const { data: currentMedia } = await supabase
-          .from('media_uploads')
-          .select('saves_count')
-          .eq('id', mediaId)
-          .single();
-
-        if (currentMedia) {
-          await supabase
-            .from('media_uploads')
-            .update({ saves_count: currentMedia.saves_count + 1 })
-            .eq('id', mediaId);
+        if (isWebsite) {
+          await supabase.from('live_link_saves').insert({ user_id: user.id, live_link_id: mediaId });
+          await supabase.rpc('increment_live_link_saves', { link_id: mediaId });
+        } else {
+          await supabase.from('media_saves').insert({ user_id: user.id, media_id: mediaId });
+          await supabase.rpc('increment_saves_count', { media_id: mediaId });
         }
 
-        // Send notification to media owner
         if (ownerId) {
           await createNotification({
             recipientId: ownerId,
             actorId: user.id,
             type: 'save',
-            mediaId: mediaId
+            mediaId: isWebsite ? undefined : mediaId
           });
         }
-
-        toast({
-          title: "Saved successfully",
-          description: "Idea saved to your collection",
-        });
+        toast({ title: "Saved successfully", description: "Idea saved to your collection" });
       }
 
-      // Update local state
       setMedia(prev => prev.map(item => 
         item.id === mediaId 
           ? { 
@@ -506,7 +470,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
                 setSignupPrompt({ open: true, action: 'comment on this video' });
                 return;
               }
-              setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title });
+              setCommentDialog({ open: true, mediaId: item.id, mediaTitle: item.title, source: item._source || 'media_uploads' });
             }}
             onShare={() => {}}
             onSave={() => handleSave(item.id, item.is_saved || false)}
@@ -524,6 +488,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         onOpenChange={(open) => setCommentDialog(prev => ({ ...prev, open }))}
         mediaId={commentDialog.mediaId}
         mediaTitle={commentDialog.mediaTitle}
+        source={commentDialog.source}
       />
 
       <MessageDialog
