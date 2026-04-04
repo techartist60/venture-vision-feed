@@ -146,6 +146,7 @@ export default function Home() {
         </div>
 
         <TryItNowDialog open={tryItDialogOpen} onOpenChange={setTryItDialogOpen} />
+        <ArtemisLivePopup />
       </div>
     );
   }
