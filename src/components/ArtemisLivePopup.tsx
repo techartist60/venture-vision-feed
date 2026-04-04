@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const YOUTUBE_VIDEO_ID = 'm3kR2KK8TEs';
-const AUTO_DISMISS_MS = 6000;
+const AUTO_DISMISS_MS = 300000;
 
 export default function ArtemisLivePopup() {
   const [visible, setVisible] = useState(false);
