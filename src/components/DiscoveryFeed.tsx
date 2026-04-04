@@ -488,6 +488,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         onOpenChange={(open) => setCommentDialog(prev => ({ ...prev, open }))}
         mediaId={commentDialog.mediaId}
         mediaTitle={commentDialog.mediaTitle}
+        source={commentDialog.source}
       />
 
       <MessageDialog
