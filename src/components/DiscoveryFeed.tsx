@@ -52,10 +52,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string }>({
+  const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string; source: 'media_uploads' | 'live_links' }>({
     open: false,
     mediaId: '',
-    mediaTitle: ''
+    mediaTitle: '',
+    source: 'media_uploads'
   });
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
   const [messageDialog, setMessageDialog] = useState<{
