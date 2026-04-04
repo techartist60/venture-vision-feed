@@ -81,6 +81,7 @@ const App = () => (
               <Route path="/idemark" element={<ProtectedRoute><IdemarkPage /></ProtectedRoute>} />
               <Route path="/premium/callback" element={<ProtectedRoute><PremiumCallback /></ProtectedRoute>} />
               <Route path="/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
+              <Route path="/idea/artemis-live" element={<ArtemisLive />} />
               <Route path="/username-check" element={<UsernameCheck />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
