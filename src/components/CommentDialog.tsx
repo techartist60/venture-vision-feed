@@ -28,7 +28,7 @@ interface CommentDialogProps {
   source?: 'media_uploads' | 'live_links';
 }
 
-export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle }: CommentDialogProps) {
+export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source = 'media_uploads' }: CommentDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [comments, setComments] = useState<Comment[]>([]);
