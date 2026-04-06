@@ -236,27 +236,40 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
         : comment
     ));
 
+    const isLiveLink = source === 'live_links';
     try {
       if (isLiked) {
-        // Unlike
-        const { error: deleteError } = await supabase
-          .from('comment_likes')
-          .delete()
-          .eq('comment_id', commentId)
-          .eq('user_id', user.id);
-
-        if (deleteError) throw deleteError;
-
-        await supabase.rpc('decrement_comment_likes_count', { comment_id: commentId });
+        if (isLiveLink) {
+          const { error: deleteError } = await supabase
+            .from('live_link_comment_likes')
+            .delete()
+            .eq('comment_id', commentId)
+            .eq('user_id', user.id);
+          if (deleteError) throw deleteError;
+          await supabase.rpc('decrement_live_link_comment_likes', { p_comment_id: commentId });
+        } else {
+          const { error: deleteError } = await supabase
+            .from('comment_likes')
+            .delete()
+            .eq('comment_id', commentId)
+            .eq('user_id', user.id);
+          if (deleteError) throw deleteError;
+          await supabase.rpc('decrement_comment_likes_count', { comment_id: commentId });
+        }
       } else {
-        // Like
-        const { error: insertError } = await supabase
-          .from('comment_likes')
-          .insert({ comment_id: commentId, user_id: user.id });
-
-        if (insertError) throw insertError;
-
-        await supabase.rpc('increment_comment_likes_count', { comment_id: commentId });
+        if (isLiveLink) {
+          const { error: insertError } = await supabase
+            .from('live_link_comment_likes')
+            .insert({ comment_id: commentId, user_id: user.id });
+          if (insertError) throw insertError;
+          await supabase.rpc('increment_live_link_comment_likes', { p_comment_id: commentId });
+        } else {
+          const { error: insertError } = await supabase
+            .from('comment_likes')
+            .insert({ comment_id: commentId, user_id: user.id });
+          if (insertError) throw insertError;
+          await supabase.rpc('increment_comment_likes_count', { comment_id: commentId });
+        }
       }
     } catch (error) {
       // Revert optimistic update on error
