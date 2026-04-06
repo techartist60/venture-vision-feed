@@ -848,7 +848,8 @@ export default function IdeaCard({
           currentDescription={description}
           currentCategory={category}
           onSuccess={onDelete}
-        />
+      />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="youtube" mediaUrl={mediaUrl} title={title} />
       </>
     );
   }
