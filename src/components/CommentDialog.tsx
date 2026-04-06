@@ -78,13 +78,23 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
         .in('user_id', userIds);
 
       let likedComments: string[] = [];
-      if (user && !isLiveLink) {
-        const { data: likesData } = await supabase
-          .from('comment_likes')
-          .select('comment_id')
-          .eq('user_id', user.id)
-          .in('comment_id', commentsData?.map(c => c.id) || []);
-        likedComments = likesData?.map(l => l.comment_id) || [];
+      if (user && commentsData && commentsData.length > 0) {
+        const commentIds = commentsData.map(c => c.id);
+        if (isLiveLink) {
+          const { data: likesData } = await supabase
+            .from('live_link_comment_likes')
+            .select('comment_id')
+            .eq('user_id', user.id)
+            .in('comment_id', commentIds);
+          likedComments = likesData?.map(l => l.comment_id) || [];
+        } else {
+          const { data: likesData } = await supabase
+            .from('comment_likes')
+            .select('comment_id')
+            .eq('user_id', user.id)
+            .in('comment_id', commentIds);
+          likedComments = likesData?.map(l => l.comment_id) || [];
+        }
       }
 
       const commentsWithUsers = commentsData?.map(comment => {
