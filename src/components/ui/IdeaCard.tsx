@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube, Globe } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube, Globe, Maximize } from 'lucide-react';
 import TryItMode from '@/components/TryItMode';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LinkifiedText } from '@/utils/linkDetection';
 import EditPostDialog from '@/components/EditPostDialog';
+import FullscreenMediaDialog from '@/components/FullscreenMediaDialog';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
 
 interface IdeaCardProps {
@@ -87,6 +88,7 @@ export default function IdeaCard({
   const [isPlaying, setIsPlaying] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showWebsiteDemo, setShowWebsiteDemo] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -364,6 +366,14 @@ export default function IdeaCard({
                     size="sm"
                     variant="secondary"
                     className="h-7 text-xs gap-1.5 shadow-lg"
+                    onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+                  >
+                    <Maximize className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 text-xs gap-1.5 shadow-lg"
                     onClick={(e) => { e.stopPropagation(); window.open(mediaUrl, '_blank', 'noopener,noreferrer'); }}
                   >
                     <Globe className="h-3 w-3" />
@@ -412,6 +422,7 @@ export default function IdeaCard({
           </div>
         </div>
         <EditPostDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} postId={id} currentTitle={title} currentDescription={description} currentCategory={category} onSuccess={onDelete} />
+        <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="website" mediaUrl={mediaUrl} title={title} />
       </>
     );
   }
@@ -633,6 +644,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="text" mediaUrl={mediaUrl} title={title} />
     </>
     );
   }
@@ -706,7 +718,7 @@ export default function IdeaCard({
           </div>
 
           {/* YouTube Embed */}
-          <div className="relative w-full aspect-video bg-muted">
+          <div className="relative w-full aspect-video bg-muted group">
             {videoId ? (
               <iframe
                 src={getYouTubeEmbedUrl(videoId)}
@@ -723,6 +735,12 @@ export default function IdeaCard({
                 className="w-full h-full object-cover"
               />
             )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+              className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Maximize className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Try It Mode */}
@@ -830,7 +848,8 @@ export default function IdeaCard({
           currentDescription={description}
           currentCategory={category}
           onSuccess={onDelete}
-        />
+      />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="youtube" mediaUrl={mediaUrl} title={title} />
       </>
     );
   }
@@ -902,7 +921,7 @@ export default function IdeaCard({
         </div>
 
         {/* Photo - Full scale display without max-height */}
-        <div className="relative w-full flex items-center justify-center bg-background">
+        <div className="relative w-full flex items-center justify-center bg-background group cursor-pointer" onClick={() => setFullscreenOpen(true)}>
           <img 
             src={mediaUrl} 
             alt={title}
@@ -913,6 +932,11 @@ export default function IdeaCard({
               target.src = 'https://placehold.co/1280x720/333/999?text=Image';
             }}
           />
+          <button
+            className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Maximize className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Try It Mode */}
@@ -1058,6 +1082,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={mediaUrl} title={title} />
     </>
     );
   }
@@ -1091,6 +1116,13 @@ export default function IdeaCard({
             <Play className="h-8 w-8 text-white ml-1" />
           </div>
         </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+          className="absolute top-3 right-3 p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors z-10"
+        >
+          <Maximize className="h-4 w-4" />
+        </button>
 
         <div className="absolute top-3 left-3 flex gap-2">
           {category && (
@@ -1292,6 +1324,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="video" mediaUrl={mediaUrl} title={title} thumbnailUrl={thumbnailUrl} />
     </>
   );
 }

@@ -451,6 +451,35 @@ export type Database = {
         }
         Relationships: []
       }
+      live_link_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_link_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "live_link_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_link_comments: {
         Row: {
           content: string
@@ -1258,6 +1287,10 @@ export type Database = {
         Returns: undefined
       }
       decrement_likes_count: { Args: { media_id: string }; Returns: undefined }
+      decrement_live_link_comment_likes: {
+        Args: { p_comment_id: string }
+        Returns: undefined
+      }
       decrement_live_link_likes: {
         Args: { link_id: string }
         Returns: undefined
@@ -1291,6 +1324,10 @@ export type Database = {
         Returns: undefined
       }
       increment_likes_count: { Args: { media_id: string }; Returns: undefined }
+      increment_live_link_comment_likes: {
+        Args: { p_comment_id: string }
+        Returns: undefined
+      }
       increment_live_link_comments: {
         Args: { link_id: string }
         Returns: undefined
