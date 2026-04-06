@@ -921,7 +921,7 @@ export default function IdeaCard({
         </div>
 
         {/* Photo - Full scale display without max-height */}
-        <div className="relative w-full flex items-center justify-center bg-background">
+        <div className="relative w-full flex items-center justify-center bg-background group cursor-pointer" onClick={() => setFullscreenOpen(true)}>
           <img 
             src={mediaUrl} 
             alt={title}
@@ -932,6 +932,11 @@ export default function IdeaCard({
               target.src = 'https://placehold.co/1280x720/333/999?text=Image';
             }}
           />
+          <button
+            className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Maximize className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Try It Mode */}
