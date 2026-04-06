@@ -366,6 +366,14 @@ export default function IdeaCard({
                     size="sm"
                     variant="secondary"
                     className="h-7 text-xs gap-1.5 shadow-lg"
+                    onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+                  >
+                    <Maximize className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 text-xs gap-1.5 shadow-lg"
                     onClick={(e) => { e.stopPropagation(); window.open(mediaUrl, '_blank', 'noopener,noreferrer'); }}
                   >
                     <Globe className="h-3 w-3" />
