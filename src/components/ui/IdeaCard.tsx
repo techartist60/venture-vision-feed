@@ -718,7 +718,7 @@ export default function IdeaCard({
           </div>
 
           {/* YouTube Embed */}
-          <div className="relative w-full aspect-video bg-muted">
+          <div className="relative w-full aspect-video bg-muted group">
             {videoId ? (
               <iframe
                 src={getYouTubeEmbedUrl(videoId)}
@@ -735,6 +735,12 @@ export default function IdeaCard({
                 className="w-full h-full object-cover"
               />
             )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+              className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Maximize className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Try It Mode */}
