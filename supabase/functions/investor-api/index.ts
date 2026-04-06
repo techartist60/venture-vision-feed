@@ -12,20 +12,39 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // Validate JWT authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const anonClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     );
 
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Use anon client (respects RLS) instead of service role
     const url = new URL(req.url);
     const stage = url.searchParams.get('stage');
     const minFunding = url.searchParams.get('min_funding');
     const maxFunding = url.searchParams.get('max_funding');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'), 0);
 
-    // Build query for investment-ready posts
-    let query = supabaseClient
+    let query = anonClient
       .from('media_uploads')
       .select(`
         id,
@@ -50,7 +69,6 @@ serve(async (req) => {
       .eq('investment_status', 'open')
       .order('created_at', { ascending: false });
 
-    // Apply filters
     if (stage) {
       query = query.eq('investment_stage', stage);
     }
@@ -61,17 +79,15 @@ serve(async (req) => {
       query = query.lte('funding_amount', parseInt(maxFunding));
     }
 
-    // Apply pagination
     query = query.range(offset, offset + limit - 1);
 
-    const { data: posts, error, count } = await query;
+    const { data: posts, error } = await query;
 
     if (error) {
       throw error;
     }
 
-    // Get total count
-    const { count: totalCount } = await supabaseClient
+    const { count: totalCount } = await anonClient
       .from('media_uploads')
       .select('*', { count: 'exact', head: true })
       .eq('investment_status', 'open');
@@ -100,11 +116,10 @@ serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error('Error in investor-api:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: errorMessage 
+        error: 'An internal error occurred'
       }),
       {
         status: 500,
