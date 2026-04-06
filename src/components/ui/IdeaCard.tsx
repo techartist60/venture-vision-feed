@@ -1117,6 +1117,13 @@ export default function IdeaCard({
           </div>
         </div>
 
+        <button
+          onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+          className="absolute top-3 right-3 p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors z-10"
+        >
+          <Maximize className="h-4 w-4" />
+        </button>
+
         <div className="absolute top-3 left-3 flex gap-2">
           {category && (
             <Badge className="bg-background/90 text-foreground">
