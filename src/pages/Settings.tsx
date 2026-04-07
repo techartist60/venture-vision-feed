@@ -112,18 +112,74 @@ export default function Settings() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    toast({
-      title: "Feature Coming Soon",
-      description: "Account deletion will be available in a future update",
-    });
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await supabase.functions.invoke('delete-account', {
+        body: { confirmation: 'DELETE_MY_ACCOUNT' },
+      });
+
+      if (response.error) throw response.error;
+
+      toast({ title: "Account Deleted", description: "Your account and data have been removed." });
+      navigate('/');
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to delete account", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const handleDownloadData = () => {
-    toast({
-      title: "Feature Coming Soon",
-      description: "Data download will be available in a future update",
-    });
+  const handleDownloadData = async () => {
+    if (!user) return;
+    setIsExporting(true);
+    try {
+      const [profile, media, likes, comments, followers, following, liveLinks] = await Promise.all([
+        supabase.from('profiles').select('*').eq('user_id', user.id).single(),
+        supabase.from('media_uploads').select('*').eq('user_id', user.id),
+        supabase.from('media_likes').select('*').eq('user_id', user.id),
+        supabase.from('media_comments').select('*').eq('user_id', user.id),
+        supabase.from('followers').select('*').eq('following_id', user.id),
+        supabase.from('followers').select('*').eq('follower_id', user.id),
+        supabase.from('live_links').select('*').eq('user_id', user.id),
+      ]);
+
+      const exportData = {
+        exported_at: new Date().toISOString(),
+        account: { email: user.email, id: user.id },
+        profile: profile.data,
+        posts: media.data || [],
+        likes: likes.data || [],
+        comments: comments.data || [],
+        followers: followers.data || [],
+        following: following.data || [],
+        live_links: liveLinks.data || [],
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `idestrim-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Download Complete", description: "Your data has been exported successfully" });
+    } catch (error: any) {
+      toast({ title: "Export Failed", description: error.message || "Could not export data", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const toggleNotification = (type: keyof typeof notifications) => {
