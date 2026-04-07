@@ -19,8 +19,12 @@ import {
   Trash2,
   LogOut,
   ChevronRight,
-  BellRing
+  BellRing,
+  Loader2
 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Settings() {
   const navigate = useNavigate();
