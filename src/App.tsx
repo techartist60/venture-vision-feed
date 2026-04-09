@@ -38,6 +38,7 @@ import IdemarkPage from "./pages/IdemarkPage";
 import UsernameCheck from "./pages/UsernameCheck";
 import ArtemisLive from "./pages/ArtemisLive";
 import NotFound from "./pages/NotFound";
+import SaidiChat from "./components/SaidiChat";
 
 const queryClient = new QueryClient();
 
