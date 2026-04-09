@@ -139,7 +139,7 @@ export default function ArtemisLivePopup() {
         {/* Footer */}
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-white/40 text-[10px]">Tap to expand</span>
-          <span className="text-white/30 text-[10px]">idestrim.com</span>
+          <span className="text-white/30 text-[10px]">idestrim</span>
         </div>
       </div>
     </div>
