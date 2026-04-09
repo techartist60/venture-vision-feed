@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
@@ -10,7 +10,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/saidi-chat`;
 
 const GREETING: Message = {
   role: 'assistant',
-  content: "Hey there! 👋 I'm **Saidi**, your Idestrim AI assistant. Ask me anything — from navigating the platform to brainstorming your next big idea!",
+  content: "Hey there! 👋 I'm **Saidi**, your Idestrim AI assistant. Ask me anything — from navigating the platform to brainstorming your next big idea!\n\n💡 *Tip: Long-press any button in the app to ask me for help about it!*",
 };
 
 export default function SaidiChat() {
@@ -33,6 +33,76 @@ export default function SaidiChat() {
       inputRef.current.focus();
     }
   }, [open]);
+
+  // Long-press handler: listen for long-press on any [data-saidi-help] or any button/link
+  useEffect(() => {
+    let pressTimer: ReturnType<typeof setTimeout> | null = null;
+    let pressTarget: HTMLElement | null = null;
+
+    const getHelpContext = (el: HTMLElement): string | null => {
+      // Check for explicit data-saidi-help attribute up the tree
+      let current: HTMLElement | null = el;
+      while (current) {
+        const help = current.getAttribute('data-saidi-help');
+        if (help) return help;
+        current = current.parentElement;
+      }
+      // Fallback: extract text from the button/link
+      const interactive = el.closest('button, a, [role="button"]') as HTMLElement | null;
+      if (interactive) {
+        const label = interactive.getAttribute('aria-label')
+          || interactive.textContent?.trim().slice(0, 80);
+        if (label) return `What does "${label}" do?`;
+      }
+      return null;
+    };
+
+    const startPress = (e: PointerEvent) => {
+      pressTarget = e.target as HTMLElement;
+      pressTimer = setTimeout(() => {
+        const context = getHelpContext(pressTarget!);
+        if (context) {
+          e.preventDefault();
+          setOpen(true);
+          setInput(context);
+          // Auto-send after a brief delay to let state settle
+          setTimeout(() => {
+            const syntheticEnter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+            document.querySelector('[data-saidi-input]')?.dispatchEvent(syntheticEnter);
+          }, 100);
+        }
+      }, 600); // 600ms long-press
+    };
+
+    const cancelPress = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
+
+    document.addEventListener('pointerdown', startPress);
+    document.addEventListener('pointerup', cancelPress);
+    document.addEventListener('pointercancel', cancelPress);
+    document.addEventListener('pointermove', cancelPress);
+
+    return () => {
+      document.removeEventListener('pointerdown', startPress);
+      document.removeEventListener('pointerup', cancelPress);
+      document.removeEventListener('pointercancel', cancelPress);
+      document.removeEventListener('pointermove', cancelPress);
+      cancelPress();
+    };
+  }, []);
+
+  // Listen for auto-send event from long-press
+  const pendingSendRef = useRef(false);
+  useEffect(() => {
+    if (input && pendingSendRef.current) {
+      pendingSendRef.current = false;
+      handleSend();
+    }
+  }, [input]);
 
   const streamChat = useCallback(async (allMessages: Message[]) => {
     const resp = await fetch(CHAT_URL, {
@@ -120,13 +190,24 @@ export default function SaidiChat() {
     }
   };
 
+  // Expose a way to open Saidi with a pre-filled question
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ question: string }>) => {
+      setOpen(true);
+      setInput(e.detail.question);
+      pendingSendRef.current = true;
+    };
+    window.addEventListener('saidi-ask' as any, handler);
+    return () => window.removeEventListener('saidi-ask' as any, handler);
+  }, []);
+
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — positioned above bottom nav, LEFT side to avoid Artemis Live on right */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-4 z-[90] h-14 w-14 rounded-full
+          className="fixed bottom-24 left-4 z-[90] h-14 w-14 rounded-full
             bg-gradient-to-br from-primary to-primary/80 text-primary-foreground
             shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.5)] hover:scale-110 active:scale-95
             transition-all duration-200 flex items-center justify-center
@@ -142,7 +223,7 @@ export default function SaidiChat() {
         <div
           className={cn(
             "fixed z-[100] flex flex-col",
-            "bottom-4 right-4 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-6rem)]",
+            "bottom-4 left-4 sm:left-auto sm:right-4 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-6rem)]",
             "rounded-2xl overflow-hidden border border-border/60",
             "bg-background shadow-[0_20px_60px_-12px_rgba(0,0,0,0.5)]",
             "animate-in fade-in slide-in-from-bottom-4 duration-300"
@@ -214,6 +295,7 @@ export default function SaidiChat() {
           <div className="border-t border-border/60 px-3 py-2.5 flex gap-2 items-end bg-background">
             <textarea
               ref={inputRef}
+              data-saidi-input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
