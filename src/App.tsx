@@ -88,6 +88,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
+          <SaidiChat />
           </BrowserRouter>
         </VideoProvider>
       </AuthProvider>
