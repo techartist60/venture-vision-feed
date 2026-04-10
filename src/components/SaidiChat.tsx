@@ -39,10 +39,15 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
     }
   }, [open]);
 
-  // Long-press handler: listen for long-press on any [data-saidi-help] or any button/link
+  // Long-press handler: listen for long-press on ANY interactive element
   useEffect(() => {
     let pressTimer: ReturnType<typeof setTimeout> | null = null;
     let pressTarget: HTMLElement | null = null;
+    let startX = 0;
+    let startY = 0;
+
+    const INTERACTIVE_SELECTOR =
+      'button, a, [role="button"], [role="tab"], [role="menuitem"], [role="link"], input, select, textarea, [tabindex], nav a, label';
 
     const getHelpContext = (el: HTMLElement): string | null => {
       // Check for explicit data-saidi-help attribute up the tree
@@ -52,31 +57,42 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
         if (help) return help;
         current = current.parentElement;
       }
-      // Fallback: extract text from the button/link
-      const interactive = el.closest('button, a, [role="button"]') as HTMLElement | null;
-      if (interactive) {
-        const label = interactive.getAttribute('aria-label')
-          || interactive.textContent?.trim().slice(0, 80);
-        if (label) return `What does "${label}" do?`;
+
+      // Find nearest interactive element
+      const interactive = el.closest(INTERACTIVE_SELECTOR) as HTMLElement | null;
+      if (!interactive) return null;
+
+      // Don't trigger on the Saidi chat itself or the FAB hub
+      if (interactive.closest('[data-saidi-input], [data-saidi-panel], [data-fab-hub]')) return null;
+
+      // Extract meaningful label
+      const label =
+        interactive.getAttribute('aria-label') ||
+        interactive.getAttribute('title') ||
+        interactive.getAttribute('data-saidi-help') ||
+        interactive.textContent?.replace(/\s+/g, ' ').trim().slice(0, 80);
+
+      if (label && label.length > 1) {
+        return `What does "${label}" do on Idestrim? Explain this feature.`;
       }
+
       return null;
     };
 
     const startPress = (e: PointerEvent) => {
       pressTarget = e.target as HTMLElement;
+      startX = e.clientX;
+      startY = e.clientY;
+
       pressTimer = setTimeout(() => {
         const context = getHelpContext(pressTarget!);
         if (context) {
           e.preventDefault();
-          setOpen(true);
+          onOpenChange(true);
           setInput(context);
-          // Auto-send after a brief delay to let state settle
-          setTimeout(() => {
-            const syntheticEnter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-            document.querySelector('[data-saidi-input]')?.dispatchEvent(syntheticEnter);
-          }, 100);
+          pendingSendRef.current = true;
         }
-      }, 600); // 600ms long-press
+      }, 600);
     };
 
     const cancelPress = () => {
@@ -86,19 +102,27 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
       }
     };
 
+    // Only cancel on significant movement (>10px) to handle mobile finger wobble
+    const moveCheck = (e: PointerEvent) => {
+      if (!pressTimer) return;
+      const dx = Math.abs(e.clientX - startX);
+      const dy = Math.abs(e.clientY - startY);
+      if (dx > 10 || dy > 10) cancelPress();
+    };
+
     document.addEventListener('pointerdown', startPress);
     document.addEventListener('pointerup', cancelPress);
     document.addEventListener('pointercancel', cancelPress);
-    document.addEventListener('pointermove', cancelPress);
+    document.addEventListener('pointermove', moveCheck);
 
     return () => {
       document.removeEventListener('pointerdown', startPress);
       document.removeEventListener('pointerup', cancelPress);
       document.removeEventListener('pointercancel', cancelPress);
-      document.removeEventListener('pointermove', cancelPress);
+      document.removeEventListener('pointermove', moveCheck);
       cancelPress();
     };
-  }, []);
+  }, [onOpenChange]);
 
   // Listen for auto-send event from long-press
   const pendingSendRef = useRef(false);
