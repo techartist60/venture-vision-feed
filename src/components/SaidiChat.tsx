@@ -235,6 +235,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
       {/* Chat panel */}
       {open && (
         <div
+          data-saidi-panel
           className={cn(
             "fixed z-[100] flex flex-col",
             "bottom-4 left-4 sm:left-auto sm:right-4 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-6rem)]",
