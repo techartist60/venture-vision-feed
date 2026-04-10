@@ -13,8 +13,13 @@ const GREETING: Message = {
   content: "Hey there! 👋 I'm **Saidi**, your Idestrim AI assistant. Ask me anything — from navigating the platform to brainstorming your next big idea!\n\n💡 *Tip: Long-press any button in the app to ask me for help about it!*",
 };
 
-export default function SaidiChat() {
-  const [open, setOpen] = useState(false);
+interface SaidiChatProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
+  const setOpen = onOpenChange;
   const [messages, setMessages] = useState<Message[]>([GREETING]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

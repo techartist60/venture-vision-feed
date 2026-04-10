@@ -6,7 +6,12 @@ import { cn } from '@/lib/utils';
 const YOUTUBE_VIDEO_ID = 'm3kR2KK8TEs';
 const AUTO_DISMISS_MS = 300000;
 
-export default function ArtemisLivePopup() {
+interface ArtemisLivePopupProps {
+  showMiniButton?: boolean;
+  onReopenFromHub?: () => void;
+}
+
+export default function ArtemisLivePopup({ showMiniButton: _externalMini, onReopenFromHub }: ArtemisLivePopupProps = {}) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [showMiniButton, setShowMiniButton] = useState(false);
