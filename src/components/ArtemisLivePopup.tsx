@@ -6,7 +6,12 @@ import { cn } from '@/lib/utils';
 const YOUTUBE_VIDEO_ID = 'm3kR2KK8TEs';
 const AUTO_DISMISS_MS = 300000;
 
-export default function ArtemisLivePopup() {
+interface ArtemisLivePopupProps {
+  showMiniButton?: boolean;
+  onReopenFromHub?: () => void;
+}
+
+export default function ArtemisLivePopup({ showMiniButton: _externalMini, onReopenFromHub }: ArtemisLivePopupProps = {}) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [showMiniButton, setShowMiniButton] = useState(false);
@@ -58,22 +63,8 @@ export default function ArtemisLivePopup() {
 
   // Floating reopen button
   if (showMiniButton && dismissed) {
-    return (
-      <button
-        onClick={handleReopen}
-        className="fixed bottom-20 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full
-          bg-gradient-to-r from-red-600 to-red-700 text-white text-xs font-semibold
-          shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 animate-in fade-in slide-in-from-bottom-4"
-        aria-label="Reopen Artemis Live"
-      >
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
-        </span>
-        <Radio className="h-3.5 w-3.5" />
-        Live
-      </button>
-    );
+    // No floating button — handled by FloatingActionHub
+    return null;
   }
 
   if (dismissed) return null;

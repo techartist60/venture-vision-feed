@@ -13,8 +13,13 @@ const GREETING: Message = {
   content: "Hey there! 👋 I'm **Saidi**, your Idestrim AI assistant. Ask me anything — from navigating the platform to brainstorming your next big idea!\n\n💡 *Tip: Long-press any button in the app to ask me for help about it!*",
 };
 
-export default function SaidiChat() {
-  const [open, setOpen] = useState(false);
+interface SaidiChatProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
+  const setOpen = onOpenChange;
   const [messages, setMessages] = useState<Message[]>([GREETING]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -203,21 +208,6 @@ export default function SaidiChat() {
 
   return (
     <>
-      {/* Floating button — positioned above bottom nav, LEFT side to avoid Artemis Live on right */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-24 left-4 z-[90] h-14 w-14 rounded-full
-            bg-gradient-to-br from-primary to-primary/80 text-primary-foreground
-            shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.5)] hover:scale-110 active:scale-95
-            transition-all duration-200 flex items-center justify-center
-            animate-in fade-in zoom-in-75"
-          aria-label="Open Saidi AI assistant"
-        >
-          <Bot className="h-7 w-7" />
-        </button>
-      )}
-
       {/* Chat panel */}
       {open && (
         <div

@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,8 +40,76 @@ import UsernameCheck from "./pages/UsernameCheck";
 import ArtemisLive from "./pages/ArtemisLive";
 import NotFound from "./pages/NotFound";
 import SaidiChat from "./components/SaidiChat";
+import FloatingActionHub from "./components/FloatingActionHub";
+import ArtemisLivePopup from "./components/ArtemisLivePopup";
+import TryItNowDialog from "./components/TryItNowDialog";
 
 const queryClient = new QueryClient();
+
+function AppShell() {
+  const [saidiOpen, setSaidiOpen] = useState(false);
+  const [tryItOpen, setTryItOpen] = useState(false);
+  const [artemisKey, setArtemisKey] = useState(0);
+
+  const handleOpenArtemis = useCallback(() => {
+    sessionStorage.removeItem('artemis-popup-seen');
+    setArtemisKey((k) => k + 1);
+  }, []);
+
+  return (
+    <>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+          <Route path="/slides" element={<Slides />} />
+          <Route path="/idea/:id" element={<IdeaDetail />} />
+          <Route path="/video/:id" element={<VideoDetail />} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+          <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
+          <Route path="/groups/:groupId" element={<ProtectedRoute><GroupChat /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/idescan" element={<Idescan />} />
+          <Route path="/idescan/history" element={<ProtectedRoute><IdescanHistory /></ProtectedRoute>} />
+          <Route path="/idescan/results/:scanId" element={<ProtectedRoute><IdescanResults /></ProtectedRoute>} />
+          <Route path="/idescan/sources" element={<IdescanDataSources />} />
+          <Route path="/idescan/webscan" element={<WebScan />} />
+          <Route path="/idescan/webscan/results/:id" element={<ProtectedRoute><WebScanResults /></ProtectedRoute>} />
+          <Route path="/idescan/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
+          <Route path="/idescan/webscan/payment-callback" element={<ProtectedRoute><WebScanPaymentCallback /></ProtectedRoute>} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/idemark/verify/:idemarkId" element={<IdemarkVerify />} />
+          <Route path="/idemark/records" element={<ProtectedRoute><IdemarkRecords /></ProtectedRoute>} />
+          <Route path="/idemark" element={<ProtectedRoute><IdemarkPage /></ProtectedRoute>} />
+          <Route path="/premium/callback" element={<ProtectedRoute><PremiumCallback /></ProtectedRoute>} />
+          <Route path="/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
+          <Route path="/idea/artemis-live" element={<ArtemisLive />} />
+          <Route path="/username-check" element={<UsernameCheck />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppLayout>
+
+      {/* Unified floating action hub */}
+      <FloatingActionHub
+        onOpenSaidi={() => setSaidiOpen(true)}
+        onOpenTryIt={() => setTryItOpen(true)}
+        onOpenArtemis={handleOpenArtemis}
+      />
+
+      {/* Panels controlled by hub */}
+      <SaidiChat open={saidiOpen} onOpenChange={setSaidiOpen} />
+      <TryItNowDialog open={tryItOpen} onOpenChange={setTryItOpen} />
+      <ArtemisLivePopup key={artemisKey} />
+    </>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -50,45 +119,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-          <AppLayout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-              <Route path="/slides" element={<Slides />} />
-              <Route path="/idea/:id" element={<IdeaDetail />} />
-              <Route path="/video/:id" element={<VideoDetail />} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/profile/:userId" element={<Profile />} />
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-              <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
-              <Route path="/groups/:groupId" element={<ProtectedRoute><GroupChat /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/idescan" element={<Idescan />} />
-              <Route path="/idescan/history" element={<ProtectedRoute><IdescanHistory /></ProtectedRoute>} />
-              <Route path="/idescan/results/:scanId" element={<ProtectedRoute><IdescanResults /></ProtectedRoute>} />
-              <Route path="/idescan/sources" element={<IdescanDataSources />} />
-              <Route path="/idescan/webscan" element={<WebScan />} />
-              <Route path="/idescan/webscan/results/:id" element={<ProtectedRoute><WebScanResults /></ProtectedRoute>} />
-              <Route path="/idescan/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
-              <Route path="/idescan/webscan/payment-callback" element={<ProtectedRoute><WebScanPaymentCallback /></ProtectedRoute>} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/idemark/verify/:idemarkId" element={<IdemarkVerify />} />
-              <Route path="/idemark/records" element={<ProtectedRoute><IdemarkRecords /></ProtectedRoute>} />
-              <Route path="/idemark" element={<ProtectedRoute><IdemarkPage /></ProtectedRoute>} />
-              <Route path="/premium/callback" element={<ProtectedRoute><PremiumCallback /></ProtectedRoute>} />
-              <Route path="/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
-              <Route path="/idea/artemis-live" element={<ArtemisLive />} />
-              <Route path="/username-check" element={<UsernameCheck />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AppLayout>
-          <SaidiChat />
+            <AppShell />
           </BrowserRouter>
         </VideoProvider>
       </AuthProvider>
