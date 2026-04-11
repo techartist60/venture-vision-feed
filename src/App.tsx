@@ -37,11 +37,9 @@ import IdemarkVerify from "./pages/IdemarkVerify";
 import IdemarkRecords from "./pages/IdemarkRecords";
 import IdemarkPage from "./pages/IdemarkPage";
 import UsernameCheck from "./pages/UsernameCheck";
-import ArtemisLive from "./pages/ArtemisLive";
 import NotFound from "./pages/NotFound";
 import SaidiChat from "./components/SaidiChat";
 import FloatingActionHub from "./components/FloatingActionHub";
-import ArtemisLivePopup from "./components/ArtemisLivePopup";
 import TryItNowDialog from "./components/TryItNowDialog";
 
 const queryClient = new QueryClient();
@@ -49,12 +47,6 @@ const queryClient = new QueryClient();
 function AppShell() {
   const [saidiOpen, setSaidiOpen] = useState(false);
   const [tryItOpen, setTryItOpen] = useState(false);
-  const [artemisKey, setArtemisKey] = useState(0);
-
-  const handleOpenArtemis = useCallback(() => {
-    sessionStorage.removeItem('artemis-popup-seen');
-    setArtemisKey((k) => k + 1);
-  }, []);
 
   return (
     <>
@@ -90,7 +82,7 @@ function AppShell() {
           <Route path="/idemark" element={<ProtectedRoute><IdemarkPage /></ProtectedRoute>} />
           <Route path="/premium/callback" element={<ProtectedRoute><PremiumCallback /></ProtectedRoute>} />
           <Route path="/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
-          <Route path="/idea/artemis-live" element={<ArtemisLive />} />
+          
           <Route path="/username-check" element={<UsernameCheck />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -100,13 +92,11 @@ function AppShell() {
       <FloatingActionHub
         onOpenSaidi={() => setSaidiOpen(true)}
         onOpenTryIt={() => setTryItOpen(true)}
-        onOpenArtemis={handleOpenArtemis}
       />
 
       {/* Panels controlled by hub */}
       <SaidiChat open={saidiOpen} onOpenChange={setSaidiOpen} />
       <TryItNowDialog open={tryItOpen} onOpenChange={setTryItOpen} />
-      <ArtemisLivePopup key={artemisKey} />
     </>
   );
 }
