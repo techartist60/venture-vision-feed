@@ -1,12 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X, Sparkles, Globe, Radio, Bot } from 'lucide-react';
+import { Plus, X, Sparkles, Globe, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FloatingActionHubProps {
   onOpenSaidi: () => void;
   onOpenTryIt: () => void;
-  onOpenArtemis: () => void;
 }
 
 const actions = [
@@ -31,20 +30,11 @@ const actions = [
     gradient: 'from-blue-600 to-cyan-500',
     shadow: 'shadow-[0_2px_12px_-2px_rgba(59,130,246,0.4)]',
   },
-  {
-    id: 'artemis',
-    label: 'Artemis Live',
-    icon: Radio,
-    gradient: 'from-red-600 to-red-700',
-    shadow: 'shadow-[0_2px_12px_-2px_rgba(220,38,38,0.4)]',
-    pulse: true,
-  },
 ];
 
 export default function FloatingActionHub({
   onOpenSaidi,
   onOpenTryIt,
-  onOpenArtemis,
 }: FloatingActionHubProps) {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
@@ -62,12 +52,9 @@ export default function FloatingActionHub({
         case 'tryit':
           onOpenTryIt();
           break;
-        case 'artemis':
-          onOpenArtemis();
-          break;
       }
     },
-    [navigate, onOpenSaidi, onOpenTryIt, onOpenArtemis]
+    [navigate, onOpenSaidi, onOpenTryIt]
   );
 
   return (
@@ -123,12 +110,6 @@ export default function FloatingActionHub({
             aria-label={action.label}
           >
             <action.icon className="h-5 w-5" />
-            {action.pulse && (
-              <span className="absolute top-0 right-0 h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
-              </span>
-            )}
           </button>
         </div>
       ))}
