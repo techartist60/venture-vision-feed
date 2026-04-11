@@ -110,12 +110,6 @@ export default function FloatingActionHub({
             aria-label={action.label}
           >
             <action.icon className="h-5 w-5" />
-            {action.pulse && (
-              <span className="absolute top-0 right-0 h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
-              </span>
-            )}
           </button>
         </div>
       ))}
