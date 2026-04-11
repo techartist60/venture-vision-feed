@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X, Sparkles, Globe, Bot } from 'lucide-react';
+import { Plus, X, Sparkles, Globe, Bot, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FloatingActionHubProps {
@@ -9,6 +9,13 @@ interface FloatingActionHubProps {
 }
 
 const actions = [
+  {
+    id: 'upload',
+    label: 'Upload Media',
+    icon: Upload,
+    gradient: 'from-orange-500 to-amber-500',
+    shadow: 'shadow-[0_2px_12px_-2px_rgba(249,115,22,0.4)]',
+  },
   {
     id: 'saidi',
     label: 'Saidi AI',
@@ -43,6 +50,9 @@ export default function FloatingActionHub({
     (id: string) => {
       setExpanded(false);
       switch (id) {
+        case 'upload':
+          navigate('/upload');
+          break;
         case 'saidi':
           onOpenSaidi();
           break;
