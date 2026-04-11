@@ -62,6 +62,7 @@ export default function FloatingActionHub({
         case 'tryit':
           onOpenTryIt();
           break;
+      }
     },
     [navigate, onOpenSaidi, onOpenTryIt]
   );
