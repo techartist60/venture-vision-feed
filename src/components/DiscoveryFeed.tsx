@@ -415,6 +415,17 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   }
 
   if (media.length === 0) {
+    if (category) {
+      return (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold mb-2">This category has no uploads</h3>
+          <p className="text-muted-foreground">
+            Want to try uploading? 😊
+          </p>
+        </div>
+      );
+    }
+
     const emptyMessage = mediaType === 'video' ? 'No videos yet' : 'No uploads yet';
     const emptyDescription = mediaType === 'video' 
       ? 'Upload your first video to see it here!' 
