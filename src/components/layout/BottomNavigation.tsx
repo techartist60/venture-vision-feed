@@ -58,15 +58,10 @@ export default function BottomNavigation() {
                 "flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-300 min-w-0",
                 isActive 
                   ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground",
-                item.isUpload && "relative"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {item.isUpload ? (
-                <div className="bg-gradient-innovation p-2 rounded-full shadow-glow">
-                  <item.icon className="h-4 w-4 text-primary-foreground" />
-                </div>
-              ) : isProfile && user ? (
+              {isProfile && user ? (
                 <Avatar className={cn("h-5 w-5 transition-all duration-300", isActive && "ring-2 ring-primary")}>
                   <AvatarImage src={userAvatarUrl} alt="Profile" />
                   <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
@@ -79,13 +74,10 @@ export default function BottomNavigation() {
                   )} 
                 />
               )}
-              <span className={cn(
-                "text-[10px] mt-0.5 font-medium transition-all duration-300 leading-tight",
-                item.isUpload && "text-transparent"
-              )}>
+              <span className="text-[10px] mt-0.5 font-medium transition-all duration-300 leading-tight">
                 {item.label}
               </span>
-              {isActive && !item.isUpload && (
+              {isActive && (
                 <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
               )}
             </NavLink>
