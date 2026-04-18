@@ -70,10 +70,11 @@ export default function FullscreenMediaDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-none overflow-hidden [&>button]:hidden">
-        {/* Close button */}
+        {/* Close button — visible on all media types */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute top-3 right-3 z-50 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+          aria-label="Close fullscreen"
+          className="absolute top-3 right-3 z-50 p-2.5 rounded-full bg-black/70 hover:bg-black text-white shadow-lg ring-1 ring-white/20 transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
