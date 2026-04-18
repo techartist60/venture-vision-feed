@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { X, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 
 interface FullscreenMediaDialogProps {
