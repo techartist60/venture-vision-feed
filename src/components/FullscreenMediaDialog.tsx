@@ -12,6 +12,7 @@ interface FullscreenMediaDialogProps {
   thumbnailUrl?: string;
   images?: string[];
   initialIndex?: number;
+  textContent?: string;
 }
 
 export default function FullscreenMediaDialog({
