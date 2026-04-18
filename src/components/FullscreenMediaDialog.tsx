@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { X, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 
 interface FullscreenMediaDialogProps {
@@ -27,6 +27,8 @@ export default function FullscreenMediaDialog({
   const videoId = mediaType === 'youtube' ? extractYouTubeVideoId(mediaUrl) : null;
   const gallery = mediaType === 'image' && images && images.length > 1 ? images : null;
   const [index, setIndex] = useState(initialIndex);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (open) setIndex(initialIndex);
@@ -42,6 +44,25 @@ export default function FullscreenMediaDialog({
     return () => window.removeEventListener('keydown', handler);
   }, [open, gallery]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!gallery) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!gallery || touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    // Only trigger if horizontal swipe is dominant and exceeds threshold
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) setIndex((i) => (i + 1) % gallery.length);
+      else setIndex((i) => (i - 1 + gallery.length) % gallery.length);
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   const currentImage = gallery ? gallery[index] : mediaUrl;
 
   return (
@@ -55,7 +76,11 @@ export default function FullscreenMediaDialog({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="w-full h-[90vh] flex items-center justify-center relative">
+        <div
+          className="w-full h-[90vh] flex items-center justify-center relative"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {mediaType === 'image' && (
             <>
               <img
