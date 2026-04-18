@@ -76,7 +76,11 @@ export default function FullscreenMediaDialog({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="w-full h-[90vh] flex items-center justify-center relative">
+        <div
+          className="w-full h-[90vh] flex items-center justify-center relative"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {mediaType === 'image' && (
             <>
               <img
