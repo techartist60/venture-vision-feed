@@ -662,7 +662,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
-      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="text" mediaUrl={mediaUrl} title={title} />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="text" mediaUrl={mediaUrl} title={title} textContent={description} />
     </>
     );
   }
