@@ -89,7 +89,14 @@ export default function IdeaCard({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showWebsiteDemo, setShowWebsiteDemo] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Parse multi-image posts (Facebook-style multi-photo). URLs joined with |||.
+  const imageUrls = mediaType === 'image' && mediaUrl?.includes('|||')
+    ? mediaUrl.split('|||').filter(Boolean)
+    : [mediaUrl];
+  const isMultiImage = imageUrls.length > 1;
 
   useEffect(() => {
     if (mediaType === 'video' && videoRef.current) {
