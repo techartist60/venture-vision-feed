@@ -24,6 +24,7 @@ export default function FullscreenMediaDialog({
   thumbnailUrl,
   images,
   initialIndex = 0,
+  textContent,
 }: FullscreenMediaDialogProps) {
   const videoId = mediaType === 'youtube' ? extractYouTubeVideoId(mediaUrl) : null;
   const gallery = mediaType === 'image' && images && images.length > 1 ? images : null;
