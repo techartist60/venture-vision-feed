@@ -27,6 +27,8 @@ export default function FullscreenMediaDialog({
   const videoId = mediaType === 'youtube' ? extractYouTubeVideoId(mediaUrl) : null;
   const gallery = mediaType === 'image' && images && images.length > 1 ? images : null;
   const [index, setIndex] = useState(initialIndex);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (open) setIndex(initialIndex);
@@ -41,6 +43,25 @@ export default function FullscreenMediaDialog({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [open, gallery]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!gallery) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!gallery || touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    // Only trigger if horizontal swipe is dominant and exceeds threshold
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) setIndex((i) => (i + 1) % gallery.length);
+      else setIndex((i) => (i - 1 + gallery.length) % gallery.length);
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
   const currentImage = gallery ? gallery[index] : mediaUrl;
 
