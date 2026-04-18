@@ -89,7 +89,14 @@ export default function IdeaCard({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showWebsiteDemo, setShowWebsiteDemo] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Parse multi-image posts (Facebook-style multi-photo). URLs joined with |||.
+  const imageUrls = mediaType === 'image' && mediaUrl?.includes('|||')
+    ? mediaUrl.split('|||').filter(Boolean)
+    : [mediaUrl];
+  const isMultiImage = imageUrls.length > 1;
 
   useEffect(() => {
     if (mediaType === 'video' && videoRef.current) {
@@ -920,24 +927,71 @@ export default function IdeaCard({
           </p>
         </div>
 
-        {/* Photo - Full scale display without max-height */}
-        <div className="relative w-full flex items-center justify-center bg-background group cursor-pointer" onClick={() => setFullscreenOpen(true)}>
-          <img 
-            src={mediaUrl} 
-            alt={title}
-            className="w-full h-auto object-contain"
-            loading="lazy"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = 'https://placehold.co/1280x720/333/999?text=Image';
-            }}
-          />
-          <button
-            className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        {/* Photo(s) - Single image or Facebook-style multi-photo grid */}
+        {!isMultiImage ? (
+          <div className="relative w-full flex items-center justify-center bg-background group cursor-pointer" onClick={() => { setFullscreenIndex(0); setFullscreenOpen(true); }}>
+            <img 
+              src={imageUrls[0]} 
+              alt={title}
+              className="w-full h-auto object-contain"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = 'https://placehold.co/1280x720/333/999?text=Image';
+              }}
+            />
+            <button
+              className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Maximize className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "grid gap-1 bg-background px-0",
+              imageUrls.length === 2 && "grid-cols-2",
+              imageUrls.length === 3 && "grid-cols-2 grid-rows-2",
+              imageUrls.length >= 4 && "grid-cols-2 grid-rows-2"
+            )}
           >
-            <Maximize className="h-4 w-4" />
-          </button>
-        </div>
+            {imageUrls.slice(0, 4).map((url, idx) => {
+              const isFirstOfThree = imageUrls.length === 3 && idx === 0;
+              const isLastVisible = idx === 3 && imageUrls.length > 4;
+              return (
+                <div
+                  key={idx}
+                  className={cn(
+                    "relative overflow-hidden cursor-pointer group bg-muted",
+                    isFirstOfThree && "row-span-2",
+                    imageUrls.length === 2 ? "aspect-square" : "aspect-square"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFullscreenIndex(idx);
+                    setFullscreenOpen(true);
+                  }}
+                >
+                  <img
+                    src={url}
+                    alt={`${title} ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://placehold.co/600x600/333/999?text=Image';
+                    }}
+                  />
+                  {isLastVisible && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-2xl font-bold">
+                      +{imageUrls.length - 4}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Try It Mode */}
         {demoUrl && (
@@ -1082,7 +1136,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
-      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={mediaUrl} title={title} />
+      <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={imageUrls[fullscreenIndex] || imageUrls[0]} title={title} images={imageUrls} initialIndex={fullscreenIndex} />
     </>
     );
   }

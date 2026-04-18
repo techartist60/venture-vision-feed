@@ -1,5 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { X, Globe } from 'lucide-react';
+import { X, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 
 interface FullscreenMediaDialogProps {
@@ -9,6 +10,8 @@ interface FullscreenMediaDialogProps {
   mediaUrl: string;
   title: string;
   thumbnailUrl?: string;
+  images?: string[];
+  initialIndex?: number;
 }
 
 export default function FullscreenMediaDialog({
@@ -18,8 +21,28 @@ export default function FullscreenMediaDialog({
   mediaUrl,
   title,
   thumbnailUrl,
+  images,
+  initialIndex = 0,
 }: FullscreenMediaDialogProps) {
   const videoId = mediaType === 'youtube' ? extractYouTubeVideoId(mediaUrl) : null;
+  const gallery = mediaType === 'image' && images && images.length > 1 ? images : null;
+  const [index, setIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    if (open) setIndex(initialIndex);
+  }, [open, initialIndex]);
+
+  useEffect(() => {
+    if (!open || !gallery) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setIndex((i) => (i - 1 + gallery.length) % gallery.length);
+      if (e.key === 'ArrowRight') setIndex((i) => (i + 1) % gallery.length);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, gallery]);
+
+  const currentImage = gallery ? gallery[index] : mediaUrl;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,13 +55,36 @@ export default function FullscreenMediaDialog({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="w-full h-[90vh] flex items-center justify-center">
+        <div className="w-full h-[90vh] flex items-center justify-center relative">
           {mediaType === 'image' && (
-            <img
-              src={mediaUrl}
-              alt={title}
-              className="max-w-full max-h-full object-contain"
-            />
+            <>
+              <img
+                src={currentImage}
+                alt={title}
+                className="max-w-full max-h-full object-contain"
+              />
+              {gallery && (
+                <>
+                  <button
+                    onClick={() => setIndex((i) => (i - 1 + gallery.length) % gallery.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={() => setIndex((i) => (i + 1) % gallery.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 text-white text-xs">
+                    {index + 1} / {gallery.length}
+                  </div>
+                </>
+              )}
+            </>
           )}
 
           {mediaType === 'video' && (

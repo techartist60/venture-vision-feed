@@ -301,9 +301,16 @@ export default function Upload() {
       
       if (uploadedUrls.length > 0) {
         let mediaId: string | null = null;
-        
+
+        // For photo posts: combine multiple URLs into ONE post (Facebook-style multi-photo)
+        // Use ||| as a delimiter — single-photo posts remain unchanged
+        const isMultiPhoto = mediaType === 'photo' && uploadedUrls.length > 1;
+        const recordsToInsert = isMultiPhoto
+          ? [uploadedUrls.join('|||')]
+          : uploadedUrls;
+
         // Save media metadata to database
-        for (const mediaUrl of uploadedUrls) {
+        for (const mediaUrl of recordsToInsert) {
           const { data: mediaData, error: dbError } = await supabase
             .from('media_uploads')
             .insert({
