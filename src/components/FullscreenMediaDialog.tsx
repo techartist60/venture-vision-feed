@@ -149,6 +149,19 @@ export default function FullscreenMediaDialog({
               />
             </div>
           )}
+
+          {mediaType === 'text' && (
+            <div className="w-full h-full overflow-y-auto py-12 px-6 sm:px-12 flex justify-center">
+              <article className="max-w-3xl w-full text-white">
+                <h2 className="text-2xl sm:text-4xl font-bold mb-6 leading-tight">{title}</h2>
+                {textContent && (
+                  <p className="text-base sm:text-lg leading-relaxed whitespace-pre-wrap text-white/90">
+                    {textContent}
+                  </p>
+                )}
+              </article>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
