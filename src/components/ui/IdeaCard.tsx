@@ -488,7 +488,18 @@ export default function IdeaCard({
 
         {/* Text content with icon */}
         <div className="px-4 pb-4">
-          <div className="bg-muted rounded-xl p-6">
+          <div
+            className="bg-muted rounded-xl p-6 relative group cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+          >
+            <button
+              type="button"
+              aria-label="Open fullscreen"
+              className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => { e.stopPropagation(); setFullscreenOpen(true); }}
+            >
+              <Maximize className="h-4 w-4" />
+            </button>
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-full bg-primary/10 flex-shrink-0">
                 <FileText className="h-6 w-6 text-primary" />
