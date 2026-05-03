@@ -339,18 +339,8 @@ export default function IdeaDetail() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="animate-pulse space-y-4 p-4">
-          <div className="h-6 bg-muted rounded w-32" />
-          <div className="aspect-video bg-muted rounded-xl" />
-          <div className="space-y-2">
-            <div className="h-6 bg-muted rounded w-3/4" />
-            <div className="h-4 bg-muted rounded w-1/2" />
-          </div>
-        </div>
-      </div>
-    );
+    const { AtomLoader } = require('@/components/ui/AtomLoader');
+    return <AtomLoader fullScreen size={88} label="Loading post..." />;
   }
 
   if (!idea) {

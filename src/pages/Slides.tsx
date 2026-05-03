@@ -335,12 +335,10 @@ export default function Slides() {
   };
 
   if (loading) {
+    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return (
       <div className="h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading videos...</p>
-        </div>
+        <AtomLoader size={88} label="Loading videos..." />
       </div>
     );
   }
