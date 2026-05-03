@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import BottomNavigation from './BottomNavigation';
 import DesktopLayout from './DesktopLayout';
+import { AtomLoader } from '@/components/ui/AtomLoader';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,7 +21,6 @@ export default function AppLayout({ children, showNavigation = true }: AppLayout
   const shouldShowNavigation = showNavigation && !hideNavigation;
   
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return <AtomLoader fullScreen size={88} label="Loading..." />;
   }
 

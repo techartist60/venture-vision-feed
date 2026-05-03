@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { AtomLoader } from '@/components/ui/AtomLoader';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,7 +12,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return <AtomLoader fullScreen size={88} label="Verifying authentication..." />;
   }
 
