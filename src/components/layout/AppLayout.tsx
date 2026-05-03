@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import BottomNavigation from './BottomNavigation';
 import DesktopLayout from './DesktopLayout';
+import { AtomLoader } from '@/components/ui/AtomLoader';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,14 +21,7 @@ export default function AppLayout({ children, showNavigation = true }: AppLayout
   const shouldShowNavigation = showNavigation && !hideNavigation;
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-discovery flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <AtomLoader fullScreen size={88} label="Loading..." />;
   }
 
   // Desktop layout
