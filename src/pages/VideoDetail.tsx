@@ -381,14 +381,8 @@ export default function VideoDetail() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="animate-pulse space-y-4 p-4">
-          <div className="h-6 bg-muted rounded w-32" />
-          <div className="aspect-video bg-muted rounded-xl" />
-        </div>
-      </div>
-    );
+    const { AtomLoader } = require('@/components/ui/AtomLoader');
+    return <AtomLoader fullScreen size={88} label="Loading video..." />;
   }
 
   if (!media) {

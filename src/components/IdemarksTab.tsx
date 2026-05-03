@@ -57,9 +57,10 @@ export function IdemarksTab({ userId, isOwnProfile }: IdemarksTabProps) {
   };
 
   if (loading) {
+    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <AtomLoader size={64} />
       </div>
     );
   }

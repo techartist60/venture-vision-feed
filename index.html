@@ -19,10 +19,32 @@
     <meta name="twitter:title" content="Idestrim - Share Your Innovation" />
     <meta name="twitter:description" content="Discover and share innovative ideas through videos and photos. Join the creative community building the future." />
     <meta name="twitter:image" content="/idestrim-og-logo.png" />
+    <style>
+      /* Initial atom splash — shown until React mounts */
+      #initial-atom-splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff,#f7f9fc);z-index:9999;transition:opacity .35s ease}
+      #initial-atom-splash svg{overflow:visible;filter:drop-shadow(0 0 6px rgba(0,76,204,.45))}
+      #initial-atom-splash .o{transform-origin:50px 50px;transform-box:fill-box;animation:atom-spin 2.4s cubic-bezier(.45,.05,.55,.95) infinite}
+      #initial-atom-splash .o2{transform:rotate(60deg);animation-duration:2.8s;animation-direction:reverse}
+      #initial-atom-splash .o3{transform:rotate(120deg);animation-duration:3.2s}
+      #initial-atom-splash ellipse{fill:none;stroke:#004ccc;stroke-width:1.6;opacity:.85}
+      #initial-atom-splash .e{fill:#1a6cff;filter:drop-shadow(0 0 4px #1a6cff)}
+      #initial-atom-splash .n{fill:#004ccc;animation:atom-pulse 1.8s ease-in-out infinite}
+      @keyframes atom-spin{to{transform:rotate(360deg)}}
+      @keyframes atom-pulse{0%,100%{r:4.5}50%{r:5.4}}
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-atom-splash" aria-label="Loading Idestrim">
+        <svg width="96" height="96" viewBox="0 0 100 100">
+          <g class="o"><ellipse cx="50" cy="50" rx="42" ry="16"/><circle class="e" cx="92" cy="50" r="3.2"/></g>
+          <g class="o o2"><ellipse cx="50" cy="50" rx="42" ry="16"/><circle class="e" cx="92" cy="50" r="3.2"/></g>
+          <g class="o o3"><ellipse cx="50" cy="50" rx="42" ry="16"/><circle class="e" cx="92" cy="50" r="3.2"/></g>
+          <circle class="n" cx="50" cy="50" r="4.5"/>
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

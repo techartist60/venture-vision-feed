@@ -395,21 +395,10 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   };
 
   if (loading) {
+    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="space-y-3">
-            <Skeleton className="aspect-video w-full rounded-xl" />
-            <div className="flex items-start gap-3 px-1">
-              <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center justify-center py-20">
+        <AtomLoader size={88} label="Loading feed..." />
       </div>
     );
   }
