@@ -68,6 +68,7 @@ export default function FloatingActionHub({
   );
 
   return (
+    <>
     <div data-fab-hub className="fixed bottom-24 right-4 z-[80] flex flex-col-reverse items-end gap-3">
       {/* Main FAB toggle */}
       <button
