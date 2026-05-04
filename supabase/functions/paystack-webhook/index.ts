@@ -26,19 +26,25 @@ serve(async (req) => {
     const bodyText = await req.text();
     const signature = req.headers.get('x-paystack-signature');
 
-    // Verify Paystack signature
-    if (signature) {
-      const hash = createHmac('sha512', paystackSecretKey)
-        .update(bodyText)
-        .digest('hex');
+    // Mandatory Paystack signature verification — never skip
+    if (!signature) {
+      console.error('Missing x-paystack-signature header');
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-      if (hash !== signature) {
-        console.error('Invalid Paystack signature');
-        return new Response(
-          JSON.stringify({ error: 'Invalid signature' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    const hash = createHmac('sha512', paystackSecretKey)
+      .update(bodyText)
+      .digest('hex');
+
+    if (hash !== signature) {
+      console.error('Invalid Paystack signature');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const event = JSON.parse(bodyText);

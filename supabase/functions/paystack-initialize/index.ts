@@ -11,7 +11,6 @@ interface PaymentRequest {
   amount: number; // In KES (50 for weekly, 150 for monthly)
   planType: 'weekly' | 'monthly';
   scanId?: string;
-  userId: string;
   callbackUrl: string;
 }
 
@@ -27,14 +26,59 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Verify the caller is authenticated
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const userId = claimsData.claims.sub as string;
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: PaymentRequest = await req.json();
-    const { email, amount, planType, scanId, userId, callbackUrl } = body;
+    const { email, amount, planType, scanId, callbackUrl } = body;
 
-    if (!email || !amount || !planType || !userId) {
-      throw new Error('Missing required fields: email, amount, planType, userId');
+    if (!email || !amount || !planType || !callbackUrl) {
+      throw new Error('Missing required fields: email, amount, planType, callbackUrl');
+    }
+
+    // Validate callbackUrl is a same-origin URL of the app
+    try {
+      const cbUrl = new URL(callbackUrl);
+      const allowedHosts = [
+        'idestrim.lovable.app',
+        'venture-vision-feed.lovable.app',
+        'id-preview--4f0386d7-d469-4e7b-b62e-18a4474b5bd6.lovable.app',
+      ];
+      const isAllowed =
+        allowedHosts.includes(cbUrl.hostname) ||
+        cbUrl.hostname.endsWith('.lovable.app') ||
+        cbUrl.hostname.endsWith('.lovableproject.com');
+      if (!isAllowed) {
+        throw new Error('Invalid callback URL');
+      }
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid callback URL' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Validate plan and amount
