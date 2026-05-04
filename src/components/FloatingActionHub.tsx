@@ -124,13 +124,15 @@ export default function FloatingActionHub({
         </div>
       ))}
 
-      {/* Backdrop when expanded */}
-      {expanded && (
-        <div
-          className="fixed inset-0 z-[-1]"
-          onClick={() => setExpanded(false)}
-        />
-      )}
     </div>
+    {/* Backdrop when expanded — rendered as sibling so it never blocks page interactions when collapsed */}
+    {expanded && (
+      <div
+        className="fixed inset-0 z-[70] bg-transparent"
+        onClick={() => setExpanded(false)}
+        aria-hidden="true"
+      />
+    )}
+    </>
   );
 }
