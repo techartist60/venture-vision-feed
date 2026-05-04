@@ -219,59 +219,27 @@ All colors MUST be HSL.
 }
 
 /* ============================================
-   Idestrim Atom Loader — branded loading
+   Idestrim Atom Loader — particles only, invisible orbits
    ============================================ */
-@keyframes atom-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes atom-halo-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50%      { opacity: 0.9;  transform: scale(1.06); }
-}
-
-@keyframes atom-nucleus-pulse {
-  0%, 100% { r: 4.5; filter: drop-shadow(0 0 3px hsl(var(--primary-glow))); }
-  50%      { r: 5.2; filter: drop-shadow(0 0 8px hsl(var(--primary-glow))); }
-}
-
 .atom-svg {
   overflow: visible;
-  filter: drop-shadow(0 0 6px hsl(var(--primary-glow) / 0.45));
 }
 
-.atom-orbit {
-  transform-origin: 50px 50px;
-  transform-box: fill-box;
-  animation: atom-spin 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-}
-.atom-orbit ellipse {
-  fill: none;
-  stroke: hsl(var(--primary));
-  stroke-width: 1.6;
-  opacity: 0.85;
-}
-.atom-orbit-1 { transform: rotate(0deg);   animation-duration: 2.4s; }
-.atom-orbit-2 { transform: rotate(60deg);  animation-duration: 2.8s; animation-direction: reverse; }
-.atom-orbit-3 { transform: rotate(120deg); animation-duration: 3.2s; }
-
-.atom-electron {
+.atom-particle {
   fill: hsl(var(--primary-glow));
-  filter: drop-shadow(0 0 4px hsl(var(--primary-glow)));
+  filter:
+    drop-shadow(0 0 3px hsl(var(--primary-glow)))
+    drop-shadow(0 0 8px hsl(var(--primary-glow) / 0.7))
+    drop-shadow(0 0 14px hsl(var(--primary) / 0.5));
 }
 
-.atom-nucleus {
+.atom-particle-alt {
   fill: hsl(var(--primary));
-  animation: atom-nucleus-pulse 1.8s ease-in-out infinite;
-}
-
-.atom-halo {
-  transform-origin: 50px 50px;
-  transform-box: fill-box;
-  animation: atom-halo-pulse 2.4s ease-in-out infinite;
+  filter:
+    drop-shadow(0 0 3px hsl(var(--primary)))
+    drop-shadow(0 0 8px hsl(var(--primary-glow) / 0.6));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .atom-orbit, .atom-halo, .atom-nucleus { animation: none; }
+  .atom-particle animateMotion { display: none; }
 }
