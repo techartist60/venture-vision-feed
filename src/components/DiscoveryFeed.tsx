@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -395,7 +396,6 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   };
 
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return (
       <div className="flex items-center justify-center py-20">
         <AtomLoader size={88} label="Loading feed..." />

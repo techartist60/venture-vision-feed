@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -304,7 +305,6 @@ export function CommentDialog({ open, onOpenChange, mediaId, mediaTitle, source 
         <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              {(() => { const { AtomLoader } = require('@/components/ui/AtomLoader'); return <AtomLoader size={56} label="Loading comments..." />; })()}
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center text-muted-foreground">No comments yet. Be the first to comment!</div>

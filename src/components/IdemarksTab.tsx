@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,7 +58,6 @@ export function IdemarksTab({ userId, isOwnProfile }: IdemarksTabProps) {
   };
 
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return (
       <div className="flex items-center justify-center py-12">
         <AtomLoader size={64} />
