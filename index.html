@@ -20,17 +20,10 @@
     <meta name="twitter:description" content="Discover and share innovative ideas through videos and photos. Join the creative community building the future." />
     <meta name="twitter:image" content="/idestrim-og-logo.png" />
     <style>
-      /* Initial atom splash — shown until React mounts */
+      /* Initial atom splash — shown until React mounts. Invisible orbits, moving particles only. */
       #initial-atom-splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff,#f7f9fc);z-index:9999;transition:opacity .35s ease}
-      #initial-atom-splash svg{overflow:visible;filter:drop-shadow(0 0 6px rgba(0,76,204,.45))}
-      #initial-atom-splash .o{transform-origin:50px 50px;transform-box:fill-box;animation:atom-spin 2.4s cubic-bezier(.45,.05,.55,.95) infinite}
-      #initial-atom-splash .o2{transform:rotate(60deg);animation-duration:2.8s;animation-direction:reverse}
-      #initial-atom-splash .o3{transform:rotate(120deg);animation-duration:3.2s}
-      #initial-atom-splash ellipse{fill:none;stroke:#004ccc;stroke-width:1.6;opacity:.85}
-      #initial-atom-splash .e{fill:#1a6cff;filter:drop-shadow(0 0 4px #1a6cff)}
-      #initial-atom-splash .n{fill:#004ccc;animation:atom-pulse 1.8s ease-in-out infinite}
-      @keyframes atom-spin{to{transform:rotate(360deg)}}
-      @keyframes atom-pulse{0%,100%{r:4.5}50%{r:5.4}}
+      #initial-atom-splash svg{overflow:visible}
+      #initial-atom-splash .atom-particle{fill:#1a6cff;filter:drop-shadow(0 0 4px #1a6cff) drop-shadow(0 0 8px rgba(26,108,255,.6))}
     </style>
   </head>
 
@@ -38,10 +31,14 @@
     <div id="root">
       <div id="initial-atom-splash" aria-label="Loading Idestrim">
         <svg width="96" height="96" viewBox="0 0 100 100">
-          <g class="o"><ellipse cx="50" cy="50" rx="42" ry="16"/><circle class="e" cx="92" cy="50" r="3.2"/></g>
-          <g class="o o2"><ellipse cx="50" cy="50" rx="42" ry="16"/><circle class="e" cx="92" cy="50" r="3.2"/></g>
-          <g class="o o3"><ellipse cx="50" cy="50" rx="42" ry="16"/><circle class="e" cx="92" cy="50" r="3.2"/></g>
-          <circle class="n" cx="50" cy="50" r="4.5"/>
+          <defs>
+            <path id="splash-orbit-1" d="M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0" fill="none" stroke="none"/>
+            <path id="splash-orbit-2" d="M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0" fill="none" stroke="none"/>
+            <path id="splash-orbit-3" d="M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0" fill="none" stroke="none"/>
+          </defs>
+          <g transform="rotate(0 50 50)"><circle class="atom-particle" r="3.4"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#splash-orbit-1"/></animateMotion></circle></g>
+          <g transform="rotate(60 50 50)"><circle class="atom-particle" r="3"><animateMotion dur="2.9s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#splash-orbit-2"/></animateMotion></circle></g>
+          <g transform="rotate(120 50 50)"><circle class="atom-particle" r="3.2"><animateMotion dur="3.4s" repeatCount="indefinite"><mpath href="#splash-orbit-3"/></animateMotion></circle></g>
         </svg>
       </div>
     </div>
