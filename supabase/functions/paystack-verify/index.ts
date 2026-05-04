@@ -77,6 +77,14 @@ serve(async (req) => {
     const planType = metadata?.plan_type;
     const userId = metadata?.user_id;
 
+    // Ensure the verified payment belongs to the authenticated caller
+    if (userId !== callerUserId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Calculate subscription period
     const startDate = new Date(paid_at || Date.now());
     const endDate = new Date(startDate);
