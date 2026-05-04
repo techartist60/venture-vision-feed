@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-intasend-signature',
 };
 
 serve(async (req) => {
@@ -17,7 +18,37 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const payload = await req.json();
+    // Mandatory IntaSend webhook signature verification.
+    // The shared challenge/secret is stored in INTASEND_WEBHOOK_SECRET.
+    const webhookSecret = Deno.env.get('INTASEND_WEBHOOK_SECRET');
+    if (!webhookSecret) {
+      console.error('INTASEND_WEBHOOK_SECRET is not configured');
+      return new Response(
+        JSON.stringify({ error: 'Webhook secret not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const signature = req.headers.get('x-intasend-signature');
+    if (!signature) {
+      console.error('Missing x-intasend-signature header');
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const bodyText = await req.text();
+    const expected = createHmac('sha256', webhookSecret).update(bodyText).digest('hex');
+    if (expected !== signature) {
+      console.error('Invalid IntaSend webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const payload = JSON.parse(bodyText);
     console.log('Intasend webhook received:', JSON.stringify(payload));
 
     const { invoice_id, state, api_ref } = payload;

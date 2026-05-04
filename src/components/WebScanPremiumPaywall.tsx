@@ -74,7 +74,6 @@ export default function WebScanPremiumPaywall({
           amount: plan.price,
           planType: selectedPlan,
           scanId,
-          userId: user.id,
           callbackUrl: `${window.location.origin}/idescan/webscan/payment-callback`,
         },
       });
