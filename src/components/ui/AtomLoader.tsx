@@ -26,31 +26,38 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
         aria-hidden="true"
       >
         <defs>
-          <radialGradient id="atom-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="hsl(var(--primary-glow))" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="hsl(var(--primary-glow))" stopOpacity="0" />
-          </radialGradient>
+          {/* invisible elliptical motion paths (used by <animateMotion>) */}
+          <path id="atom-path-1" d="M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0" />
+          <path id="atom-path-2" d="M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0" />
+          <path id="atom-path-3" d="M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0" />
         </defs>
 
-        {/* soft glow halo */}
-        <circle cx="50" cy="50" r="46" fill="url(#atom-glow)" className="atom-halo" />
-
-        {/* three elliptical orbits — each rotated to form the atom */}
-        <g className="atom-orbit atom-orbit-1">
-          <ellipse cx="50" cy="50" rx="42" ry="16" />
-          <circle className="atom-electron" cx="92" cy="50" r="3.2" />
-        </g>
-        <g className="atom-orbit atom-orbit-2">
-          <ellipse cx="50" cy="50" rx="42" ry="16" />
-          <circle className="atom-electron" cx="92" cy="50" r="3.2" />
-        </g>
-        <g className="atom-orbit atom-orbit-3">
-          <ellipse cx="50" cy="50" rx="42" ry="16" />
-          <circle className="atom-electron" cx="92" cy="50" r="3.2" />
+        {/* particle 1 */}
+        <g transform="rotate(0 50 50)">
+          <circle r="3.2" className="atom-particle">
+            <animateMotion dur="2.4s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#atom-path-1" />
+            </animateMotion>
+          </circle>
         </g>
 
-        {/* nucleus */}
-        <circle cx="50" cy="50" r="4.5" className="atom-nucleus" />
+        {/* particle 2 */}
+        <g transform="rotate(60 50 50)">
+          <circle r="2.8" className="atom-particle atom-particle-alt">
+            <animateMotion dur="2.9s" repeatCount="indefinite" rotate="auto" keyPoints="1;0" keyTimes="0;1" calcMode="linear">
+              <mpath href="#atom-path-2" />
+            </animateMotion>
+          </circle>
+        </g>
+
+        {/* particle 3 */}
+        <g transform="rotate(120 50 50)">
+          <circle r="3" className="atom-particle">
+            <animateMotion dur="3.4s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#atom-path-3" />
+            </animateMotion>
+          </circle>
+        </g>
       </svg>
       {label && <p className="text-sm text-muted-foreground">{label}</p>}
     </div>
