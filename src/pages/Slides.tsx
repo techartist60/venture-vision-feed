@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -335,7 +336,6 @@ export default function Slides() {
   };
 
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return (
       <div className="h-screen bg-background flex items-center justify-center">
         <AtomLoader size={88} label="Loading videos..." />

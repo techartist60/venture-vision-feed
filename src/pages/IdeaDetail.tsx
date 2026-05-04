@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Youtube } from 'lucide-react';
@@ -339,7 +340,6 @@ export default function IdeaDetail() {
   };
 
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return <AtomLoader fullScreen size={88} label="Loading post..." />;
   }
 

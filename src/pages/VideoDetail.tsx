@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Play, Trash2 } from 'lucide-react';
@@ -381,7 +382,6 @@ export default function VideoDetail() {
   };
 
   if (loading) {
-    const { AtomLoader } = require('@/components/ui/AtomLoader');
     return <AtomLoader fullScreen size={88} label="Loading video..." />;
   }
 
