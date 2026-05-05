@@ -138,6 +138,9 @@ serve(async (req) => {
   }
 
   try {
+    const unauthorized = await requireUser(req);
+    if (unauthorized) return unauthorized;
+
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
