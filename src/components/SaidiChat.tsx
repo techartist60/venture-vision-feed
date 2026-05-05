@@ -300,7 +300,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
                 <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <AtomLoader size={28} />
                 </div>
               </div>
             )}
