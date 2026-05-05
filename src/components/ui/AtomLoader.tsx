@@ -37,11 +37,22 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
         style={{ overflow: 'visible' }}
       >
         <defs>
-          {/* invisible motion paths — never rendered, only referenced by <mpath/> */}
-          <path id="atom-orbit-1" d={ellipsePath} fill="none" stroke="none" />
-          <path id="atom-orbit-2" d={ellipsePath} fill="none" stroke="none" />
-          <path id="atom-orbit-3" d={ellipsePath} fill="none" stroke="none" />
+          {/* shared motion path used by both visible orbits and particle motion */}
+          <path id="atom-orbit-1" d={ellipsePath} fill="none" />
+          <path id="atom-orbit-2" d={ellipsePath} fill="none" />
+          <path id="atom-orbit-3" d={ellipsePath} fill="none" />
         </defs>
+
+        {/* Visible stationary orbits */}
+        <g transform="rotate(0 50 50)">
+          <ellipse cx="50" cy="50" rx="42" ry="16" className="atom-orbit" />
+        </g>
+        <g transform="rotate(60 50 50)">
+          <ellipse cx="50" cy="50" rx="42" ry="16" className="atom-orbit" />
+        </g>
+        <g transform="rotate(120 50 50)">
+          <ellipse cx="50" cy="50" rx="42" ry="16" className="atom-orbit" />
+        </g>
 
         {/* Orbit 1 — horizontal (0°) */}
         <g transform="rotate(0 50 50)">

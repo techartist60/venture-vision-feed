@@ -225,6 +225,13 @@ All colors MUST be HSL.
   overflow: visible;
 }
 
+.atom-orbit {
+  fill: none;
+  stroke: hsl(var(--primary) / 0.35);
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
 .atom-particle {
   fill: hsl(var(--primary-glow));
   filter:
