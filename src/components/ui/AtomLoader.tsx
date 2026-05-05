@@ -46,7 +46,7 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
 
         {/* Particles — stationary group rotation, motion path inline */}
         <g transform="rotate(0 50 50)">
-          <circle r="3.4" cx="50" cy="50" className="atom-particle">
+          <circle r="3.4" cx="0" cy="0" className="atom-particle">
             <animateMotion
               dur="2.4s"
               repeatCount="indefinite"
@@ -56,7 +56,7 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
           </circle>
         </g>
         <g transform="rotate(60 50 50)">
-          <circle r="3" cx="50" cy="50" className="atom-particle atom-particle-alt">
+          <circle r="3" cx="0" cy="0" className="atom-particle atom-particle-alt">
             <animateMotion
               dur="2.9s"
               repeatCount="indefinite"
@@ -68,7 +68,7 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
           </circle>
         </g>
         <g transform="rotate(120 50 50)">
-          <circle r="3.2" cx="50" cy="50" className="atom-particle">
+          <circle r="3.2" cx="0" cy="0" className="atom-particle">
             <animateMotion
               dur="3.4s"
               repeatCount="indefinite"
