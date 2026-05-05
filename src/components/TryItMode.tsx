@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { ExternalLink, Play, AlertTriangle, Loader2, X, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
