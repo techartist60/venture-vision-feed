@@ -131,7 +131,7 @@ export default function WebScanPremiumPlan() {
     return (
       <Card>
         <CardContent className="p-8 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <AtomLoader size={72} />
         </CardContent>
       </Card>
     );

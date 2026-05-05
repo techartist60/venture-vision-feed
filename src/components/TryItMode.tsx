@@ -105,10 +105,7 @@ export default function TryItMode({ demoUrl, title, autoLoad = false }: TryItMod
     <div className="relative animate-in fade-in duration-500">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg z-10">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm">Launching demo…</span>
-          </div>
+          <AtomLoader size={56} label="Launching demo…" />
         </div>
       )}
       <div className="flex items-center justify-between mb-2">

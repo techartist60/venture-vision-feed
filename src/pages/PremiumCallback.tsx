@@ -93,7 +93,9 @@ export default function PremiumCallback() {
         <CardContent className="p-8 text-center">
           {status === 'loading' && (
             <>
-              <Loader2 className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
+              <div className="flex justify-center mb-4">
+                <AtomLoader size={96} />
+              </div>
               <h2 className="text-xl font-semibold mb-2">Processing Payment</h2>
               <p className="text-muted-foreground">{message}</p>
             </>
