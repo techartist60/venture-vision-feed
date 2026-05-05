@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -258,9 +259,8 @@ export function MessageDialog({
         <ScrollArea className="flex-1 px-6" ref={scrollRef}>
           <div className="space-y-4 py-6">
             {!conversationId ? (
-              <div className="text-center text-muted-foreground py-8">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                Loading conversation...
+              <div className="flex justify-center py-8">
+                <AtomLoader size={64} label="Loading conversation..." />
               </div>
             ) : messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">

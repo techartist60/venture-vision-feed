@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,7 +60,9 @@ export default function WebScanPaymentCallback() {
         <CardContent className="pt-8 pb-6 text-center">
           {status === 'loading' && (
             <>
-              <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin text-primary" />
+              <div className="flex justify-center mb-4">
+                <AtomLoader size={96} />
+              </div>
               <h2 className="text-xl font-bold mb-2">Verifying Payment...</h2>
               <p className="text-muted-foreground">Please wait while we confirm your payment</p>
             </>

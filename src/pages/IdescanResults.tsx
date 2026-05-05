@@ -1,3 +1,4 @@
+import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -1028,7 +1029,7 @@ export default function IdescanResults() {
             {isChatLoading && (
               <div className="flex justify-start">
                 <div className="bg-muted rounded-lg p-3 text-sm flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <AtomLoader size={28} />
                   Thinking...
                 </div>
               </div>
