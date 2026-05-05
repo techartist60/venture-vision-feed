@@ -9,13 +9,10 @@ interface AtomLoaderProps {
 
 /**
  * Idestrim branded atom/reaction loader.
- * Three stationary, INVISIBLE elliptical orbits at fixed rotations (0°, 60°, 120°).
- * Glowing particles travel along each invisible path — their motion alone
- * suggests the presence of the orbit.
+ * Three stationary visible elliptical orbits (0°, 60°, 120°).
+ * Glowing particles continuously travel along each orbit.
  */
 export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoaderProps) {
-  // Single ellipse path definition reused for all 3 orbits.
-  // Path is intentionally never stroked or filled — only used as <mpath/>.
   const ellipsePath =
     'M 50,50 m -42,0 a 42,16 0 1,0 84,0 a 42,16 0 1,0 -84,0';
 
@@ -36,13 +33,6 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
         aria-hidden="true"
         style={{ overflow: 'visible' }}
       >
-        <defs>
-          {/* shared motion path used by both visible orbits and particle motion */}
-          <path id="atom-orbit-1" d={ellipsePath} fill="none" />
-          <path id="atom-orbit-2" d={ellipsePath} fill="none" />
-          <path id="atom-orbit-3" d={ellipsePath} fill="none" />
-        </defs>
-
         {/* Visible stationary orbits */}
         <g transform="rotate(0 50 50)">
           <ellipse cx="50" cy="50" rx="42" ry="16" className="atom-orbit" />
@@ -54,36 +44,36 @@ export function AtomLoader({ size = 64, className, label, fullScreen }: AtomLoad
           <ellipse cx="50" cy="50" rx="42" ry="16" className="atom-orbit" />
         </g>
 
-        {/* Orbit 1 — horizontal (0°) */}
+        {/* Particles — stationary group rotation, motion path inline */}
         <g transform="rotate(0 50 50)">
-          <circle r="3.4" className="atom-particle">
-            <animateMotion dur="2.4s" repeatCount="indefinite">
-              <mpath href="#atom-orbit-1" />
-            </animateMotion>
+          <circle r="3.4" cx="0" cy="0" className="atom-particle">
+            <animateMotion
+              dur="2.4s"
+              repeatCount="indefinite"
+              path={ellipsePath}
+              rotate="0"
+            />
           </circle>
         </g>
-
-        {/* Orbit 2 — tilted 60° */}
         <g transform="rotate(60 50 50)">
-          <circle r="3" className="atom-particle atom-particle-alt">
+          <circle r="3" cx="0" cy="0" className="atom-particle atom-particle-alt">
             <animateMotion
               dur="2.9s"
               repeatCount="indefinite"
+              path={ellipsePath}
               keyPoints="1;0"
               keyTimes="0;1"
               calcMode="linear"
-            >
-              <mpath href="#atom-orbit-2" />
-            </animateMotion>
+            />
           </circle>
         </g>
-
-        {/* Orbit 3 — tilted 120° */}
         <g transform="rotate(120 50 50)">
-          <circle r="3.2" className="atom-particle">
-            <animateMotion dur="3.4s" repeatCount="indefinite">
-              <mpath href="#atom-orbit-3" />
-            </animateMotion>
+          <circle r="3.2" cx="0" cy="0" className="atom-particle">
+            <animateMotion
+              dur="3.4s"
+              repeatCount="indefinite"
+              path={ellipsePath}
+            />
           </circle>
         </g>
       </svg>
