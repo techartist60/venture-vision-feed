@@ -16,6 +16,8 @@ import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 import TryItMode from '@/components/TryItMode';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
+import { FileText } from 'lucide-react';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
@@ -52,6 +54,7 @@ export default function IdeaDetail() {
   const [loading, setLoading] = useState(true);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
