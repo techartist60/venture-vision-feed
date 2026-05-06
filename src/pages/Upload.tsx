@@ -27,7 +27,6 @@ import {
 } from '@/utils/idemark';
 import { isValidYouTubeUrl, extractYouTubeVideoId, getYouTubeThumbnail } from '@/utils/youtube';
 import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
-import { FileText } from 'lucide-react';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
