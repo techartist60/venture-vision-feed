@@ -894,6 +894,60 @@ export type Database = {
         }
         Relationships: []
       }
+      pitch_decks: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          idea_id: string | null
+          image_url: string | null
+          is_public: boolean
+          monetization: string | null
+          sections: Json
+          share_token: string | null
+          target_audience: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+          website_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          image_url?: string | null
+          is_public?: boolean
+          monetization?: string | null
+          sections?: Json
+          share_token?: string | null
+          target_audience?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          image_url?: string | null
+          is_public?: boolean
+          monetization?: string | null
+          sections?: Json
+          share_token?: string | null
+          target_audience?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       premium_subscriptions: {
         Row: {
           amount: number
