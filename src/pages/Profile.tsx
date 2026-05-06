@@ -16,6 +16,7 @@ import { FollowingList } from '@/components/FollowingList';
 import { supabase } from '@/integrations/supabase/client';
 import SignupPrompt from '@/components/SignupPrompt';
 import { IdemarksTab } from '@/components/IdemarksTab';
+import { PitchDecksTab } from '@/components/pitch/PitchDecksTab';
 import QRCode from 'qrcode';
 import { 
   Share, 
@@ -34,7 +35,8 @@ import {
   TrendingUp,
   DollarSign,
   MessageCircle,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { MessageDialog } from '@/components/MessageDialog';
@@ -397,22 +399,26 @@ export default function Profile() {
         {/* Tabs */}
         <section className="px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 rounded-xl bg-muted/50">
-              <TabsTrigger value="ideas" className="gap-1 rounded-lg text-xs px-2">
+            <TabsList className="grid w-full grid-cols-5 rounded-xl bg-muted/50">
+              <TabsTrigger value="ideas" className="gap-1 rounded-lg text-xs px-1">
                 <Grid className="h-4 w-4" />
-                Ideas
+                <span className="hidden sm:inline">Ideas</span>
               </TabsTrigger>
-              <TabsTrigger value="videos" className="gap-1 rounded-lg text-xs px-2">
+              <TabsTrigger value="videos" className="gap-1 rounded-lg text-xs px-1">
                 <Video className="h-4 w-4" />
-                Videos
+                <span className="hidden sm:inline">Videos</span>
               </TabsTrigger>
-              <TabsTrigger value="idemarks" className="gap-1 rounded-lg text-xs px-2">
+              <TabsTrigger value="idemarks" className="gap-1 rounded-lg text-xs px-1">
                 <Shield className="h-4 w-4" />
-                Idemarks
+                <span className="hidden sm:inline">Idemarks</span>
               </TabsTrigger>
-              <TabsTrigger value="saved" className="gap-1 rounded-lg text-xs px-2">
+              <TabsTrigger value="decks" className="gap-1 rounded-lg text-xs px-1">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Decks</span>
+              </TabsTrigger>
+              <TabsTrigger value="saved" className="gap-1 rounded-lg text-xs px-1">
                 <Bookmark className="h-4 w-4" />
-                Saved
+                <span className="hidden sm:inline">Saved</span>
               </TabsTrigger>
             </TabsList>
 
@@ -426,6 +432,10 @@ export default function Profile() {
 
             <TabsContent value="idemarks" className="mt-6">
               <IdemarksTab userId={profileUserId} isOwnProfile={isOwnProfile} />
+            </TabsContent>
+
+            <TabsContent value="decks" className="mt-6">
+              <PitchDecksTab userId={profileUserId} isOwnProfile={isOwnProfile} />
             </TabsContent>
 
             <TabsContent value="saved" className="mt-6">

@@ -16,6 +16,8 @@ import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 import TryItMode from '@/components/TryItMode';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
+import { FileText } from 'lucide-react';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
@@ -52,6 +54,7 @@ export default function IdeaDetail() {
   const [loading, setLoading] = useState(true);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -469,6 +472,13 @@ export default function IdeaDetail() {
           </div>
         )}
 
+        {/* Pitch Deck */}
+        <div className="mb-6">
+          <Button variant="outline" className="w-full gap-2" onClick={() => setPitchDeckOpen(true)}>
+            <FileText className="h-4 w-4" /> Create Pitch Deck
+          </Button>
+        </div>
+
         {/* Actions */}
         <div className="flex items-center justify-between py-4 border-t border-border">
           <div className="flex items-center gap-6">
@@ -531,6 +541,18 @@ export default function IdeaDetail() {
         open={signupPrompt.open}
         onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
         action={signupPrompt.action}
+      />
+
+      <PitchDeckDialog
+        open={pitchDeckOpen}
+        onOpenChange={setPitchDeckOpen}
+        prefill={{
+          title: idea.title,
+          description: idea.description,
+          category: (idea as any).category,
+          image_url: idea.media_type !== 'youtube' ? idea.media_url : (idea.thumbnail_url || undefined),
+          ideaId: idea.id,
+        }}
       />
     </div>
   );

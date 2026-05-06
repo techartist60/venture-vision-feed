@@ -38,6 +38,7 @@ import IdemarkRecords from "./pages/IdemarkRecords";
 import IdemarkPage from "./pages/IdemarkPage";
 import UsernameCheck from "./pages/UsernameCheck";
 import NotFound from "./pages/NotFound";
+import PitchDeck from "./pages/PitchDeck";
 import SaidiChat from "./components/SaidiChat";
 import FloatingActionHub from "./components/FloatingActionHub";
 import TryItNowDialog from "./components/TryItNowDialog";
@@ -84,6 +85,7 @@ function AppShell() {
           <Route path="/webscan/dashboard" element={<ProtectedRoute><WebScanDashboard /></ProtectedRoute>} />
           
           <Route path="/username-check" element={<UsernameCheck />} />
+          <Route path="/pitch-deck/:id" element={<PitchDeck />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppLayout>

@@ -26,6 +26,7 @@ import {
   IdemarkData 
 } from '@/utils/idemark';
 import { isValidYouTubeUrl, extractYouTubeVideoId, getYouTubeThumbnail } from '@/utils/youtube';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design', 
@@ -52,6 +53,7 @@ export default function Upload() {
   const [idemarkTitlePublic, setIdemarkTitlePublic] = useState(true);
   const [showIdemarkSuccess, setShowIdemarkSuccess] = useState(false);
   const [idemarkData, setIdemarkData] = useState<IdemarkData | null>(null);
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -902,11 +904,33 @@ export default function Upload() {
             {isUploading ? 'Uploading...' : 'Publish Idea'}
           </Button>
           
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={() => setPitchDeckOpen(true)}
+            disabled={!formData.title || !formData.description}
+          >
+            <FileText className="h-5 w-5 mr-2" />
+            Generate Pitch Deck
+          </Button>
+
           <Button variant="ghost" size="lg" className="w-full">
             Save as Draft
           </Button>
         </div>
       </div>
+
+      <PitchDeckDialog
+        open={pitchDeckOpen}
+        onOpenChange={setPitchDeckOpen}
+        prefill={{
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          website: formData.demoUrl,
+        }}
+      />
 
       {/* Idemark Success Dialog */}
       <IdemarkSuccessDialog
