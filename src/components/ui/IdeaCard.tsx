@@ -418,6 +418,9 @@ export default function IdeaCard({
                     <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); setEditDialogOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" title="Create Pitch Deck" onClick={(e) => { e.stopPropagation(); setPitchDeckOpen(true); }}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
