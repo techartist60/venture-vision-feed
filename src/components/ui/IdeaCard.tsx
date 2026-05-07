@@ -88,6 +88,7 @@ export default function IdeaCard({
   const { currentlyPlaying, setCurrentlyPlaying, videoRefs } = useVideo();
   const [isPlaying, setIsPlaying] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
   const [showWebsiteDemo, setShowWebsiteDemo] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
