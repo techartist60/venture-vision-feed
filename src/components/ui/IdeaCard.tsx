@@ -861,6 +861,7 @@ export default function IdeaCard({
           currentCategory={category}
           onSuccess={onDelete}
       />
+      {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="youtube" mediaUrl={mediaUrl} title={title} />
       </>
     );
