@@ -1129,6 +1129,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={imageUrls[fullscreenIndex] || imageUrls[0]} title={title} images={imageUrls} initialIndex={fullscreenIndex} />
     </>
     );
