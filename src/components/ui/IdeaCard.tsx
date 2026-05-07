@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { LinkifiedText } from '@/utils/linkDetection';
 import EditPostDialog from '@/components/EditPostDialog';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 import FullscreenMediaDialog from '@/components/FullscreenMediaDialog';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
 
@@ -87,6 +88,7 @@ export default function IdeaCard({
   const { currentlyPlaying, setCurrentlyPlaying, videoRefs } = useVideo();
   const [isPlaying, setIsPlaying] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
   const [showWebsiteDemo, setShowWebsiteDemo] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
@@ -129,6 +131,19 @@ export default function IdeaCard({
       setIsPlaying(currentlyPlaying === id);
     }
   }, [currentlyPlaying, id, mediaType]);
+
+  const pitchPrefill = {
+    title,
+    description,
+    category,
+    image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' ? thumbnailUrl : undefined),
+    video_url: mediaType === 'video' ? mediaUrl : undefined,
+    website: mediaType === 'website' ? mediaUrl : undefined,
+    ideaId: id,
+  };
+  const pitchDeckDialog = (
+    <PitchDeckDialog open={pitchDeckOpen} onOpenChange={setPitchDeckOpen} prefill={pitchPrefill} />
+  );
 
   const handleVideoClick = () => {
     if (mediaType !== 'video' || !videoRef.current) return;
@@ -416,6 +431,9 @@ export default function IdeaCard({
                     <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); setEditDialogOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" title="Create Pitch Deck" onClick={(e) => { e.stopPropagation(); setPitchDeckOpen(true); }}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -429,6 +447,7 @@ export default function IdeaCard({
           </div>
         </div>
         <EditPostDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} postId={id} currentTitle={title} currentDescription={description} currentCategory={category} onSuccess={onDelete} />
+        {pitchDeckDialog}
         <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="website" mediaUrl={mediaUrl} title={title} />
       </>
     );
@@ -610,26 +629,13 @@ export default function IdeaCard({
             <div className="flex items-center gap-2">
               {isOwner && (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-primary transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditDialogOpen(true);
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); setEditDialogOpen(true); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-destructive transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" title="Create Pitch Deck" onClick={(e) => { e.stopPropagation(); setPitchDeckOpen(true); }}>
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </>
@@ -662,6 +668,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="text" mediaUrl={mediaUrl} title={title} textContent={description} />
     </>
     );
@@ -815,26 +822,13 @@ export default function IdeaCard({
               <div className="flex items-center gap-2">
                 {isOwner && (
                   <>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="hover:text-primary transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditDialogOpen(true);
-                      }}
-                    >
+                    <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); setEditDialogOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="hover:text-destructive transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete();
-                      }}
-                    >
+                    <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" title="Create Pitch Deck" onClick={(e) => { e.stopPropagation(); setPitchDeckOpen(true); }}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </>
@@ -867,6 +861,7 @@ export default function IdeaCard({
           currentCategory={category}
           onSuccess={onDelete}
       />
+      {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="youtube" mediaUrl={mediaUrl} title={title} />
       </>
     );
@@ -1095,26 +1090,13 @@ export default function IdeaCard({
             <div className="flex items-center gap-2">
               {isOwner && (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-primary transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditDialogOpen(true);
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); setEditDialogOpen(true); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-destructive transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" title="Create Pitch Deck" onClick={(e) => { e.stopPropagation(); setPitchDeckOpen(true); }}>
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </>
@@ -1147,6 +1129,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={imageUrls[fullscreenIndex] || imageUrls[0]} title={title} images={imageUrls} initialIndex={fullscreenIndex} />
     </>
     );
@@ -1337,26 +1320,13 @@ export default function IdeaCard({
           <div className="flex items-center gap-2">
               {isOwner && (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-primary transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditDialogOpen(true);
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); setEditDialogOpen(true); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="hover:text-destructive transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" title="Create Pitch Deck" onClick={(e) => { e.stopPropagation(); setPitchDeckOpen(true); }}>
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </>
@@ -1389,6 +1359,7 @@ export default function IdeaCard({
         currentCategory={category}
         onSuccess={onDelete}
       />
+      {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="video" mediaUrl={mediaUrl} title={title} thumbnailUrl={thumbnailUrl} />
     </>
   );
