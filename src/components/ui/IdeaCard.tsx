@@ -132,6 +132,19 @@ export default function IdeaCard({
     }
   }, [currentlyPlaying, id, mediaType]);
 
+  const pitchPrefill = {
+    title,
+    description,
+    category,
+    image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' ? thumbnailUrl : undefined),
+    video_url: mediaType === 'video' ? mediaUrl : undefined,
+    website: mediaType === 'website' ? mediaUrl : undefined,
+    ideaId: id,
+  };
+  const pitchDeckDialog = (
+    <PitchDeckDialog open={pitchDeckOpen} onOpenChange={setPitchDeckOpen} prefill={pitchPrefill} />
+  );
+
   const handleVideoClick = () => {
     if (mediaType !== 'video' || !videoRef.current) return;
 
