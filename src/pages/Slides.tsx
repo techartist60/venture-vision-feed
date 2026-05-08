@@ -27,6 +27,7 @@ interface MediaUpload {
   views_count: number;
   created_at: string;
   user_id: string;
+  category?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
@@ -571,6 +572,7 @@ export default function Slides() {
           postId={editPost.id}
           currentTitle={editPost.title}
           currentDescription={editPost.description || ''}
+          currentCategory={editPost.category || undefined}
           onSuccess={fetchVideos}
           onCreatePitchDeck={() => {
             setPitchPost(editPost);
@@ -585,6 +587,7 @@ export default function Slides() {
           prefill={{
             title: pitchPost.title,
             description: pitchPost.description || '',
+            category: pitchPost.category || undefined,
             image_url: pitchPost.thumbnail_url || undefined,
             video_url: pitchPost.media_url,
             ideaId: pitchPost.id,
