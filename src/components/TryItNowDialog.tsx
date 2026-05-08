@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { getWebsiteThumbnailUrl } from '@/utils/websiteThumbnail';
 
 const categories = [
   'Technology', 'Fashion', 'Agriculture', 'Art & Design',
@@ -58,6 +59,7 @@ export default function TryItNowDialog({ open, onOpenChange }: TryItNowDialogPro
         title: title.trim(),
         description: description.trim() || null,
         website_url: websiteUrl.trim(),
+        thumbnail_url: getWebsiteThumbnailUrl(websiteUrl.trim()),
         category: category || null,
       });
 
