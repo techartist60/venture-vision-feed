@@ -678,7 +678,6 @@ export default function IdeaCard({
         currentTitle={title}
         currentDescription={description}
         currentCategory={category}
-        onSuccess={onDelete}
         onCreatePitchDeck={() => {
           setEditDialogOpen(false);
           setPitchDeckOpen(true);
@@ -875,7 +874,6 @@ export default function IdeaCard({
           currentTitle={title}
           currentDescription={description}
           currentCategory={category}
-          onSuccess={onDelete}
         onCreatePitchDeck={() => {
           setEditDialogOpen(false);
           setPitchDeckOpen(true);
@@ -1147,7 +1145,6 @@ export default function IdeaCard({
         currentTitle={title}
         currentDescription={description}
         currentCategory={category}
-        onSuccess={onDelete}
         onCreatePitchDeck={() => {
           setEditDialogOpen(false);
           setPitchDeckOpen(true);
@@ -1381,7 +1378,6 @@ export default function IdeaCard({
         currentTitle={title}
         currentDescription={description}
         currentCategory={category}
-        onSuccess={onDelete}
         onCreatePitchDeck={() => {
           setEditDialogOpen(false);
           setPitchDeckOpen(true);
