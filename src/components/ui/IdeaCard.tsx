@@ -15,6 +15,7 @@ import EditPostDialog from '@/components/EditPostDialog';
 import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 import FullscreenMediaDialog from '@/components/FullscreenMediaDialog';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
+import { getWebsiteThumbnailUrl } from '@/utils/websiteThumbnail';
 
 interface IdeaCardProps {
   id: string;
@@ -136,7 +137,7 @@ export default function IdeaCard({
     title,
     description,
     category,
-    image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' ? thumbnailUrl : undefined),
+    image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' || mediaType === 'website' ? (thumbnailUrl || (mediaType === 'website' ? getWebsiteThumbnailUrl(mediaUrl) : undefined)) : undefined),
     video_url: mediaType === 'video' ? mediaUrl : undefined,
     website: mediaType === 'website' ? mediaUrl : undefined,
     ideaId: id,
@@ -363,7 +364,7 @@ export default function IdeaCard({
             {!showWebsiteDemo ? (
               <div className="relative rounded-lg overflow-hidden">
                 <img
-                  src={thumbnailUrl || `https://image.thum.io/get/width/600/crop/400/${mediaUrl}`}
+                  src={thumbnailUrl || getWebsiteThumbnailUrl(mediaUrl)}
                   alt={`${title} website preview`}
                   className="w-full aspect-video object-cover object-top bg-muted"
                   loading="lazy"
