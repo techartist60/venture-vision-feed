@@ -1,6 +1,6 @@
 import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause } from 'lucide-react';
+import { FileText, Heart, MessageCircle, Pencil, Share, Bookmark, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
+import EditPostDialog from '@/components/EditPostDialog';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 import { cn } from '@/lib/utils';
 import { linkifyText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
@@ -48,6 +50,8 @@ export default function Slides() {
     mediaTitle: ''
   });
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [editPost, setEditPost] = useState<MediaUpload | null>(null);
+  const [pitchPost, setPitchPost] = useState<MediaUpload | null>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
