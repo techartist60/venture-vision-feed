@@ -21,23 +21,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
+    let mounted = true;
+
+    const restoreSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+
+      if (error && error.message?.toLowerCase().includes('refresh token')) {
+        await supabase.auth.signOut({ scope: 'local' });
+      }
+
+      setSession(error ? null : session);
+      setUser(error ? null : session?.user ?? null);
+      setLoading(false);
+    };
+
+    restoreSession();
+
+    // Set up auth state listener after storage restore has started.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
