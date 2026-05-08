@@ -1,6 +1,6 @@
 import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause } from 'lucide-react';
+import { FileText, Heart, MessageCircle, Pencil, Share, Bookmark, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CommentDialog } from '@/components/CommentDialog';
 import SignupPrompt from '@/components/SignupPrompt';
+import EditPostDialog from '@/components/EditPostDialog';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 import { cn } from '@/lib/utils';
 import { linkifyText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
@@ -25,6 +27,7 @@ interface MediaUpload {
   views_count: number;
   created_at: string;
   user_id: string;
+  category?: string | null;
   profiles: {
     full_name?: string | null;
     username?: string | null;
@@ -48,6 +51,8 @@ export default function Slides() {
     mediaTitle: ''
   });
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [editPost, setEditPost] = useState<MediaUpload | null>(null);
+  const [pitchPost, setPitchPost] = useState<MediaUpload | null>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -461,6 +466,30 @@ export default function Slides() {
 
           {/* Action Buttons - Right Side */}
           <div className="absolute bottom-20 right-4 z-10 flex flex-col gap-6">
+            {user?.id === video.user_id && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-12 w-12 flex flex-col items-center gap-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white"
+                  onClick={() => setEditPost(video)}
+                  title="Edit post"
+                >
+                  <Pencil className="h-7 w-7" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-12 w-12 flex flex-col items-center gap-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white"
+                  onClick={() => setPitchPost(video)}
+                  title="Create Pitch Deck"
+                >
+                  <FileText className="h-7 w-7" />
+                </Button>
+              </>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
@@ -536,6 +565,35 @@ export default function Slides() {
         onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
         action={signupPrompt.action}
       />
+      {editPost && (
+        <EditPostDialog
+          open={!!editPost}
+          onOpenChange={(open) => !open && setEditPost(null)}
+          postId={editPost.id}
+          currentTitle={editPost.title}
+          currentDescription={editPost.description || ''}
+          currentCategory={editPost.category || undefined}
+          onSuccess={fetchVideos}
+          onCreatePitchDeck={() => {
+            setPitchPost(editPost);
+            setEditPost(null);
+          }}
+        />
+      )}
+      {pitchPost && (
+        <PitchDeckDialog
+          open={!!pitchPost}
+          onOpenChange={(open) => !open && setPitchPost(null)}
+          prefill={{
+            title: pitchPost.title,
+            description: pitchPost.description || '',
+            category: pitchPost.category || undefined,
+            image_url: pitchPost.thumbnail_url || undefined,
+            video_url: pitchPost.media_url,
+            ideaId: pitchPost.id,
+          }}
+        />
+      )}
       </div>
     </>
   );

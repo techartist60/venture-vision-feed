@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Pause, Mail, Trash2, Shield, FileText, Pencil, Youtube, Globe, Maximize } from 'lucide-react';
+import { Heart, MessageCircle, Share, Bookmark, Eye, Play, Mail, Trash2, Shield, FileText, Pencil, Youtube, Globe, Maximize } from 'lucide-react';
 import TryItMode from '@/components/TryItMode';
 import { Button } from './button';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
@@ -14,7 +14,8 @@ import { LinkifiedText } from '@/utils/linkDetection';
 import EditPostDialog from '@/components/EditPostDialog';
 import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 import FullscreenMediaDialog from '@/components/FullscreenMediaDialog';
-import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
+import { getWebsiteThumbnailUrl } from '@/utils/websiteThumbnail';
 
 interface IdeaCardProps {
   id: string;
@@ -136,10 +137,10 @@ export default function IdeaCard({
     title,
     description,
     category,
-    image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' ? thumbnailUrl : undefined),
+    image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' || mediaType === 'website' ? (thumbnailUrl || (mediaType === 'website' ? getWebsiteThumbnailUrl(mediaUrl) : undefined)) : undefined),
     video_url: mediaType === 'video' ? mediaUrl : undefined,
     website: mediaType === 'website' ? mediaUrl : undefined,
-    ideaId: id,
+    ideaId: mediaType === 'website' ? undefined : id,
   };
   const pitchDeckDialog = (
     <PitchDeckDialog open={pitchDeckOpen} onOpenChange={setPitchDeckOpen} prefill={pitchPrefill} />
@@ -363,7 +364,7 @@ export default function IdeaCard({
             {!showWebsiteDemo ? (
               <div className="relative rounded-lg overflow-hidden">
                 <img
-                  src={thumbnailUrl || `https://image.thum.io/get/width/600/crop/400/${mediaUrl}`}
+                  src={thumbnailUrl || getWebsiteThumbnailUrl(mediaUrl)}
                   alt={`${title} website preview`}
                   className="w-full aspect-video object-cover object-top bg-muted"
                   loading="lazy"
@@ -446,7 +447,18 @@ export default function IdeaCard({
             </div>
           </div>
         </div>
-        <EditPostDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} postId={id} currentTitle={title} currentDescription={description} currentCategory={category} onSuccess={onDelete} />
+        <EditPostDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          postId={id}
+          currentTitle={title}
+          currentDescription={description}
+          currentCategory={category}
+          onCreatePitchDeck={() => {
+            setEditDialogOpen(false);
+            setPitchDeckOpen(true);
+          }}
+        />
         {pitchDeckDialog}
         <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="website" mediaUrl={mediaUrl} title={title} />
       </>
@@ -666,7 +678,10 @@ export default function IdeaCard({
         currentTitle={title}
         currentDescription={description}
         currentCategory={category}
-        onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="text" mediaUrl={mediaUrl} title={title} textContent={description} />
@@ -859,7 +874,10 @@ export default function IdeaCard({
           currentTitle={title}
           currentDescription={description}
           currentCategory={category}
-          onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="youtube" mediaUrl={mediaUrl} title={title} />
@@ -1127,7 +1145,10 @@ export default function IdeaCard({
         currentTitle={title}
         currentDescription={description}
         currentCategory={category}
-        onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={imageUrls[fullscreenIndex] || imageUrls[0]} title={title} images={imageUrls} initialIndex={fullscreenIndex} />
@@ -1357,7 +1378,10 @@ export default function IdeaCard({
         currentTitle={title}
         currentDescription={description}
         currentCategory={category}
-        onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="video" mediaUrl={mediaUrl} title={title} thumbnailUrl={thumbnailUrl} />
