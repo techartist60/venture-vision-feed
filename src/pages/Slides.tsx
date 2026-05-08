@@ -465,6 +465,30 @@ export default function Slides() {
 
           {/* Action Buttons - Right Side */}
           <div className="absolute bottom-20 right-4 z-10 flex flex-col gap-6">
+            {user?.id === video.user_id && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-12 w-12 flex flex-col items-center gap-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white"
+                  onClick={() => setEditPost(video)}
+                  title="Edit post"
+                >
+                  <Pencil className="h-7 w-7" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-12 w-12 flex flex-col items-center gap-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white"
+                  onClick={() => setPitchPost(video)}
+                  title="Create Pitch Deck"
+                >
+                  <FileText className="h-7 w-7" />
+                </Button>
+              </>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
@@ -540,6 +564,33 @@ export default function Slides() {
         onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
         action={signupPrompt.action}
       />
+      {editPost && (
+        <EditPostDialog
+          open={!!editPost}
+          onOpenChange={(open) => !open && setEditPost(null)}
+          postId={editPost.id}
+          currentTitle={editPost.title}
+          currentDescription={editPost.description || ''}
+          onSuccess={fetchVideos}
+          onCreatePitchDeck={() => {
+            setPitchPost(editPost);
+            setEditPost(null);
+          }}
+        />
+      )}
+      {pitchPost && (
+        <PitchDeckDialog
+          open={!!pitchPost}
+          onOpenChange={(open) => !open && setPitchPost(null)}
+          prefill={{
+            title: pitchPost.title,
+            description: pitchPost.description || '',
+            image_url: pitchPost.thumbnail_url || undefined,
+            video_url: pitchPost.media_url,
+            ideaId: pitchPost.id,
+          }}
+        />
+      )}
       </div>
     </>
   );
