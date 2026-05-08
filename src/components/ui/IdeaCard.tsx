@@ -14,7 +14,7 @@ import { LinkifiedText } from '@/utils/linkDetection';
 import EditPostDialog from '@/components/EditPostDialog';
 import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 import FullscreenMediaDialog from '@/components/FullscreenMediaDialog';
-import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/utils/youtube';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtube';
 import { getWebsiteThumbnailUrl } from '@/utils/websiteThumbnail';
 
 interface IdeaCardProps {
@@ -447,11 +447,18 @@ export default function IdeaCard({
             </div>
           </div>
         </div>
-        <EditPostDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} postId={id} currentTitle={title} currentDescription={description} currentCategory={category} onSuccess={onDelete}
-        onCreatePitchDeck={() => {
-          setEditDialogOpen(false);
-          setPitchDeckOpen(true);
-        }} />
+        <EditPostDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          postId={id}
+          currentTitle={title}
+          currentDescription={description}
+          currentCategory={category}
+          onCreatePitchDeck={() => {
+            setEditDialogOpen(false);
+            setPitchDeckOpen(true);
+          }}
+        />
         {pitchDeckDialog}
         <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="website" mediaUrl={mediaUrl} title={title} />
       </>
