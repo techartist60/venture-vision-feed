@@ -540,15 +540,35 @@ export default function VideoDetail() {
                 </Button>
 
                 {user?.id === media.user_id && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="gap-2 hover:text-destructive transition-colors"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="h-5 w-5" />
-                    <span>Delete</span>
-                  </Button>
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="gap-2 hover:text-primary transition-colors"
+                      onClick={() => setEditDialogOpen(true)}
+                    >
+                      <Pencil className="h-5 w-5" />
+                      <span>Edit Post</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="gap-2 hover:text-primary transition-colors"
+                      onClick={() => setPitchDeckOpen(true)}
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span>Create Pitch Deck</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="gap-2 hover:text-destructive transition-colors"
+                      onClick={handleDelete}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                      <span>Delete</span>
+                    </Button>
+                  </>
                 )}
                 </div>
               </div>
