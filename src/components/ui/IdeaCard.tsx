@@ -447,7 +447,11 @@ export default function IdeaCard({
             </div>
           </div>
         </div>
-        <EditPostDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} postId={id} currentTitle={title} currentDescription={description} currentCategory={category} onSuccess={onDelete} />
+        <EditPostDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} postId={id} currentTitle={title} currentDescription={description} currentCategory={category} onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }} />
         {pitchDeckDialog}
         <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="website" mediaUrl={mediaUrl} title={title} />
       </>
@@ -668,6 +672,10 @@ export default function IdeaCard({
         currentDescription={description}
         currentCategory={category}
         onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="text" mediaUrl={mediaUrl} title={title} textContent={description} />
@@ -861,6 +869,10 @@ export default function IdeaCard({
           currentDescription={description}
           currentCategory={category}
           onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="youtube" mediaUrl={mediaUrl} title={title} />
@@ -1129,6 +1141,10 @@ export default function IdeaCard({
         currentDescription={description}
         currentCategory={category}
         onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="image" mediaUrl={imageUrls[fullscreenIndex] || imageUrls[0]} title={title} images={imageUrls} initialIndex={fullscreenIndex} />
@@ -1359,6 +1375,10 @@ export default function IdeaCard({
         currentDescription={description}
         currentCategory={category}
         onSuccess={onDelete}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
       />
       {pitchDeckDialog}
       <FullscreenMediaDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} mediaType="video" mediaUrl={mediaUrl} title={title} thumbnailUrl={thumbnailUrl} />
