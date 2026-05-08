@@ -1,7 +1,7 @@
 import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Play, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Heart, MessageCircle, Pencil, Share, Bookmark, Eye, Play, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import { LinkifiedText } from '@/utils/linkDetection';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import DynamicMetaTags from '@/components/DynamicMetaTags';
 import { createNotification } from '@/utils/notifications';
+import EditPostDialog from '@/components/EditPostDialog';
+import { PitchDeckDialog } from '@/components/pitch/PitchDeckDialog';
 
 // Default fallback logo for OG images
 const DEFAULT_OG_IMAGE = '/idestrim-og-logo.png';
@@ -52,6 +54,8 @@ export default function VideoDetail() {
   const [loading, setLoading] = useState(true);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [signupPrompt, setSignupPrompt] = useState<{ open: boolean; action: string }>({ open: false, action: '' });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [pitchDeckOpen, setPitchDeckOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
