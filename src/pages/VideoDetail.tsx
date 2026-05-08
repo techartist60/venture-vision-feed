@@ -692,6 +692,31 @@ export default function VideoDetail() {
         onOpenChange={(open) => setSignupPrompt({ ...signupPrompt, open })}
         action={signupPrompt.action}
       />
+
+      <EditPostDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        postId={media.id}
+        currentTitle={media.title}
+        currentDescription={media.description || ''}
+        onSuccess={fetchMedia}
+        onCreatePitchDeck={() => {
+          setEditDialogOpen(false);
+          setPitchDeckOpen(true);
+        }}
+      />
+
+      <PitchDeckDialog
+        open={pitchDeckOpen}
+        onOpenChange={setPitchDeckOpen}
+        prefill={{
+          title: media.title,
+          description: media.description || '',
+          image_url: media.thumbnail_url || undefined,
+          video_url: media.media_url,
+          ideaId: media.id,
+        }}
+      />
     </div>
   );
 }
