@@ -140,7 +140,7 @@ export default function IdeaCard({
     image_url: mediaType === 'image' ? imageUrls[0] : (mediaType === 'video' || mediaType === 'website' ? (thumbnailUrl || (mediaType === 'website' ? getWebsiteThumbnailUrl(mediaUrl) : undefined)) : undefined),
     video_url: mediaType === 'video' ? mediaUrl : undefined,
     website: mediaType === 'website' ? mediaUrl : undefined,
-    ideaId: id,
+    ideaId: mediaType === 'website' ? undefined : id,
   };
   const pitchDeckDialog = (
     <PitchDeckDialog open={pitchDeckOpen} onOpenChange={setPitchDeckOpen} prefill={pitchPrefill} />
