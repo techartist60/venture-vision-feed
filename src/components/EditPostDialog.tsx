@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ interface EditPostDialogProps {
   currentDescription: string;
   currentCategory?: string;
   onSuccess?: () => void;
+  onCreatePitchDeck?: () => void;
 }
 
 export default function EditPostDialog({
@@ -26,11 +27,20 @@ export default function EditPostDialog({
   currentDescription,
   currentCategory,
   onSuccess,
+  onCreatePitchDeck,
 }: EditPostDialogProps) {
   const [title, setTitle] = useState(currentTitle);
   const [description, setDescription] = useState(currentDescription);
   const [category, setCategory] = useState(currentCategory || '');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(currentTitle);
+      setDescription(currentDescription);
+      setCategory(currentCategory || '');
+    }
+  }, [open, currentTitle, currentDescription, currentCategory]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -97,14 +107,22 @@ export default function EditPostDialog({
               placeholder="e.g. Technology, Art, Business"
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Save Changes
-            </Button>
+          <div className="space-y-2 pt-2">
+            {onCreatePitchDeck && (
+              <Button variant="outline" className="w-full gap-2" onClick={onCreatePitchDeck} disabled={saving}>
+                <FileText className="h-4 w-4" />
+                Create Pitch Deck
+              </Button>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Save Changes
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
