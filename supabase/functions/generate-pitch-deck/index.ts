@@ -87,15 +87,15 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are a startup pitch deck writer. Produce concise, investor-ready bullet points for each section. Every bullet MUST be directly grounded in and consistent with the provided idea description and post context — do NOT invent unrelated facts, products, markets, or features. If a detail is unknown, infer cautiously from the description and keep it generic. Use clear, simple, professional language. 3-5 short bullets per section. No markdown symbols.`;
 
-    const userPrompt = `Create a pitch deck for this idea.
+    const userPrompt = `Create a pitch deck for this idea. Every section must reflect and stay faithful to the description below.
 Title: ${title}
 Description: ${description}
 Category: ${category || "general"}
 Target audience: ${audience || "not specified"}
 Monetization: ${monetization || "not specified"}
-Website: ${website || "n/a"}
+Website: ${website || "n/a"}${ideaContext}
 
-Generate bullets for: ${SECTIONS.map((s) => s.title).join(", ")}.`;
+Generate bullets for: ${SECTIONS.map((s) => s.title).join(", ")}. Keep every bullet on-topic with the described idea.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
