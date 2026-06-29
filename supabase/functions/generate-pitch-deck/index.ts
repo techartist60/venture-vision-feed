@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { title, description, category, audience, monetization, website } = body || {};
+    let { title, description, category, audience, monetization, website, ideaId } = body || {};
     if (!title || !description) {
       return new Response(JSON.stringify({ error: "title and description are required" }), {
         status: 400,
@@ -53,20 +53,49 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Enrich context from the existing idea (if any) so AI tightly matches the post
+    let ideaContext = "";
+    if (ideaId) {
+      try {
+        const { data: media } = await anonClient
+          .from("media_uploads")
+          .select("title, description, category, media_type")
+          .eq("id", ideaId)
+          .maybeSingle();
+        if (media) {
+          ideaContext = `\nORIGINAL POST CONTEXT (must align with these details):\n- Post title: ${media.title || title}\n- Post description: ${media.description || description}\n- Post category: ${media.category || category || "n/a"}\n- Post media type: ${media.media_type || "n/a"}`;
+          if (!category && media.category) category = media.category;
+        } else {
+          const { data: link } = await anonClient
+            .from("live_links")
+            .select("title, description, category, url")
+            .eq("id", ideaId)
+            .maybeSingle();
+          if (link) {
+            ideaContext = `\nORIGINAL POST CONTEXT (must align with these details):\n- Post title: ${link.title || title}\n- Post description: ${link.description || description}\n- Post category: ${link.category || category || "n/a"}\n- Linked website: ${link.url || website || "n/a"}`;
+            if (!category && link.category) category = link.category;
+            if (!website && link.url) website = link.url;
+          }
+        }
+      } catch (e) {
+        console.warn("idea context fetch failed", e);
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `You are a startup pitch deck writer. Produce concise, investor-ready bullet points for each section. Use clear, simple, professional language. 3-5 short bullets per section. No markdown symbols.`;
+    const systemPrompt = `You are a startup pitch deck writer. Produce concise, investor-ready bullet points for each section. Every bullet MUST be directly grounded in and consistent with the provided idea description and post context — do NOT invent unrelated facts, products, markets, or features. If a detail is unknown, infer cautiously from the description and keep it generic. Use clear, simple, professional language. 3-5 short bullets per section. No markdown symbols.`;
 
-    const userPrompt = `Create a pitch deck for this idea.
+    const userPrompt = `Create a pitch deck for this idea. Every section must reflect and stay faithful to the description below.
 Title: ${title}
 Description: ${description}
 Category: ${category || "general"}
 Target audience: ${audience || "not specified"}
 Monetization: ${monetization || "not specified"}
-Website: ${website || "n/a"}
+Website: ${website || "n/a"}${ideaContext}
 
-Generate bullets for: ${SECTIONS.map((s) => s.title).join(", ")}.`;
+Generate bullets for: ${SECTIONS.map((s) => s.title).join(", ")}. Keep every bullet on-topic with the described idea.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
