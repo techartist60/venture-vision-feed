@@ -38,7 +38,7 @@ export default function Home() {
 
         {/* Ideas Feed */}
         <section>
-          <DiscoveryFeed category={activeCategory} />
+          <DiscoveryFeed category={activeCategory} excludeVideo />
         </section>
       </div>
     );
