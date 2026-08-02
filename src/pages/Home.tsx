@@ -86,7 +86,7 @@ export default function Home() {
 
       {/* Ideas Feed */}
       <section className="px-4 pb-8 max-w-md mx-auto">
-        <DiscoveryFeed category={activeCategory} />
+        <DiscoveryFeed category={activeCategory} excludeVideo />
       </section>
     </div>
   );
