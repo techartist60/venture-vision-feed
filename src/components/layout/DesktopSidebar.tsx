@@ -19,7 +19,6 @@ const navItems = [
   { to: '/', icon: Home, label: 'Home', exact: true },
   { to: '/slides', icon: Play, label: 'Slides' },
   { to: '/idescan', icon: Scan, label: 'Idescan' },
-  { to: '/groups', icon: Users, label: 'Groups' },
   { to: '/search', icon: Search, label: 'Search' },
 ];
 

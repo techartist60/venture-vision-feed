@@ -22,11 +22,6 @@ const navItems = [
     label: 'Categories'
   },
   { 
-    to: '/groups', 
-    icon: Users, 
-    label: 'Groups' 
-  },
-  { 
     to: '/profile', 
     icon: User, 
     label: 'Profile' 
