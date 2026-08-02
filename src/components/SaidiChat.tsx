@@ -81,19 +81,21 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
     };
 
     const startPress = (e: PointerEvent) => {
+      // Only primary button / single touch, and never on form controls
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
       pressTarget = e.target as HTMLElement;
       startX = e.clientX;
       startY = e.clientY;
 
       pressTimer = setTimeout(() => {
+        pressTimer = null;
         const context = getHelpContext(pressTarget!);
         if (context) {
-          e.preventDefault();
           onOpenChange(true);
           setInput(context);
           pendingSendRef.current = true;
         }
-      }, 600);
+      }, 1200);
     };
 
     const cancelPress = () => {
@@ -103,27 +105,32 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
       }
     };
 
-    // Only cancel on significant movement (>10px) to handle mobile finger wobble
+    // Cancel on any real movement so taps and scrolls are never hijacked
     const moveCheck = (e: PointerEvent) => {
       if (!pressTimer) return;
       const dx = Math.abs(e.clientX - startX);
       const dy = Math.abs(e.clientY - startY);
-      if (dx > 10 || dy > 10) cancelPress();
+      if (dx > 6 || dy > 6) cancelPress();
     };
 
     document.addEventListener('pointerdown', startPress);
     document.addEventListener('pointerup', cancelPress);
     document.addEventListener('pointercancel', cancelPress);
     document.addEventListener('pointermove', moveCheck);
+    window.addEventListener('scroll', cancelPress, true);
+    window.addEventListener('blur', cancelPress);
 
     return () => {
       document.removeEventListener('pointerdown', startPress);
       document.removeEventListener('pointerup', cancelPress);
       document.removeEventListener('pointercancel', cancelPress);
       document.removeEventListener('pointermove', moveCheck);
+      window.removeEventListener('scroll', cancelPress, true);
+      window.removeEventListener('blur', cancelPress);
       cancelPress();
     };
   }, [onOpenChange]);
+
 
   // Listen for auto-send event from long-press
   const pendingSendRef = useRef(false);
