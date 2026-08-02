@@ -31,8 +31,6 @@ import WebScanDashboard from "./pages/WebScanDashboard";
 import WebScanPaymentCallback from "./pages/WebScanPaymentCallback";
 import PremiumCallback from "./pages/PremiumCallback";
 import Slides from "./pages/Slides";
-import Groups from "./pages/Groups";
-import GroupChat from "./pages/GroupChat";
 import IdemarkVerify from "./pages/IdemarkVerify";
 import IdemarkRecords from "./pages/IdemarkRecords";
 import IdemarkPage from "./pages/IdemarkPage";
@@ -64,8 +62,6 @@ function AppShell() {
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-          <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
-          <Route path="/groups/:groupId" element={<ProtectedRoute><GroupChat /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/idescan" element={<Idescan />} />
           <Route path="/idescan/history" element={<ProtectedRoute><IdescanHistory /></ProtectedRoute>} />

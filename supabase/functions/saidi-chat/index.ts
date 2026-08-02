@@ -73,10 +73,8 @@ Idestrim is a social innovation platform where creators, inventors, and entrepre
 - Users can toggle whether the title is publicly visible on the verification page.
 - QR codes are generated for easy sharing of Idemark verification links.
 
-### Groups
-- Users can create groups for collaborative innovation.
-- Group features: group chat, member management, admin roles.
-- Group creators can manage settings, add/remove members, and promote admins.
+### Social Connections
+- Idestrim does NOT have groups or group chat. That feature was removed; never suggest it.
 - Friend requests system for connecting with other users.
 
 ### Messaging

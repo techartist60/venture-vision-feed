@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Play, LayoutGrid, Users, User } from 'lucide-react';
+import { Home, Play, LayoutGrid, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,11 +20,6 @@ const navItems = [
     to: '/categories', 
     icon: LayoutGrid, 
     label: 'Categories'
-  },
-  { 
-    to: '/groups', 
-    icon: Users, 
-    label: 'Groups' 
   },
   { 
     to: '/profile', 

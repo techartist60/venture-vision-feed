@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Grid3X3, Plus, User, Search, Settings, Scan, Play, Users, ChevronDown, Cpu, Palette, Leaf, Heart, Gamepad2 } from 'lucide-react';
+import { Home, Grid3X3, Plus, User, Search, Settings, Scan, Play, ChevronDown, Cpu, Palette, Leaf, Heart, Gamepad2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
@@ -19,7 +19,6 @@ const navItems = [
   { to: '/', icon: Home, label: 'Home', exact: true },
   { to: '/slides', icon: Play, label: 'Slides' },
   { to: '/idescan', icon: Scan, label: 'Idescan' },
-  { to: '/groups', icon: Users, label: 'Groups' },
   { to: '/search', icon: Search, label: 'Search' },
 ];
 
