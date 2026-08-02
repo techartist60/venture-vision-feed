@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Grid3X3, Plus, User, Search, Settings, Scan, Play, Users, ChevronDown, Cpu, Palette, Leaf, Heart, Gamepad2 } from 'lucide-react';
+import { Home, Grid3X3, Plus, User, Search, Settings, Scan, Play, ChevronDown, Cpu, Palette, Leaf, Heart, Gamepad2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
