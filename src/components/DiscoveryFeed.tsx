@@ -46,9 +46,10 @@ interface DiscoveryFeedProps {
   userId?: string;
   mediaType?: 'image' | 'video' | 'text' | 'youtube' | 'all';
   category?: string;
+  excludeVideo?: boolean;
 }
 
-export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', category }: DiscoveryFeedProps = {}) => {
+export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', category, excludeVideo = false }: DiscoveryFeedProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
@@ -120,6 +121,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
       // If mediaType is specified (not 'all'), filter by media type
       if (mediaType && mediaType !== 'all') {
         query = query.eq('media_type', mediaType);
+      }
+
+      // Exclude uploaded videos from feeds like the homepage (videos live in Slides)
+      if (excludeVideo) {
+        query = query.neq('media_type', 'video');
       }
 
       // Filter by category if specified
