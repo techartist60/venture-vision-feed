@@ -399,7 +399,7 @@ export default function Profile() {
         {/* Tabs */}
         <section className="px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 rounded-xl bg-muted/50">
+            <TabsList className="grid w-full grid-cols-5 rounded-xl bg-muted/50 relative z-10 touch-manipulation">
               <TabsTrigger value="ideas" className="gap-1 rounded-lg text-xs px-1">
                 <Grid className="h-4 w-4" />
                 <span className="hidden sm:inline">Ideas</span>
