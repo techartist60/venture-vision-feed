@@ -46,6 +46,7 @@ interface DiscoveryFeedProps {
   userId?: string;
   mediaType?: 'image' | 'video' | 'text' | 'youtube' | 'all';
   category?: string;
+  excludeVideo?: boolean;
 }
 
 export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', category }: DiscoveryFeedProps = {}) => {
