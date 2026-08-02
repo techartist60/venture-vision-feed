@@ -123,6 +123,11 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
         query = query.eq('media_type', mediaType);
       }
 
+      // Exclude uploaded videos from feeds like the homepage (videos live in Slides)
+      if (excludeVideo) {
+        query = query.neq('media_type', 'video');
+      }
+
       // Filter by category if specified
       if (category) {
         query = query.ilike('category', category);
