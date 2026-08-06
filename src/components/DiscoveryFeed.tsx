@@ -84,6 +84,33 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     fetchMedia();
   }, [user, userOnly, userId, mediaType, category]);
 
+  // Daily tech news post (system-authored, only on the main discovery feed)
+  useEffect(() => {
+    if (userOnly || category || (mediaType && mediaType !== 'all')) {
+      setTechNews(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadTechNews = async () => {
+      const { data } = await supabase
+        .from('tech_news_posts')
+        .select('id, title, description, image_url, source_name, source_url, published_for')
+        .order('published_for', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!cancelled) setTechNews((data as TechNewsItem) || null);
+    };
+
+    loadTechNews();
+    return () => {
+      cancelled = true;
+    };
+  }, [userOnly, category, mediaType]);
+
+
   // Track view for media when component mounts
   const trackView = async (mediaId: string) => {
     try {
