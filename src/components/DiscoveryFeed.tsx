@@ -9,6 +9,8 @@ import { MessageDialog } from '@/components/MessageDialog';
 import { useToast } from '@/hooks/use-toast';
 import SignupPrompt from './SignupPrompt';
 import { createNotification } from '@/utils/notifications';
+import { TechNewsCard, type TechNewsItem } from '@/components/TechNewsCard';
+
 
 interface MediaUpload {
   id: string;
