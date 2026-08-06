@@ -5,8 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const RSS_URL =
-  'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en';
+// Multiple tech feeds — tried in order until one responds with articles.
+const RSS_FEEDS = [
+  'https://techcrunch.com/feed/',
+  'https://www.theverge.com/rss/index.xml',
+  'https://feeds.arstechnica.com/arstechnica/technology-lab',
+  'https://www.wired.com/feed/category/business/latest/rss',
+  'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en',
+];
+
 
 function decodeEntities(text: string): string {
   return text
@@ -23,20 +30,48 @@ interface Article {
   link: string;
   source: string;
   description: string;
+  image: string | null;
 }
 
-function parseRss(xml: string): Article[] {
-  const items = xml.match(/<item>(.*?)<\/item>/gs) || [];
+function hostName(url: string): string {
+  try {
+    const h = new URL(url).hostname.replace('www.', '');
+    const first = h.split('.')[0];
+    return first.charAt(0).toUpperCase() + first.slice(1);
+  } catch {
+    return 'Tech News';
+  }
+}
+
+function parseFeed(xml: string): Article[] {
+  const blocks = [
+    ...(xml.match(/<item[\s>][\s\S]*?<\/item>/g) || []),
+    ...(xml.match(/<entry[\s>][\s\S]*?<\/entry>/g) || []),
+  ];
   const articles: Article[] = [];
 
-  for (const item of items) {
+  for (const item of blocks) {
     const titleMatch =
-      item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/s) || item.match(/<title>(.*?)<\/title>/s);
-    const linkMatch = item.match(/<link>(.*?)<\/link>/s);
-    const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/s);
+      item.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>/) ||
+      item.match(/<title[^>]*>([\s\S]*?)<\/title>/);
+
+    const linkMatch =
+      item.match(/<link[^>]*href=["']([^"']+)["']/) || item.match(/<link>([\s\S]*?)<\/link>/);
+
+    const sourceMatch = item.match(/<source[^>]*>([\s\S]*?)<\/source>/);
+
     const descMatch =
-      item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/s) ||
-      item.match(/<description>(.*?)<\/description>/s);
+      item.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) ||
+      item.match(/<description[^>]*>([\s\S]*?)<\/description>/) ||
+      item.match(/<summary[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/summary>/) ||
+      item.match(/<summary[^>]*>([\s\S]*?)<\/summary>/) ||
+      item.match(/<content:encoded><!\[CDATA\[([\s\S]*?)\]\]><\/content:encoded>/);
+
+    const mediaMatch =
+      item.match(/<media:content[^>]*url=["']([^"']+)["']/i) ||
+      item.match(/<media:thumbnail[^>]*url=["']([^"']+)["']/i) ||
+      item.match(/<enclosure[^>]*url=["']([^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/i) ||
+      item.match(/<img[^>]*src=["'](https?:\/\/[^"']+)["']/i);
 
     if (!titleMatch || !linkMatch) continue;
 
@@ -49,16 +84,20 @@ function parseRss(xml: string): Article[] {
 
     if (title.length < 12) continue;
 
+    const link = linkMatch[1].trim();
+
     articles.push({
       title: title.substring(0, 200),
-      link: linkMatch[1].trim(),
-      source: sourceMatch ? decodeEntities(sourceMatch[1]).trim() : 'Tech News',
+      link,
+      source: sourceMatch ? decodeEntities(sourceMatch[1]).trim() : hostName(link),
       description: description.substring(0, 600),
+      image: mediaMatch ? decodeEntities(mediaMatch[1]) : null,
     });
   }
 
   return articles;
 }
+
 
 async function resolveArticle(url: string): Promise<{ finalUrl: string; image: string | null; summary: string | null }> {
   try {
@@ -122,23 +161,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    const rssRes = await fetch(RSS_URL, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
-        Accept: 'application/rss+xml, application/xml, text/xml',
-      },
-    });
+    let articles: Article[] = [];
+    for (const feedUrl of RSS_FEEDS) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const rssRes = await fetch(feedUrl, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+            Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
 
-    if (!rssRes.ok) {
-      throw new Error(`RSS fetch failed with status ${rssRes.status}`);
+        if (!rssRes.ok) {
+          console.log(`Feed ${feedUrl} responded ${rssRes.status}`);
+          continue;
+        }
+
+        const parsed = parseFeed(await rssRes.text());
+        console.log(`Parsed ${parsed.length} articles from ${feedUrl}`);
+        articles = articles.concat(parsed);
+        if (articles.length >= 10) break;
+      } catch (e) {
+        console.log(`Feed ${feedUrl} failed:`, e instanceof Error ? e.message : e);
+      }
     }
 
-    const articles = parseRss(await rssRes.text());
-    console.log(`Parsed ${articles.length} tech articles`);
-
     if (articles.length === 0) {
-      throw new Error('No articles found in feed');
+      throw new Error('No articles found in any feed');
     }
 
     const { data: recent } = await supabase
@@ -150,14 +203,26 @@ Deno.serve(async (req) => {
     const seenUrls = new Set((recent || []).map((r) => r.source_url));
     const seenTitles = new Set((recent || []).map((r) => r.title.toLowerCase()));
 
-    for (const article of articles.slice(0, 10)) {
+    for (const article of articles.slice(0, 12)) {
       if (seenUrls.has(article.link) || seenTitles.has(article.title.toLowerCase())) continue;
 
-      const { finalUrl, image, summary } = await resolveArticle(article.link);
+      let finalUrl = article.link;
+      let image = article.image;
+      let summary: string | null = null;
+
+      if (!image || !article.description) {
+        const resolved = await resolveArticle(article.link);
+        finalUrl = resolved.finalUrl;
+        image = image || resolved.image;
+        summary = resolved.summary;
+      }
+
       if (!image) continue; // require a photo
       if (seenUrls.has(finalUrl)) continue;
 
-      const description = (summary || article.description || '').substring(0, 600);
+      const description = (article.description || summary || '').substring(0, 600);
+
+
 
       const { data: inserted, error } = await supabase
         .from('tech_news_posts')
