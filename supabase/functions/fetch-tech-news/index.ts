@@ -161,23 +161,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    const rssRes = await fetch(RSS_URL, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
-        Accept: 'application/rss+xml, application/xml, text/xml',
-      },
-    });
+    let articles: Article[] = [];
+    for (const feedUrl of RSS_FEEDS) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const rssRes = await fetch(feedUrl, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+            Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
 
-    if (!rssRes.ok) {
-      throw new Error(`RSS fetch failed with status ${rssRes.status}`);
+        if (!rssRes.ok) {
+          console.log(`Feed ${feedUrl} responded ${rssRes.status}`);
+          continue;
+        }
+
+        const parsed = parseFeed(await rssRes.text());
+        console.log(`Parsed ${parsed.length} articles from ${feedUrl}`);
+        articles = articles.concat(parsed);
+        if (articles.length >= 10) break;
+      } catch (e) {
+        console.log(`Feed ${feedUrl} failed:`, e instanceof Error ? e.message : e);
+      }
     }
 
-    const articles = parseRss(await rssRes.text());
-    console.log(`Parsed ${articles.length} tech articles`);
-
     if (articles.length === 0) {
-      throw new Error('No articles found in feed');
+      throw new Error('No articles found in any feed');
     }
 
     const { data: recent } = await supabase
@@ -189,14 +203,26 @@ Deno.serve(async (req) => {
     const seenUrls = new Set((recent || []).map((r) => r.source_url));
     const seenTitles = new Set((recent || []).map((r) => r.title.toLowerCase()));
 
-    for (const article of articles.slice(0, 10)) {
+    for (const article of articles.slice(0, 12)) {
       if (seenUrls.has(article.link) || seenTitles.has(article.title.toLowerCase())) continue;
 
-      const { finalUrl, image, summary } = await resolveArticle(article.link);
+      let finalUrl = article.link;
+      let image = article.image;
+      let summary: string | null = null;
+
+      if (!image || !article.description) {
+        const resolved = await resolveArticle(article.link);
+        finalUrl = resolved.finalUrl;
+        image = image || resolved.image;
+        summary = resolved.summary;
+      }
+
       if (!image) continue; // require a photo
       if (seenUrls.has(finalUrl)) continue;
 
-      const description = (summary || article.description || '').substring(0, 600);
+      const description = (article.description || summary || '').substring(0, 600);
+
+
 
       const { data: inserted, error } = await supabase
         .from('tech_news_posts')
