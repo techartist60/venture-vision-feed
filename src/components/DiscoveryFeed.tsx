@@ -468,6 +468,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   return (
     <>
       <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+        {techNews && <TechNewsCard item={techNews} />}
+
         {media.map((item) => (
           <IdeaCard
             key={item.id}
