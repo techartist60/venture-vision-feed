@@ -30,20 +30,48 @@ interface Article {
   link: string;
   source: string;
   description: string;
+  image: string | null;
 }
 
-function parseRss(xml: string): Article[] {
-  const items = xml.match(/<item>(.*?)<\/item>/gs) || [];
+function hostName(url: string): string {
+  try {
+    const h = new URL(url).hostname.replace('www.', '');
+    const first = h.split('.')[0];
+    return first.charAt(0).toUpperCase() + first.slice(1);
+  } catch {
+    return 'Tech News';
+  }
+}
+
+function parseFeed(xml: string): Article[] {
+  const blocks = [
+    ...(xml.match(/<item[\s>][\s\S]*?<\/item>/g) || []),
+    ...(xml.match(/<entry[\s>][\s\S]*?<\/entry>/g) || []),
+  ];
   const articles: Article[] = [];
 
-  for (const item of items) {
+  for (const item of blocks) {
     const titleMatch =
-      item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/s) || item.match(/<title>(.*?)<\/title>/s);
-    const linkMatch = item.match(/<link>(.*?)<\/link>/s);
-    const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/s);
+      item.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>/) ||
+      item.match(/<title[^>]*>([\s\S]*?)<\/title>/);
+
+    const linkMatch =
+      item.match(/<link[^>]*href=["']([^"']+)["']/) || item.match(/<link>([\s\S]*?)<\/link>/);
+
+    const sourceMatch = item.match(/<source[^>]*>([\s\S]*?)<\/source>/);
+
     const descMatch =
-      item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/s) ||
-      item.match(/<description>(.*?)<\/description>/s);
+      item.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) ||
+      item.match(/<description[^>]*>([\s\S]*?)<\/description>/) ||
+      item.match(/<summary[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/summary>/) ||
+      item.match(/<summary[^>]*>([\s\S]*?)<\/summary>/) ||
+      item.match(/<content:encoded><!\[CDATA\[([\s\S]*?)\]\]><\/content:encoded>/);
+
+    const mediaMatch =
+      item.match(/<media:content[^>]*url=["']([^"']+)["']/i) ||
+      item.match(/<media:thumbnail[^>]*url=["']([^"']+)["']/i) ||
+      item.match(/<enclosure[^>]*url=["']([^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/i) ||
+      item.match(/<img[^>]*src=["'](https?:\/\/[^"']+)["']/i);
 
     if (!titleMatch || !linkMatch) continue;
 
@@ -56,16 +84,20 @@ function parseRss(xml: string): Article[] {
 
     if (title.length < 12) continue;
 
+    const link = linkMatch[1].trim();
+
     articles.push({
       title: title.substring(0, 200),
-      link: linkMatch[1].trim(),
-      source: sourceMatch ? decodeEntities(sourceMatch[1]).trim() : 'Tech News',
+      link,
+      source: sourceMatch ? decodeEntities(sourceMatch[1]).trim() : hostName(link),
       description: description.substring(0, 600),
+      image: mediaMatch ? decodeEntities(mediaMatch[1]) : null,
     });
   }
 
   return articles;
 }
+
 
 async function resolveArticle(url: string): Promise<{ finalUrl: string; image: string | null; summary: string | null }> {
   try {
