@@ -440,7 +440,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     );
   }
 
-  if (media.length === 0) {
+  if (media.length === 0 && !techNews) {
     if (category) {
       return (
         <div className="text-center py-12">
