@@ -5,8 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const RSS_URL =
-  'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en';
+// Multiple tech feeds — tried in order until one responds with articles.
+const RSS_FEEDS = [
+  'https://techcrunch.com/feed/',
+  'https://www.theverge.com/rss/index.xml',
+  'https://feeds.arstechnica.com/arstechnica/technology-lab',
+  'https://www.wired.com/feed/category/business/latest/rss',
+  'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en',
+];
+
 
 function decodeEntities(text: string): string {
   return text
