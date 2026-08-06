@@ -9,6 +9,8 @@ import { MessageDialog } from '@/components/MessageDialog';
 import { useToast } from '@/hooks/use-toast';
 import SignupPrompt from './SignupPrompt';
 import { createNotification } from '@/utils/notifications';
+import { TechNewsCard, type TechNewsItem } from '@/components/TechNewsCard';
+
 
 interface MediaUpload {
   id: string;
@@ -54,7 +56,9 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
+  const [techNews, setTechNews] = useState<TechNewsItem | null>(null);
   const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string; source: 'media_uploads' | 'live_links' }>({
+
     open: false,
     mediaId: '',
     mediaTitle: '',
@@ -79,6 +83,33 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   useEffect(() => {
     fetchMedia();
   }, [user, userOnly, userId, mediaType, category]);
+
+  // Daily tech news post (system-authored, only on the main discovery feed)
+  useEffect(() => {
+    if (userOnly || category || (mediaType && mediaType !== 'all')) {
+      setTechNews(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadTechNews = async () => {
+      const { data } = await supabase
+        .from('tech_news_posts')
+        .select('id, title, description, image_url, source_name, source_url, published_for')
+        .order('published_for', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!cancelled) setTechNews((data as TechNewsItem) || null);
+    };
+
+    loadTechNews();
+    return () => {
+      cancelled = true;
+    };
+  }, [userOnly, category, mediaType]);
+
 
   // Track view for media when component mounts
   const trackView = async (mediaId: string) => {
@@ -409,7 +440,7 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
     );
   }
 
-  if (media.length === 0) {
+  if (media.length === 0 && !techNews) {
     if (category) {
       return (
         <div className="text-center py-12">
@@ -437,6 +468,8 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   return (
     <>
       <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+        {techNews && <TechNewsCard item={techNews} />}
+
         {media.map((item) => (
           <IdeaCard
             key={item.id}

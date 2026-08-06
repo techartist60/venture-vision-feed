@@ -1092,6 +1092,39 @@ export type Database = {
           },
         ]
       }
+      tech_news_posts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          published_for: string
+          source_name: string | null
+          source_url: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          published_for?: string
+          source_name?: string | null
+          source_url: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          published_for?: string
+          source_name?: string | null
+          source_url?: string
+          title?: string
+        }
+        Relationships: []
+      }
       unlocked_innovations: {
         Row: {
           amount: number
