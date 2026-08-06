@@ -56,7 +56,9 @@ export const DiscoveryFeed = ({ userOnly = false, userId, mediaType = 'all', cat
   const { toast } = useToast();
   const [media, setMedia] = useState<MediaUpload[]>([]);
   const [loading, setLoading] = useState(true);
+  const [techNews, setTechNews] = useState<TechNewsItem | null>(null);
   const [commentDialog, setCommentDialog] = useState<{ open: boolean; mediaId: string; mediaTitle: string; source: 'media_uploads' | 'live_links' }>({
+
     open: false,
     mediaId: '',
     mediaTitle: '',
