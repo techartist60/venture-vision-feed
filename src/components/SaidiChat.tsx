@@ -74,7 +74,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
         interactive.textContent?.replace(/\s+/g, ' ').trim().slice(0, 80);
 
       if (label && label.length > 1) {
-        return `What does "${label}" do on Idestrim? Explain this feature.`;
+        return `I long-pressed "${label}" on Idestrim. Explain in depth what it is, exactly what happens when I use it, how it fits into the Idestrim workflow, a practical tip, and related features I should know about.`;
       }
 
       return null;
@@ -95,7 +95,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
           setInput(context);
           pendingSendRef.current = true;
         }
-      }, 1200);
+      }, 900);
     };
 
     const cancelPress = () => {
