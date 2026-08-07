@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,28 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function requireUser(req: Request): Promise<Response | null> {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const anon = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data, error } = await anon.auth.getClaims(authHeader.replace("Bearer ", ""));
-  if (error || !data?.claims) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  return null;
-}
+// Saidi is a public help assistant: no user data is read or written here,
+// so any caller with the project key may chat with it.
 
 const SYSTEM_PROMPT = `You are Saidi, a friendly and knowledgeable AI assistant built into the Idestrim platform. You know every feature inside-out. Here is the complete feature reference:
 
@@ -58,13 +37,11 @@ Idestrim is a social innovation platform where creators, inventors, and entrepre
 - Idescan uses AI embeddings (text and image) to find similar existing innovations and returns a similarity score with tier ratings (Unique, Similar, High Match).
 - Results show matched innovations with similarity breakdowns (text, image, metadata).
 - Users can view scan history and re-visit past results.
-- Premium features allow unlocking detailed innovation records.
 
 ### WebScan (Website Monitor)
 - Users add competitor or reference websites to monitor for changes.
 - WebScan periodically checks websites and detects content changes (new features, text updates, visual changes).
 - Users receive notifications about detected changes.
-- Premium WebScan subscriptions unlock higher scan frequencies and more watched websites.
 
 ### Idemark (Idea Timestamping & IP Protection)
 - Users can "Idemark" their ideas to create a timestamped, cryptographic proof of ownership.
@@ -119,9 +96,8 @@ Idestrim is a social innovation platform where creators, inventors, and entrepre
 - Real-time notifications for likes, comments, follows, and other interactions.
 - Notification bell with unread count badge.
 
-### Premium Features
-- Premium subscriptions unlock advanced Idescan and WebScan capabilities.
-- Payment integration via Paystack and IntaSend.
+### Pricing
+- Idestrim is 100% free. There are no payments, subscriptions, or premium plans. Never suggest paying for anything.
 
 ## How to Help Users
 - When users ask about features, reference the exact feature names and explain step-by-step how to use them.
@@ -136,9 +112,6 @@ serve(async (req) => {
   }
 
   try {
-    const unauthorized = await requireUser(req);
-    if (unauthorized) return unauthorized;
-
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
@@ -156,11 +129,11 @@ serve(async (req) => {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Lovable-API-Key": LOVABLE_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.6-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           ...messages,
