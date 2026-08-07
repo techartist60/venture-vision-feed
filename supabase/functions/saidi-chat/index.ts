@@ -7,28 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function requireUser(req: Request): Promise<Response | null> {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const anon = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data, error } = await anon.auth.getClaims(authHeader.replace("Bearer ", ""));
-  if (error || !data?.claims) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  return null;
-}
+// Saidi is a public help assistant: no user data is read or written here,
+// so any caller with the project key may chat with it.
 
 const SYSTEM_PROMPT = `You are Saidi, a friendly and knowledgeable AI assistant built into the Idestrim platform. You know every feature inside-out. Here is the complete feature reference:
 
