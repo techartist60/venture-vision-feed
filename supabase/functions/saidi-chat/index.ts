@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -116,9 +115,6 @@ serve(async (req) => {
   }
 
   try {
-    const unauthorized = await requireUser(req);
-    if (unauthorized) return unauthorized;
-
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
@@ -136,11 +132,11 @@ serve(async (req) => {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Lovable-API-Key": LOVABLE_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.6-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           ...messages,
