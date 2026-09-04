@@ -51,6 +51,9 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
       'button, a, [role="button"], [role="tab"], [role="menuitem"], [role="link"], input, select, textarea, [tabindex], nav a, label';
 
     const getHelpContext = (el: HTMLElement): string | null => {
+      // Never trigger inside the Saidi chat itself or the FAB hub
+      if (el.closest('[data-saidi-input], [data-saidi-panel], [data-fab-hub]')) return null;
+
       // Check for explicit data-saidi-help attribute up the tree
       let current: HTMLElement | null = el;
       while (current) {
@@ -61,23 +64,25 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
 
       // Find nearest interactive element
       const interactive = el.closest(INTERACTIVE_SELECTOR) as HTMLElement | null;
-      if (!interactive) return null;
+      if (interactive) {
+        const label =
+          interactive.getAttribute('aria-label') ||
+          interactive.getAttribute('title') ||
+          interactive.getAttribute('data-saidi-help') ||
+          interactive.textContent?.replace(/\s+/g, ' ').trim().slice(0, 80);
 
-      // Don't trigger on the Saidi chat itself or the FAB hub
-      if (interactive.closest('[data-saidi-input], [data-saidi-panel], [data-fab-hub]')) return null;
-
-      // Extract meaningful label
-      const label =
-        interactive.getAttribute('aria-label') ||
-        interactive.getAttribute('title') ||
-        interactive.getAttribute('data-saidi-help') ||
-        interactive.textContent?.replace(/\s+/g, ' ').trim().slice(0, 80);
-
-      if (label && label.length > 1) {
-        return `I long-pressed "${label}" on Idestrim. Explain in depth what it is, exactly what happens when I use it, how it fits into the Idestrim workflow, a practical tip, and related features I should know about.`;
+        if (label && label.length > 1) {
+          return `I long-pressed "${label}" on Idestrim. Explain in depth what it is, exactly what happens when I use it, how it fits into the Idestrim workflow, a practical tip, and related features I should know about.`;
+        }
       }
 
-      return null;
+      // Fallback: long-press anywhere else — describe the surrounding content
+      const text = el.textContent?.replace(/\s+/g, ' ').trim().slice(0, 80);
+      const page = document.title || window.location.pathname;
+      if (text && text.length > 1) {
+        return `I long-pressed on this content on Idestrim (page: ${page}): "${text}". Explain in depth what this is, what I can do with it, how it fits into the Idestrim workflow, a practical tip, and related features I should know about.`;
+      }
+      return `I long-pressed on the ${page} page on Idestrim. Explain in depth what this page/area is for, what I can do here, a practical tip, and related features I should know about.`;
     };
 
     const startPress = (e: PointerEvent) => {
@@ -95,7 +100,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
           setInput(context);
           pendingSendRef.current = true;
         }
-      }, 900);
+      }, 800);
     };
 
     const cancelPress = () => {
@@ -106,17 +111,28 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
     };
 
     // Cancel on any real movement so taps and scrolls are never hijacked
+    // (tolerance is generous for touch, where fingers naturally drift)
     const moveCheck = (e: PointerEvent) => {
       if (!pressTimer) return;
+      const tolerance = e.pointerType === 'touch' ? 15 : 8;
       const dx = Math.abs(e.clientX - startX);
       const dy = Math.abs(e.clientY - startY);
-      if (dx > 6 || dy > 6) cancelPress();
+      if (dx > tolerance || dy > tolerance) cancelPress();
+    };
+
+    // Suppress the browser context menu so touch long-press reaches our handler
+    const blockContextMenu = (e: Event) => {
+      const el = e.target as HTMLElement;
+      if (!el.closest('[data-saidi-input], [data-saidi-panel]')) {
+        e.preventDefault();
+      }
     };
 
     document.addEventListener('pointerdown', startPress);
     document.addEventListener('pointerup', cancelPress);
     document.addEventListener('pointercancel', cancelPress);
     document.addEventListener('pointermove', moveCheck);
+    document.addEventListener('contextmenu', blockContextMenu);
     window.addEventListener('scroll', cancelPress, true);
     window.addEventListener('blur', cancelPress);
 
@@ -125,6 +141,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
       document.removeEventListener('pointerup', cancelPress);
       document.removeEventListener('pointercancel', cancelPress);
       document.removeEventListener('pointermove', moveCheck);
+      document.removeEventListener('contextmenu', blockContextMenu);
       window.removeEventListener('scroll', cancelPress, true);
       window.removeEventListener('blur', cancelPress);
       cancelPress();
