@@ -111,17 +111,28 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
     };
 
     // Cancel on any real movement so taps and scrolls are never hijacked
+    // (tolerance is generous for touch, where fingers naturally drift)
     const moveCheck = (e: PointerEvent) => {
       if (!pressTimer) return;
+      const tolerance = e.pointerType === 'touch' ? 15 : 8;
       const dx = Math.abs(e.clientX - startX);
       const dy = Math.abs(e.clientY - startY);
-      if (dx > 6 || dy > 6) cancelPress();
+      if (dx > tolerance || dy > tolerance) cancelPress();
+    };
+
+    // Suppress the browser context menu so touch long-press reaches our handler
+    const blockContextMenu = (e: Event) => {
+      const el = e.target as HTMLElement;
+      if (!el.closest('[data-saidi-input], [data-saidi-panel]')) {
+        e.preventDefault();
+      }
     };
 
     document.addEventListener('pointerdown', startPress);
     document.addEventListener('pointerup', cancelPress);
     document.addEventListener('pointercancel', cancelPress);
     document.addEventListener('pointermove', moveCheck);
+    document.addEventListener('contextmenu', blockContextMenu);
     window.addEventListener('scroll', cancelPress, true);
     window.addEventListener('blur', cancelPress);
 
@@ -130,6 +141,7 @@ export default function SaidiChat({ open, onOpenChange }: SaidiChatProps) {
       document.removeEventListener('pointerup', cancelPress);
       document.removeEventListener('pointercancel', cancelPress);
       document.removeEventListener('pointermove', moveCheck);
+      document.removeEventListener('contextmenu', blockContextMenu);
       window.removeEventListener('scroll', cancelPress, true);
       window.removeEventListener('blur', cancelPress);
       cancelPress();
