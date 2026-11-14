@@ -1,7 +1,7 @@
 import { AtomLoader } from '@/components/ui/AtomLoader';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Youtube } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Eye, Youtube, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,8 @@ interface MediaUpload {
   is_liked?: boolean;
   is_saved?: boolean;
   demo_url?: string | null;
+  user_id?: string;
+  is_live_link?: boolean;
 }
 
 export default function IdeaDetail() {
@@ -70,7 +72,7 @@ export default function IdeaDetail() {
         .from('media_uploads')
         .select('media_type')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -126,9 +128,37 @@ export default function IdeaDetail() {
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        const { data: liveLink, error: liveLinkError } = await supabase
+          .from('live_links')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (liveLinkError) throw liveLinkError;
+        if (!liveLink) throw new Error('Shared post was not found');
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, username, avatar_url, is_verified')
+          .eq('user_id', liveLink.user_id)
+          .maybeSingle();
+
+        setIdea({
+          ...liveLink,
+          media_type: 'website',
+          media_url: liveLink.website_url,
+          profiles: profile || undefined,
+          is_liked: false,
+          is_saved: false,
+          is_live_link: true,
+        });
+        return;
+      }
 
       if (user && data) {
         // Check if user has liked and saved this media
@@ -342,6 +372,16 @@ export default function IdeaDetail() {
     }
   };
 
+  const handleShare = async () => {
+    if (!idea) return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/idea/${idea.id}`);
+      toast({ title: 'Link copied', description: 'The post link is ready to share.' });
+    } catch {
+      toast({ title: 'Unable to copy link', description: 'Please copy the page address from your browser.', variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return <AtomLoader fullScreen size={88} label="Loading post..." />;
   }
@@ -378,13 +418,21 @@ export default function IdeaDetail() {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">Idea Detail</h1>
+            <h1 className="text-lg font-semibold">{idea.is_live_link ? 'Website Post' : 'Idea Detail'}</h1>
           </div>
         </div>
       </header>
 
       {/* Media */}
       <section className="px-4 py-6 max-w-md mx-auto">
+        {idea.is_live_link ? (
+          <div className="mb-6 space-y-3">
+            <TryItMode demoUrl={idea.media_url} title={idea.title} autoLoad />
+            <Button variant="outline" className="w-full gap-2" onClick={() => window.open(idea.media_url, '_blank', 'noopener,noreferrer')}>
+              <Globe className="h-4 w-4" /> Open website
+            </Button>
+          </div>
+        ) : (
         <div className="relative bg-muted rounded-xl overflow-hidden mb-6">
           {idea.media_type === 'youtube' ? (
             (() => {
@@ -420,11 +468,12 @@ export default function IdeaDetail() {
           )}
           
           <Badge className="absolute top-3 left-3 bg-background/90 text-foreground">
-            {idea.media_type === 'youtube' ? (
+            {idea.is_live_link ? 'Website' : idea.media_type === 'youtube' ? (
               <span className="flex items-center gap-1"><Youtube className="h-3 w-3" /> YouTube</span>
             ) : 'Image'}
           </Badge>
         </div>
+        )}
 
         {/* User Info */}
         <div className="flex items-center gap-3 mb-4">
@@ -473,16 +522,16 @@ export default function IdeaDetail() {
         )}
 
         {/* Pitch Deck */}
-        <div className="mb-6">
+        {!idea.is_live_link && <div className="mb-6">
           <Button variant="outline" className="w-full gap-2" onClick={() => setPitchDeckOpen(true)}>
             <FileText className="h-4 w-4" /> Create Pitch Deck
           </Button>
-        </div>
+        </div>}
 
         {/* Actions */}
         <div className="flex items-center justify-between py-4 border-t border-border">
           <div className="flex items-center gap-6">
-            <Button 
+            {!idea.is_live_link && <Button 
               variant="ghost" 
               size="sm" 
               className={`gap-2 hover:text-red-500 transition-colors ${
@@ -492,7 +541,7 @@ export default function IdeaDetail() {
             >
               <Heart className={`h-5 w-5 ${idea.is_liked ? 'fill-current' : ''}`} />
               <span>{idea.likes_count}</span>
-            </Button>
+            </Button>}
             
             <Button 
               variant="ghost" 
@@ -510,13 +559,13 @@ export default function IdeaDetail() {
               <span>{idea.comments_count}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" onClick={handleShare}>
               <Share className="h-5 w-5" />
               <span>Share</span>
             </Button>
           </div>
 
-          <Button 
+          {!idea.is_live_link && <Button 
             variant="ghost" 
             size="sm"
             className={`gap-2 hover:text-accent transition-colors ${
@@ -526,7 +575,7 @@ export default function IdeaDetail() {
           >
             <Bookmark className={`h-5 w-5 ${idea.is_saved ? 'fill-current' : ''}`} />
             <span>{idea.saves_count}</span>
-          </Button>
+          </Button>}
         </div>
       </section>
 
@@ -535,6 +584,7 @@ export default function IdeaDetail() {
         onOpenChange={setCommentDialogOpen}
         mediaId={idea.id}
         mediaTitle={idea.title}
+        source={idea.is_live_link ? 'live_links' : 'media_uploads'}
       />
       
       <SignupPrompt
